@@ -616,10 +616,6 @@ export default function GameView() {
 
         <OnlineCounterPill />
 
-        <div className="top-balance-pill">
-          <span className="text-green-400 text-xs font-black">📈 {formatNum(incomePerMin)}/dk</span>
-        </div>
-
         {streak > 0 && (
           <div className="top-balance-pill">
             <Flame size={12} className="text-orange-400" />
