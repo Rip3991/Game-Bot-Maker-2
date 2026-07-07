@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "dN2ENBGuyuaar_etD55qi"
+uri = "file://artifacts/farm-game/public/farm-theme.mp3"
+type = "audio"
+title = "farm-theme"

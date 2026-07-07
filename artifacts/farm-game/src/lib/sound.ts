@@ -1,10 +1,53 @@
 /**
- * Game sound engine — Web Audio API synthesized sounds.
- * No audio files needed; everything is procedurally generated.
+ * Game sound engine — Web Audio API synthesized sounds + background music.
  */
 
 let ctx: AudioContext | null = null;
 let enabled = true;
+
+// ── Background Music ─────────────────────────────────────────────────────────
+let bgAudio: HTMLAudioElement | null = null;
+let musicEnabled = true;
+
+export function initBackgroundMusic() {
+  if (typeof window === 'undefined') return;
+  if (bgAudio) return; // already initialized
+
+  const baseUrl = import.meta.env.BASE_URL ?? '/';
+  const src = baseUrl.replace(/\/$/, '') + '/farm-theme.mp3';
+
+  bgAudio = new Audio(src);
+  bgAudio.loop = true;
+  bgAudio.volume = 0.35;
+
+  if (musicEnabled) {
+    bgAudio.play().catch(() => {
+      // autoplay blocked — will be resumed on first user gesture
+    });
+  }
+}
+
+export function resumeBackgroundMusic() {
+  if (!bgAudio || !musicEnabled) return;
+  if (bgAudio.paused) {
+    bgAudio.play().catch(() => {});
+  }
+}
+
+export function setMusicEnabled(val: boolean) {
+  musicEnabled = val;
+  if (!bgAudio) return;
+  if (val) {
+    bgAudio.play().catch(() => {});
+  } else {
+    bgAudio.pause();
+  }
+}
+
+export function isMusicEnabled() {
+  return musicEnabled;
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 /* ── Unlock audio on first user gesture (browser autoplay policy) ── */
 // Creates ctx if not yet created AND resumes it if suspended.

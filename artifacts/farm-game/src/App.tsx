@@ -16,12 +16,13 @@ import ProfilePage from './pages/ProfilePage';
 import { useUser } from './hooks/use-user';
 import { UserProvider } from './context/UserProvider';
 import { AnimatePresence, motion } from 'framer-motion';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { WithdrawModal } from './components/WithdrawModal';
 import { AchievementsPanel, useAchievementCount } from './components/AchievementsPanel';
 import { Toaster as SonnerToaster } from 'sonner';
 import { initI18n } from './lib/i18n';
 import LoadingScreen from './components/LoadingScreen';
+import { initBackgroundMusic, resumeBackgroundMusic, setMusicEnabled, isMusicEnabled } from './lib/sound';
 
 initI18n();
 
@@ -37,7 +38,7 @@ const RIGHT_NAV = [
   { label: 'Mağaza', icon: '🌟', path: '/stars' },
 ] as const;
 
-function RightNav({ onAchievementsOpen }: { onAchievementsOpen: () => void }) {
+function RightNav({ onAchievementsOpen, musicOn, onMusicToggle }: { onAchievementsOpen: () => void; musicOn: boolean; onMusicToggle: () => void }) {
   const [location, navigate] = useLocation();
   const achievementCount = useAchievementCount();
 
@@ -74,7 +75,7 @@ function RightNav({ onAchievementsOpen }: { onAchievementsOpen: () => void }) {
         );
       })}
 
-      {/* Achievements button — below Mağaza */}
+      {/* Achievements button */}
       <button
         onClick={onAchievementsOpen}
         className="right-nav-btn flex-shrink-0 relative"
@@ -94,6 +95,24 @@ function RightNav({ onAchievementsOpen }: { onAchievementsOpen: () => void }) {
           </span>
         )}
       </button>
+
+      {/* Music toggle button */}
+      <button
+        onClick={onMusicToggle}
+        className="right-nav-btn flex-shrink-0"
+        style={{
+          background: musicOn
+            ? 'linear-gradient(180deg, #f59e0b 0%, #b45309 100%)'
+            : 'rgba(0,0,0,0.35)',
+          borderColor: musicOn ? '#92400e' : 'rgba(255,255,255,0.15)',
+          boxShadow: musicOn ? '0 2px 8px rgba(245,158,11,0.45)' : 'none',
+        }}
+      >
+        <span className="text-xl leading-none">{musicOn ? '🎵' : '🔇'}</span>
+        <span className="text-[8px] font-black leading-tight text-center" style={{ color: musicOn ? 'white' : '#aaa' }}>
+          {musicOn ? 'Müzik' : 'Sessiz'}
+        </span>
+      </button>
     </div>
   );
 }
@@ -105,7 +124,28 @@ function Router() {
   );
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [achievementsOpen, setAchievementsOpen] = useState(false);
+  const [musicOn, setMusicOn] = useState(() => isMusicEnabled());
   const { isLoading } = useUser();
+
+  // Initialize music on first user gesture
+  useEffect(() => {
+    const handleGesture = () => {
+      initBackgroundMusic();
+      resumeBackgroundMusic();
+    };
+    window.addEventListener('touchstart', handleGesture, { once: true });
+    window.addEventListener('click', handleGesture, { once: true });
+    return () => {
+      window.removeEventListener('touchstart', handleGesture);
+      window.removeEventListener('click', handleGesture);
+    };
+  }, []);
+
+  const handleMusicToggle = useCallback(() => {
+    const next = !musicOn;
+    setMusicOn(next);
+    setMusicEnabled(next);
+  }, [musicOn]);
 
   // Show loading screen once per session — gate by animation, not by isLoading
   // (the 2.4s animation outlasts the API call in all realistic cases)
@@ -179,7 +219,7 @@ function Router() {
         </div>
 
         {/* Permanent right nav */}
-        <RightNav onAchievementsOpen={() => setAchievementsOpen(true)} />
+        <RightNav onAchievementsOpen={() => setAchievementsOpen(true)} musicOn={musicOn} onMusicToggle={handleMusicToggle} />
       </div>
 
       <AchievementsPanel isOpen={achievementsOpen} onClose={() => setAchievementsOpen(false)} />

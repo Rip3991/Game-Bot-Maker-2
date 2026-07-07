@@ -5,6 +5,9 @@ import { eq, sql } from "drizzle-orm";
 
 const processedPayments = new Set<string>();
 
+// Cache Telegram file_id after first upload so subsequent /start calls are instant
+let cachedBannerFileId: string | null = null;
+
 const router = Router();
 
 function isAdmin(telegramId?: number | string): boolean {
@@ -223,7 +226,9 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       ? `https://t.me/${botUsername}?start=ref_${userId}`
       : `https://t.me/${botUsername}`;
 
-    const announcementChannel = process.env.ANNOUNCEMENT_CHANNEL ?? "sarınçiftliği";
+    const rawChannel = process.env.ANNOUNCEMENT_CHANNEL ?? "sarınoyunciftligi";
+    // Strip leading @ so the URL is always well-formed
+    const announcementChannel = rawChannel.replace(/^@/, "");
     const bannerUrl = getBannerUrl();
 
     const caption = `🌾 <b>Merhaba ${firstName}!</b>\n\nSarı'nın Çiftliği'ne hoş geldin! 🐄🐔🌾\n\n` +
@@ -243,14 +248,25 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       ],
     };
 
-    if (bannerUrl) {
-      await sendTelegramRequest("sendPhoto", {
+    if (cachedBannerFileId || bannerUrl) {
+      // Use cached file_id for instant send; fall back to URL on first run
+      const photoVal = cachedBannerFileId ?? bannerUrl;
+      const photoRes = await sendTelegramRequest("sendPhoto", {
         chat_id: chatId,
-        photo: bannerUrl,
+        photo: photoVal,
         caption,
         parse_mode: "HTML",
         reply_markup,
-      });
+      }) as { result?: { photo?: Array<{ file_id: string }> } } | null;
+
+      // Cache file_id from Telegram's response for future sends
+      if (!cachedBannerFileId && photoRes?.result?.photo) {
+        const photos = photoRes.result.photo;
+        const largest = photos[photos.length - 1];
+        if (largest?.file_id) {
+          cachedBannerFileId = largest.file_id;
+        }
+      }
     } else {
       await sendTelegramRequest("sendMessage", {
         chat_id: chatId,
