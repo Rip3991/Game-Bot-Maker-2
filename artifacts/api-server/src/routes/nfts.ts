@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, desc, and, isNull, or, sql } from "drizzle-orm";
+import { eq, desc, and, isNull, or, sql, isNotNull } from "drizzle-orm";
 import { db, usersTable, nftsTable, nftTradeOffersTable } from "@workspace/db";
 import crypto from "crypto";
 
@@ -77,7 +77,7 @@ export const NFT_DEFS = {
 
 export type NftType = keyof typeof NFT_DEFS;
 
-// ── Case (Kasa) Definitions ──────────────────────────────────────────────────
+// ── Case Definitions ──────────────────────────────────────────────────────────
 
 export const CASE_DEFS = {
   farm_case: {
@@ -86,11 +86,7 @@ export const CASE_DEFS = {
     price: 75,
     description: "Temel çiftlik NFT'leri",
     bgGradient: "linear-gradient(135deg, #2d5a1b, #4a8c2a)",
-    drops: {
-      common: 0.70,    // 70% common
-      rare: 0.25,      // 25% rare
-      legendary: 0.05, // 5% legendary
-    },
+    drops: { common: 0.70, rare: 0.25, legendary: 0.05 },
   },
   crystal_case: {
     name: "Kristal Kasa",
@@ -98,11 +94,7 @@ export const CASE_DEFS = {
     price: 350,
     description: "Nadir ve değerli NFT'ler",
     bgGradient: "linear-gradient(135deg, #1a3a6b, #2d6bb5)",
-    drops: {
-      common: 0.30,
-      rare: 0.55,
-      legendary: 0.15,
-    },
+    drops: { common: 0.30, rare: 0.55, legendary: 0.15 },
   },
   legend_case: {
     name: "Efsane Kasası",
@@ -110,15 +102,50 @@ export const CASE_DEFS = {
     price: 1500,
     description: "En nadir efsanevi NFT'ler",
     bgGradient: "linear-gradient(135deg, #5c3000, #b8860b)",
-    drops: {
-      common: 0.10,
-      rare: 0.35,
-      legendary: 0.55,
-    },
+    drops: { common: 0.10, rare: 0.35, legendary: 0.55 },
   },
 } as const;
 
 export type CaseType = keyof typeof CASE_DEFS;
+
+// ── In-memory Market Price Simulation ────────────────────────────────────────
+
+const HISTORY_LEN = 24;
+
+interface PricePoint { price: number; ts: number }
+
+// Initialize price history for each NFT type with 24 starting points
+const priceHistory = new Map<NftType, PricePoint[]>(
+  (Object.entries(NFT_DEFS) as [NftType, typeof NFT_DEFS[NftType]][]).map(([key, def]) => {
+    const base = def.sellPrice;
+    const now = Date.now();
+    const history: PricePoint[] = [];
+    let price: number = base;
+    for (let i = HISTORY_LEN - 1; i >= 0; i--) {
+      const drift = (Math.random() - 0.48) * 0.06; // slight upward bias
+      price = Math.max(1, Math.round(price * (1 + drift)));
+      history.push({ price, ts: now - i * 20000 });
+    }
+    return [key, history];
+  })
+);
+
+// Fluctuate prices every 15 seconds
+setInterval(() => {
+  (Object.keys(NFT_DEFS) as NftType[]).forEach(key => {
+    const hist = priceHistory.get(key)!;
+    const last = hist[hist.length - 1].price;
+    const drift = (Math.random() - 0.48) * 0.08;
+    const newPrice = Math.max(1, Math.round(last * (1 + drift)));
+    hist.push({ price: newPrice, ts: Date.now() });
+    if (hist.length > HISTORY_LEN) hist.shift();
+  });
+}, 15000);
+
+function getCurrentPrice(key: NftType): number {
+  const hist = priceHistory.get(key)!;
+  return hist[hist.length - 1].price;
+}
 
 // ── Helper: grant an NFT ─────────────────────────────────────────────────────
 
@@ -137,10 +164,9 @@ export async function grantNft(telegramId: string, nftType: NftType): Promise<vo
     emoji: def.emoji,
     mintNumber: Math.floor(Math.random() * def.mintLimit) + 1,
     isListedForTrade: false,
+    listPrice: null,
   }).onConflictDoNothing();
 }
-
-// ── Helper: pick random NFT by rarity ────────────────────────────────────────
 
 function pickRandomNft(rarity: "common" | "rare" | "legendary"): NftType {
   const pool = (Object.entries(NFT_DEFS) as [NftType, typeof NFT_DEFS[NftType]][])
@@ -156,9 +182,27 @@ function rollRarity(drops: { common: number; rare: number; legendary: number }):
   return "common";
 }
 
+function serializeNft(n: typeof nftsTable.$inferSelect) {
+  const def = NFT_DEFS[n.nftType as NftType];
+  return {
+    id: n.id,
+    ownerTelegramId: n.ownerTelegramId,
+    nftType: n.nftType,
+    rarity: n.rarity,
+    name: n.name,
+    emoji: n.emoji,
+    mintNumber: n.mintNumber,
+    isListedForTrade: n.isListedForTrade,
+    listPrice: n.listPrice ?? null,
+    sellPrice: def?.sellPrice ?? 10,
+    marketPrice: getCurrentPrice(n.nftType as NftType),
+    createdAt: n.createdAt.toISOString(),
+  };
+}
+
 // ── Routes ───────────────────────────────────────────────────────────────────
 
-// GET /nfts/cases — return case definitions
+// GET /nfts/cases
 router.get("/cases", (_req, res): void => {
   const result = (Object.entries(CASE_DEFS) as [CaseType, typeof CASE_DEFS[CaseType]][]).map(([id, def]) => ({
     id,
@@ -172,138 +216,150 @@ router.get("/cases", (_req, res): void => {
   res.json(result);
 });
 
-// POST /nfts/cases/open — open a case (atomically deducts balance + mints NFT server-side)
+// GET /nfts/market/prices — current prices + history for all NFT types
+router.get("/market/prices", (_req, res): void => {
+  const result = (Object.entries(NFT_DEFS) as [NftType, typeof NFT_DEFS[NftType]][]).map(([key, def]) => {
+    const hist = priceHistory.get(key)!;
+    const current = hist[hist.length - 1].price;
+    const prev = hist[hist.length - 2]?.price ?? current;
+    const change = prev > 0 ? ((current - prev) / prev) * 100 : 0;
+    const allTimeHigh = Math.max(...hist.map(h => h.price));
+    const allTimeLow = Math.min(...hist.map(h => h.price));
+    return {
+      nftType: key,
+      emoji: def.emoji,
+      name: def.name,
+      rarity: def.rarity,
+      basePrice: def.sellPrice,
+      currentPrice: current,
+      change: Math.round(change * 100) / 100,
+      history: hist.map(h => h.price),
+      allTimeHigh,
+      allTimeLow,
+    };
+  });
+  res.json(result);
+});
+
+// POST /nfts/cases/open
 router.post("/cases/open", async (req, res): Promise<void> => {
   const { telegramId, caseType } = req.body as { telegramId: string; caseType: CaseType };
-
   if (!telegramId || !caseType || !CASE_DEFS[caseType]) {
     res.status(400).json({ error: "telegramId and valid caseType required" });
     return;
   }
-
   const caseDef = CASE_DEFS[caseType];
-
-  // Pick random NFT first (so we know what to mint)
   const rarity = rollRarity(caseDef.drops);
   const nftType = pickRandomNft(rarity);
   const nftDef = NFT_DEFS[nftType];
   const mintNumber = Math.floor(Math.random() * nftDef.mintLimit) + 1;
   const nftId = crypto.randomUUID();
   const now = new Date();
-
   let nftResult: typeof nftsTable.$inferSelect | null = null;
-
   try {
     await db.transaction(async (tx) => {
-      // Atomically deduct balance ONLY if sufficient — single predicate update
-      // prevents race conditions under concurrent requests
       const updated = await tx
         .update(usersTable)
         .set({ balance: sql`${usersTable.balance} - ${caseDef.price}` })
-        .where(
-          and(
-            eq(usersTable.telegramId, telegramId),
-            sql`${usersTable.balance} >= ${caseDef.price}`,
-          ),
-        )
+        .where(and(eq(usersTable.telegramId, telegramId), sql`${usersTable.balance} >= ${caseDef.price}`))
         .returning({ telegramId: usersTable.telegramId });
-
       if (updated.length === 0) {
-        // Either user not found or insufficient balance — check which
-        const user = await tx.query.usersTable.findFirst({
-          where: eq(usersTable.telegramId, telegramId),
-          columns: { telegramId: true },
-        });
+        const user = await tx.query.usersTable.findFirst({ where: eq(usersTable.telegramId, telegramId), columns: { telegramId: true } });
         throw new Error(user ? "INSUFFICIENT_BALANCE" : "USER_NOT_FOUND");
       }
-
-      // Mint the NFT only after balance was successfully deducted
-      const inserted = await tx
-        .insert(nftsTable)
-        .values({
-          id: nftId,
-          ownerTelegramId: telegramId,
-          nftType,
-          rarity: nftDef.rarity,
-          name: nftDef.name,
-          emoji: nftDef.emoji,
-          mintNumber,
-          isListedForTrade: false,
-        })
-        .returning();
-
+      const inserted = await tx.insert(nftsTable).values({
+        id: nftId, ownerTelegramId: telegramId, nftType, rarity: nftDef.rarity,
+        name: nftDef.name, emoji: nftDef.emoji, mintNumber, isListedForTrade: false, listPrice: null,
+      }).returning();
       nftResult = inserted[0];
     });
   } catch (e: any) {
-    if (e.message === "USER_NOT_FOUND") {
-      res.status(404).json({ error: "Kullanıcı bulunamadı" });
-    } else if (e.message === "INSUFFICIENT_BALANCE") {
-      res.status(402).json({ error: "Yetersiz TL bakiyesi. Çiftliğini geliştir ve daha fazla TL kazan!" });
-    } else {
-      res.status(500).json({ error: "Kasa açılamadı, lütfen tekrar dene" });
-    }
+    if (e.message === "USER_NOT_FOUND") res.status(404).json({ error: "Kullanıcı bulunamadı" });
+    else if (e.message === "INSUFFICIENT_BALANCE") res.status(402).json({ error: "Yetersiz TL bakiyesi. Çiftliğini geliştir!" });
+    else res.status(500).json({ error: "Kasa açılamadı" });
     return;
   }
-
-  res.json({
-    id: nftId,
-    ownerTelegramId: telegramId,
-    nftType,
-    rarity: nftDef.rarity,
-    name: nftDef.name,
-    emoji: nftDef.emoji,
-    mintNumber,
-    isListedForTrade: false,
-    sellPrice: nftDef.sellPrice,
-    createdAt: now.toISOString(),
-  });
+  res.json({ id: nftId, ownerTelegramId: telegramId, nftType, rarity: nftDef.rarity, name: nftDef.name, emoji: nftDef.emoji, mintNumber, isListedForTrade: false, listPrice: null, sellPrice: nftDef.sellPrice, marketPrice: getCurrentPrice(nftType), createdAt: now.toISOString() });
 });
 
-// POST /nfts/sell — sell an NFT for TL (atomic transaction)
+// POST /nfts/sell — sell to system for fixed price
 router.post("/sell", async (req, res): Promise<void> => {
   const { telegramId, nftId } = req.body as { telegramId: string; nftId: string };
-
-  if (!telegramId || !nftId) {
-    res.status(400).json({ error: "telegramId and nftId required" });
-    return;
-  }
-
-  let earnedTl = 0;
-  let nftType = "";
-
+  if (!telegramId || !nftId) { res.status(400).json({ error: "required" }); return; }
+  let earnedTl = 0; let nftType = "";
   try {
     await db.transaction(async (tx) => {
-      // Delete only if owned — this is the atomic ownership guard
-      const deleted = await tx
-        .delete(nftsTable)
+      const deleted = await tx.delete(nftsTable)
         .where(and(eq(nftsTable.id, nftId), eq(nftsTable.ownerTelegramId, telegramId)))
         .returning();
-
-      if (deleted.length === 0) {
-        throw new Error("NOT_FOUND");
-      }
-
+      if (deleted.length === 0) throw new Error("NOT_FOUND");
       const nft = deleted[0];
       const def = NFT_DEFS[nft.nftType as NftType];
-      earnedTl = def?.sellPrice ?? 10;
-      nftType = nft.nftType;
-
-      // Increment balance atomically
-      await tx
-        .update(usersTable)
-        .set({ balance: sql`${usersTable.balance} + ${earnedTl}` })
-        .where(eq(usersTable.telegramId, telegramId));
+      earnedTl = def?.sellPrice ?? 10; nftType = nft.nftType;
+      await tx.update(usersTable).set({ balance: sql`${usersTable.balance} + ${earnedTl}` }).where(eq(usersTable.telegramId, telegramId));
     });
   } catch (e: any) {
-    if (e.message === "NOT_FOUND") {
-      res.status(404).json({ error: "NFT bulunamadı veya sana ait değil" });
-    } else {
-      res.status(500).json({ error: "Satış başarısız" });
-    }
+    if (e.message === "NOT_FOUND") res.status(404).json({ error: "NFT bulunamadı" });
+    else res.status(500).json({ error: "Satış başarısız" });
     return;
   }
-
   res.json({ success: true, earnedTl, nftType });
+});
+
+// POST /nfts/list-for-sale — list NFT on exchange with a TL price
+router.post("/list-for-sale", async (req, res): Promise<void> => {
+  const { telegramId, nftId, price } = req.body as { telegramId: string; nftId: string; price: number | null };
+  if (!telegramId || !nftId) { res.status(400).json({ error: "required" }); return; }
+  const nft = await db.query.nftsTable.findFirst({ where: and(eq(nftsTable.id, nftId), eq(nftsTable.ownerTelegramId, telegramId)) });
+  if (!nft) { res.status(404).json({ error: "NFT bulunamadı" }); return; }
+  const listPrice = price && price > 0 ? Math.round(price) : null;
+  const updated = await db.update(nftsTable)
+    .set({ listPrice, isListedForTrade: listPrice !== null })
+    .where(eq(nftsTable.id, nftId))
+    .returning();
+  res.json(serializeNft(updated[0]));
+});
+
+// POST /nfts/buy — buy a market-listed NFT with TL
+router.post("/buy", async (req, res): Promise<void> => {
+  const { telegramId, nftId } = req.body as { telegramId: string; nftId: string };
+  if (!telegramId || !nftId) { res.status(400).json({ error: "required" }); return; }
+  let paidTl = 0;
+  try {
+    await db.transaction(async (tx) => {
+      const nft = await tx.query.nftsTable.findFirst({ where: and(eq(nftsTable.id, nftId), isNotNull(nftsTable.listPrice)) });
+      if (!nft || !nft.listPrice) throw new Error("NOT_LISTED");
+      if (nft.ownerTelegramId === telegramId) throw new Error("OWN_NFT");
+      paidTl = nft.listPrice;
+      // Deduct buyer balance
+      const deducted = await tx.update(usersTable)
+        .set({ balance: sql`${usersTable.balance} - ${paidTl}` })
+        .where(and(eq(usersTable.telegramId, telegramId), sql`${usersTable.balance} >= ${paidTl}`))
+        .returning({ telegramId: usersTable.telegramId });
+      if (deducted.length === 0) throw new Error("INSUFFICIENT_BALANCE");
+      // Credit seller
+      await tx.update(usersTable)
+        .set({ balance: sql`${usersTable.balance} + ${paidTl}` })
+        .where(eq(usersTable.telegramId, nft.ownerTelegramId));
+      // Transfer NFT
+      await tx.update(nftsTable)
+        .set({ ownerTelegramId: telegramId, isListedForTrade: false, listPrice: null })
+        .where(eq(nftsTable.id, nftId));
+      // Update market price (sale price influences market)
+      const hist = priceHistory.get(nft.nftType as NftType);
+      if (hist) {
+        hist.push({ price: paidTl, ts: Date.now() });
+        if (hist.length > HISTORY_LEN) hist.shift();
+      }
+    });
+  } catch (e: any) {
+    if (e.message === "NOT_LISTED") res.status(404).json({ error: "Bu NFT satışta değil" });
+    else if (e.message === "OWN_NFT") res.status(400).json({ error: "Kendi NFT'ini satın alamazsın" });
+    else if (e.message === "INSUFFICIENT_BALANCE") res.status(402).json({ error: "Yetersiz TL bakiyesi" });
+    else res.status(500).json({ error: "Satın alma başarısız" });
+    return;
+  }
+  res.json({ success: true, paidTl });
 });
 
 // GET /nfts/user/:telegramId
@@ -312,44 +368,27 @@ router.get("/user/:telegramId", async (req, res): Promise<void> => {
     where: eq(nftsTable.ownerTelegramId, req.params.telegramId),
     orderBy: [desc(nftsTable.createdAt)],
   });
-  res.json(nfts.map(n => ({
-    id: n.id,
-    ownerTelegramId: n.ownerTelegramId,
-    nftType: n.nftType,
-    rarity: n.rarity,
-    name: n.name,
-    emoji: n.emoji,
-    mintNumber: n.mintNumber,
-    isListedForTrade: n.isListedForTrade,
-    sellPrice: (NFT_DEFS[n.nftType as NftType]?.sellPrice ?? 10),
-    createdAt: n.createdAt.toISOString(),
-  })));
+  res.json(nfts.map(serializeNft));
 });
 
-// POST /nfts/list-trade
+// POST /nfts/list-trade (legacy — keep for backward compat)
 router.post("/list-trade", async (req, res): Promise<void> => {
   const { telegramId, nftId, list } = req.body as { telegramId: string; nftId: string; list: boolean };
-  if (!telegramId || !nftId || typeof list !== "boolean") {
-    res.status(400).json({ error: "telegramId, nftId, list required" });
-    return;
-  }
-  const nft = await db.query.nftsTable.findFirst({
-    where: and(eq(nftsTable.id, nftId), eq(nftsTable.ownerTelegramId, telegramId)),
-  });
+  if (!telegramId || !nftId || typeof list !== "boolean") { res.status(400).json({ error: "required" }); return; }
+  const nft = await db.query.nftsTable.findFirst({ where: and(eq(nftsTable.id, nftId), eq(nftsTable.ownerTelegramId, telegramId)) });
   if (!nft) { res.status(404).json({ error: "NFT not found" }); return; }
-  const updated = await db.update(nftsTable).set({ isListedForTrade: list }).where(eq(nftsTable.id, nftId)).returning();
-  const u = updated[0];
-  res.json({ id: u.id, ownerTelegramId: u.ownerTelegramId, nftType: u.nftType, rarity: u.rarity, name: u.name, emoji: u.emoji, mintNumber: u.mintNumber, isListedForTrade: u.isListedForTrade, createdAt: u.createdAt.toISOString() });
+  const updated = await db.update(nftsTable).set({ isListedForTrade: list, listPrice: list ? nft.listPrice : null }).where(eq(nftsTable.id, nftId)).returning();
+  res.json(serializeNft(updated[0]));
 });
 
-// GET /nfts/market
+// GET /nfts/market — all NFTs listed for sale on exchange
 router.get("/market", async (_req, res): Promise<void> => {
   const listed = await db.query.nftsTable.findMany({
-    where: eq(nftsTable.isListedForTrade, true),
+    where: isNotNull(nftsTable.listPrice),
     orderBy: [desc(nftsTable.createdAt)],
-    limit: 100,
+    limit: 200,
   });
-  res.json(listed.map(n => ({ id: n.id, ownerTelegramId: n.ownerTelegramId, nftType: n.nftType, rarity: n.rarity, name: n.name, emoji: n.emoji, mintNumber: n.mintNumber, isListedForTrade: n.isListedForTrade, sellPrice: (NFT_DEFS[n.nftType as NftType]?.sellPrice ?? 10), createdAt: n.createdAt.toISOString() })));
+  res.json(listed.map(serializeNft));
 });
 
 // POST /nfts/trade/offer
@@ -360,7 +399,7 @@ router.post("/trade/offer", async (req, res): Promise<void> => {
   if (!nft) { res.status(404).json({ error: "NFT not found" }); return; }
   const id = crypto.randomUUID();
   await db.insert(nftTradeOffersTable).values({ id, offererTelegramId, offeredNftId, targetTelegramId: targetTelegramId ?? null, wantedNftType: wantedNftType ?? null, status: "pending" });
-  res.json({ id, offererTelegramId, offeredNftId, targetTelegramId: targetTelegramId ?? null, wantedNftType: wantedNftType ?? null, status: "pending", createdAt: new Date().toISOString(), offeredNft: { id: nft.id, ownerTelegramId: nft.ownerTelegramId, nftType: nft.nftType, rarity: nft.rarity, name: nft.name, emoji: nft.emoji, mintNumber: nft.mintNumber, isListedForTrade: nft.isListedForTrade, createdAt: nft.createdAt.toISOString() } });
+  res.json({ id, offererTelegramId, offeredNftId, targetTelegramId: targetTelegramId ?? null, wantedNftType: wantedNftType ?? null, status: "pending", createdAt: new Date().toISOString(), offeredNft: serializeNft(nft) });
 });
 
 // GET /nfts/trade/offers/:telegramId
@@ -369,7 +408,7 @@ router.get("/trade/offers/:telegramId", async (req, res): Promise<void> => {
   const offers = await db.query.nftTradeOffersTable.findMany({ where: and(eq(nftTradeOffersTable.status, "pending"), or(eq(nftTradeOffersTable.targetTelegramId, telegramId), isNull(nftTradeOffersTable.targetTelegramId))), orderBy: [desc(nftTradeOffersTable.createdAt)], limit: 50 });
   const enriched = await Promise.all(offers.map(async (o) => {
     const offeredNft = await db.query.nftsTable.findFirst({ where: eq(nftsTable.id, o.offeredNftId) });
-    return { id: o.id, offererTelegramId: o.offererTelegramId, offeredNftId: o.offeredNftId, targetTelegramId: o.targetTelegramId, wantedNftType: o.wantedNftType, status: o.status, createdAt: o.createdAt.toISOString(), offeredNft: offeredNft ? { id: offeredNft.id, ownerTelegramId: offeredNft.ownerTelegramId, nftType: offeredNft.nftType, rarity: offeredNft.rarity, name: offeredNft.name, emoji: offeredNft.emoji, mintNumber: offeredNft.mintNumber, isListedForTrade: offeredNft.isListedForTrade, createdAt: offeredNft.createdAt.toISOString() } : null };
+    return { id: o.id, offererTelegramId: o.offererTelegramId, offeredNftId: o.offeredNftId, targetTelegramId: o.targetTelegramId, wantedNftType: o.wantedNftType, status: o.status, createdAt: o.createdAt.toISOString(), offeredNft: offeredNft ? serializeNft(offeredNft) : null };
   }));
   res.json(enriched);
 });
@@ -383,8 +422,8 @@ router.post("/trade/accept", async (req, res): Promise<void> => {
   const acceptorNft = await db.query.nftsTable.findFirst({ where: and(eq(nftsTable.id, acceptorNftId), eq(nftsTable.ownerTelegramId, telegramId)) });
   if (!acceptorNft) { res.status(404).json({ error: "Your NFT not found" }); return; }
   await db.transaction(async (tx) => {
-    await tx.update(nftsTable).set({ ownerTelegramId: telegramId, isListedForTrade: false }).where(eq(nftsTable.id, offer.offeredNftId));
-    await tx.update(nftsTable).set({ ownerTelegramId: offer.offererTelegramId, isListedForTrade: false }).where(eq(nftsTable.id, acceptorNftId));
+    await tx.update(nftsTable).set({ ownerTelegramId: telegramId, isListedForTrade: false, listPrice: null }).where(eq(nftsTable.id, offer.offeredNftId));
+    await tx.update(nftsTable).set({ ownerTelegramId: offer.offererTelegramId, isListedForTrade: false, listPrice: null }).where(eq(nftsTable.id, acceptorNftId));
     await tx.update(nftTradeOffersTable).set({ status: "accepted", resolvedAt: new Date() }).where(eq(nftTradeOffersTable.id, offerId));
   });
   res.json({ success: true });
