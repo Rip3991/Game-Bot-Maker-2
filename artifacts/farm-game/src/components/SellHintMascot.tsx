@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import mascotAvatar from '../assets/mascot-avatar.png';
 
-const STORAGE_KEY = 'farm_sell_hint_done_v1';
+const STORAGE_KEY = 'farm_sell_hint_done_v2';
 
 interface SellHintMascotProps {
   hasProducts: boolean;
@@ -10,28 +10,34 @@ interface SellHintMascotProps {
 
 export function SellHintMascot({ hasProducts }: SellHintMascotProps) {
   const [visible, setVisible] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    if (dismissed) return;
-    if (localStorage.getItem(STORAGE_KEY) === 'true') { setDismissed(true); return; }
-    if (hasProducts) {
-      const t = setTimeout(() => setVisible(true), 800);
-      return () => clearTimeout(t);
-    }
-  }, [hasProducts, dismissed]);
+    // Already shown once — never show again
+    if (localStorage.getItem(STORAGE_KEY) === 'true') return;
+    if (!hasProducts) return;
 
-  const dismiss = () => {
-    setVisible(false);
-    setDismissed(true);
-    localStorage.setItem(STORAGE_KEY, 'true');
-  };
+    // Show after a short delay
+    const showTimer = setTimeout(() => setVisible(true), 800);
+
+    // Auto-dismiss after 4.5 s and mark as done forever
+    const hideTimer = setTimeout(() => {
+      setVisible(false);
+      localStorage.setItem(STORAGE_KEY, 'true');
+    }, 5300);
+
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(hideTimer);
+    };
+  // Only trigger once when products first appear
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasProducts]);
 
   return (
     <AnimatePresence>
       {visible && (
         <motion.div
-          className="absolute bottom-[64px] right-2 z-[150] flex flex-col items-end gap-1 pointer-events-auto"
+          className="absolute bottom-[64px] right-2 z-[150] flex flex-col items-end gap-1 pointer-events-none"
           initial={{ opacity: 0, y: 20, scale: 0.85 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 16, scale: 0.88 }}
@@ -42,12 +48,6 @@ export function SellHintMascot({ hasProducts }: SellHintMascotProps) {
             className="relative rounded-2xl rounded-br-sm px-3 py-2.5 shadow-2xl border-2 max-w-[200px]"
             style={{ background: 'linear-gradient(135deg, #8b5c1e, #5c3a21)', borderColor: '#f5c842' }}
           >
-            {/* Close */}
-            <button
-              onClick={dismiss}
-              className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-black/60 text-white/70 text-[10px] font-black flex items-center justify-center hover:bg-black/80"
-            >✕</button>
-
             {/* Arrow pointing down-right toward sell button */}
             <div
               className="absolute -bottom-2 right-4 w-0 h-0"
@@ -57,7 +57,6 @@ export function SellHintMascot({ hasProducts }: SellHintMascotProps) {
                 borderTop: '10px solid #f5c842',
               }}
             />
-
             <p className="text-white font-bold text-[12px] leading-snug">
               🎉 Ürünlerin birikiyor!<br />
               <span className="text-yellow-300 font-black">💰 SAT</span> tuşuna bas ve<br />
