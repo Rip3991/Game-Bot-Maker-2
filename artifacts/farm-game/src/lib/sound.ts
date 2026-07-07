@@ -47,6 +47,15 @@ export function setMusicEnabled(val: boolean) {
 export function isMusicEnabled() {
   return musicEnabled;
 }
+
+export function getMusicVolume(): number {
+  return bgAudio ? bgAudio.volume : 0.35;
+}
+
+export function setMusicVolume(val: number) {
+  const clamped = Math.max(0, Math.min(1, val));
+  if (bgAudio) bgAudio.volume = clamped;
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 /* ── Unlock audio on first user gesture (browser autoplay policy) ── */

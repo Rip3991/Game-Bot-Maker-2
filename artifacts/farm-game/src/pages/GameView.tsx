@@ -4,10 +4,10 @@ import { MarketPanel } from '../components/MarketPanel';
 import { useUser } from '../hooks/use-user';
 import { useSaveFarmState, useGetOnlineStats, getGetOnlineStatsQueryKey } from '@workspace/api-client-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flame, Plus, Lock, Volume2, VolumeX } from 'lucide-react';
+import { Flame, Plus, Lock, Volume2, VolumeX, Settings } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { formatNum } from '../utils/format';
-import { playCoinSound, playAnimalSound, playUnlockSound, isSoundEnabled, setSoundEnabled } from '../lib/sound';
+import { playCoinSound, playAnimalSound, playUnlockSound, isSoundEnabled, setSoundEnabled, isMusicEnabled, setMusicEnabled, getMusicVolume, setMusicVolume } from '../lib/sound';
 import MascotTutorial, { useMascotTutorial } from '../components/MascotTutorial';
 import mascotAvatar from '../assets/mascot-avatar.png';
 import { LiveNftShowcase } from '../components/LiveNftShowcase';
@@ -488,12 +488,29 @@ export default function GameView() {
     if (saved === 'off') { setSoundEnabled(false); return false; }
     return true;
   });
+  const [musicOn, setMusicOn] = useState(() => isMusicEnabled());
+  const [musicVol, setMusicVol] = useState(() => Math.round(getMusicVolume() * 100));
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { showTutorial, doneTutorial } = useMascotTutorial();
+
   const toggleSound = () => {
     const next = !soundOn;
     setSoundOn(next);
     setSoundEnabled(next);
     localStorage.setItem('farm_sound', next ? 'on' : 'off');
+  };
+
+  const handleMusicToggle = () => {
+    const next = !musicOn;
+    setMusicOn(next);
+    setMusicEnabled(next);
+    localStorage.setItem('farm_music', next ? 'on' : 'off');
+  };
+
+  const handleVolumeChange = (val: number) => {
+    setMusicVol(val);
+    setMusicVolume(val / 100);
+    localStorage.setItem('farm_music_vol', String(val));
   };
 
   // Telegram init
@@ -598,18 +615,13 @@ export default function GameView() {
           <Plus size={14} className="text-yellow-900" strokeWidth={3} />
         </button>
 
-        {/* Sound toggle */}
+        {/* Settings button */}
         <button
-          onClick={toggleSound}
+          onClick={() => setSettingsOpen(true)}
           className="w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all active:scale-90"
-          style={soundOn
-            ? { background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.3)' }
-            : { background: 'rgba(0,0,0,0.3)', borderColor: 'rgba(255,255,255,0.1)' }}
-          title={soundOn ? 'Sesi Kapat' : 'Sesi Aç'}
+          style={{ background: 'rgba(255,255,255,0.12)', borderColor: 'rgba(255,255,255,0.25)' }}
         >
-          {soundOn
-            ? <Volume2 size={13} className="text-white" />
-            : <VolumeX size={13} className="text-white/50" />}
+          <Settings size={13} className="text-white" />
         </button>
 
         <div className="flex-1" />
@@ -728,6 +740,95 @@ export default function GameView() {
       <AnimatePresence>
         {showTutorial && (
           <MascotTutorial key="mascot-tutorial" onDone={doneTutorial} />
+        )}
+      </AnimatePresence>
+
+      {/* ══ SETTINGS PANEL (custom, no Radix) ══ */}
+      <AnimatePresence>
+        {settingsOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="settings-backdrop"
+              className="absolute inset-0 z-[200]"
+              style={{ background: 'rgba(0,0,0,0.55)' }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSettingsOpen(false)}
+            />
+            {/* Panel */}
+            <motion.div
+              key="settings-panel"
+              className="absolute bottom-0 left-0 right-0 z-[201] rounded-t-3xl px-5 pt-5 pb-10"
+              style={{ background: 'linear-gradient(180deg, #1a2e0a 0%, #0d1a05 100%)', borderTop: '2px solid rgba(255,255,255,0.12)' }}
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 340, damping: 32 }}
+            >
+              {/* Handle */}
+              <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: 'rgba(255,255,255,0.2)' }} />
+
+              <div className="flex items-center gap-2 mb-5">
+                <Settings size={18} className="text-yellow-400" />
+                <span className="text-white font-black text-lg">Ayarlar</span>
+              </div>
+
+              <div className="flex flex-col gap-5">
+                {/* Music volume */}
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-white/80">🎵 Müzik Sesi</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-yellow-300 font-black text-sm w-8 text-right">{musicVol}%</span>
+                      <button
+                        onClick={handleMusicToggle}
+                        className="px-3 py-1 rounded-lg text-xs font-black transition-all active:scale-90"
+                        style={musicOn
+                          ? { background: 'rgba(74,222,128,0.2)', border: '1px solid rgba(74,222,128,0.4)', color: '#4ade80' }
+                          : { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff60' }}
+                      >
+                        {musicOn ? 'Açık' : 'Kapalı'}
+                      </button>
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={musicVol}
+                    onChange={e => handleVolumeChange(Number(e.target.value))}
+                    disabled={!musicOn}
+                    className="w-full h-2 rounded-full appearance-none cursor-pointer disabled:opacity-30"
+                    style={{ accentColor: '#f5c842' }}
+                  />
+                  <div className="flex justify-between text-[10px] text-white/30 font-bold px-0.5">
+                    <span>Sessiz</span><span>Orta</span><span>Tam</span>
+                  </div>
+                </div>
+
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }} />
+
+                {/* Sound effects */}
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 font-bold text-sm text-white/80">
+                    {soundOn ? <Volume2 size={16} className="text-white/70" /> : <VolumeX size={16} className="text-white/40" />}
+                    Efekt Sesleri
+                  </span>
+                  <button
+                    onClick={toggleSound}
+                    className="px-3 py-1 rounded-lg text-xs font-black transition-all active:scale-90"
+                    style={soundOn
+                      ? { background: 'rgba(74,222,128,0.2)', border: '1px solid rgba(74,222,128,0.4)', color: '#4ade80' }
+                      : { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff60' }}
+                  >
+                    {soundOn ? 'Açık' : 'Kapalı'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>

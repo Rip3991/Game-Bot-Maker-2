@@ -41,52 +41,52 @@ export const SECTIONS: SectionConfig[] = [
   // ——— HAYVANLAR (ANIMALS) ———
   {
     id: 'chicken', emoji: '🐔', name: 'Tavuk Kümesi', category: 'animal',
-    unlockCost: 400, unitCost: 80, baseRate: 3, sellPrice: 8, maxUnits: 20,
+    unlockCost: 180, unitCost: 40, baseRate: 3, sellPrice: 8, maxUnits: 20,
     description: 'Yumurta ve et üretimi', scene: ['🏚️', '🌾'],
   },
   {
     id: 'cow', emoji: '🐄', name: 'İnek Ahırı', category: 'animal',
-    unlockCost: 2500, unitCost: 700, baseRate: 12, sellPrice: 30, maxUnits: 15,
+    unlockCost: 1000, unitCost: 300, baseRate: 12, sellPrice: 30, maxUnits: 15,
     description: 'Süt ve et üretimi', scene: ['🏠', '🌿'],
   },
   {
     id: 'sheep', emoji: '🐑', name: 'Koyun Ağılı', category: 'animal',
-    unlockCost: 8000, unitCost: 2000, baseRate: 35, sellPrice: 80, maxUnits: 15,
+    unlockCost: 3500, unitCost: 900, baseRate: 35, sellPrice: 80, maxUnits: 15,
     description: 'Yün ve süt üretimi', scene: ['⛰️', '🌿'],
   },
   {
     id: 'pig', emoji: '🐷', name: 'Domuz Çiftliği', category: 'animal',
-    unlockCost: 25000, unitCost: 6000, baseRate: 100, sellPrice: 200, maxUnits: 12,
+    unlockCost: 10000, unitCost: 2500, baseRate: 100, sellPrice: 200, maxUnits: 12,
     description: 'Et ve şarküteri ürünleri', scene: ['🏡', '🌱'],
   },
   {
     id: 'horse', emoji: '🐴', name: 'At Ahırı', category: 'animal',
-    unlockCost: 70000, unitCost: 18000, baseRate: 280, sellPrice: 500, maxUnits: 10,
+    unlockCost: 30000, unitCost: 8000, baseRate: 280, sellPrice: 500, maxUnits: 10,
     description: 'Prestijli at yetiştiriciliği', scene: ['🏟️', '🌿'],
   },
   {
     id: 'rabbit', emoji: '🐰', name: 'Tavşan Çiftliği', category: 'animal',
-    unlockCost: 180000, unitCost: 45000, baseRate: 650, sellPrice: 1200, maxUnits: 20,
+    unlockCost: 80000, unitCost: 20000, baseRate: 650, sellPrice: 1200, maxUnits: 20,
     description: 'Hızlı üreyen tavşanlar', scene: ['🌸', '🌿'],
   },
   {
     id: 'duck', emoji: '🦆', name: 'Ördek Göleti', category: 'animal',
-    unlockCost: 400000, unitCost: 100000, baseRate: 1400, sellPrice: 2500, maxUnits: 15,
+    unlockCost: 180000, unitCost: 45000, baseRate: 1400, sellPrice: 2500, maxUnits: 15,
     description: 'Gölet kenarında ördekler', scene: ['💧', '🌊'],
   },
   {
     id: 'goat', emoji: '🐐', name: 'Keçi Çiftliği', category: 'animal',
-    unlockCost: 900000, unitCost: 220000, baseRate: 3000, sellPrice: 5000, maxUnits: 12,
+    unlockCost: 400000, unitCost: 100000, baseRate: 3000, sellPrice: 5000, maxUnits: 12,
     description: 'Peynir ve süt üretimi', scene: ['⛰️', '🌿'],
   },
   {
     id: 'turkey', emoji: '🦃', name: 'Hindi Çiftliği', category: 'animal',
-    unlockCost: 2000000, unitCost: 500000, baseRate: 6500, sellPrice: 10000, maxUnits: 10,
+    unlockCost: 900000, unitCost: 220000, baseRate: 6500, sellPrice: 10000, maxUnits: 10,
     description: 'Premium hindi yetiştiriciliği', scene: ['🌳', '🍂'],
   },
   {
     id: 'bee', emoji: '🐝', name: 'Arı Kovanı', category: 'animal',
-    unlockCost: 5000000, unitCost: 1200000, baseRate: 15000, sellPrice: 25000, maxUnits: 20,
+    unlockCost: 2000000, unitCost: 500000, baseRate: 15000, sellPrice: 25000, maxUnits: 20,
     description: 'Organik bal üretimi', scene: ['🌸', '🌼'],
   },
 ];
