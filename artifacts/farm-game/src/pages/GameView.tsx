@@ -11,6 +11,7 @@ import { formatNum } from '../utils/format';
 import { playCoinSound, playAnimalSound, playUnlockSound, isSoundEnabled, setSoundEnabled } from '../lib/sound';
 import MascotTutorial, { useMascotTutorial } from '../components/MascotTutorial';
 import { LiveNftShowcase } from '../components/LiveNftShowcase';
+import { SellHintMascot } from '../components/SellHintMascot';
 
 export { formatNum } from '../utils/format';
 
@@ -475,6 +476,10 @@ export default function GameView() {
               <div className="text-center">
                 <h2 className="text-2xl font-black text-yellow-300">Hoş Geldin Bonusu!</h2>
                 <p className="text-white/80 text-sm mt-1">Çiftliğine başlamak için hediye</p>
+                {/* One-time badge */}
+                <div className="inline-flex items-center gap-1 mt-2 px-3 py-1 rounded-full border border-orange-400/60 bg-orange-400/15">
+                  <span className="text-orange-300 text-[11px] font-black">⚠️ Tek seferlik — bir daha verilmez!</span>
+                </div>
               </div>
               <div className="bg-yellow-400/20 border-2 border-yellow-400 rounded-2xl px-8 py-3 text-center">
                 <div className="text-4xl font-black text-yellow-300">+{WELCOME_BONUS} TL</div>
@@ -549,11 +554,14 @@ export default function GameView() {
       <AchievementsPanel />
 
       {/* ══ MARKET PANEL ══ */}
-      <MarketPanel
-        storage={state.storage}
-        gameState={state}
-        onSell={sellProducts}
-      />
+      <div className="relative flex-shrink-0">
+        <MarketPanel
+          storage={state.storage}
+          gameState={state}
+          onSell={sellProducts}
+        />
+        <SellHintMascot hasProducts={Object.values(state.storage).some(v => Math.floor(v) > 0)} />
+      </div>
 
       {/* ══ MAIN SCENE ══ */}
       <div className="flex-1 flex overflow-hidden relative">

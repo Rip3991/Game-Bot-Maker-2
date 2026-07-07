@@ -137,38 +137,67 @@ export function MarketPanel({ storage, gameState, onSell }: MarketPanelProps) {
         </div>
 
         {/* Sell button */}
-        <div className="flex-shrink-0 flex flex-col items-center gap-1 w-[70px]">
+        <div className="flex-shrink-0 flex flex-col items-center gap-1 w-[76px]">
           {hasAnything && (
             <motion.div
               key={grandTotal}
-              initial={{ scale: 1.15 }}
+              initial={{ scale: 1.2, color: '#fbbf24' }}
               animate={{ scale: 1 }}
-              className="text-yellow-300 font-black text-[10px] text-center leading-tight"
+              className="font-black text-[11px] text-center leading-tight text-yellow-300"
             >
               {formatNum(grandTotal)} TL
             </motion.div>
           )}
-          <motion.button
-            onClick={handleSell}
-            disabled={!hasAnything}
-            whileTap={hasAnything ? { scale: 0.9 } : undefined}
-            animate={hasAnything ? { scale: [1, 1.04, 1] } : { scale: 1 }}
-            transition={hasAnything ? { repeat: Infinity, duration: 1.8, ease: 'easeInOut' } : undefined}
-            className="w-full py-2 rounded-xl font-black text-sm border-2 transition-all"
-            style={hasAnything ? {
-              background: 'linear-gradient(180deg, #22c55e, #15803d)',
-              borderColor: '#16a34a',
-              color: 'white',
-              textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-              boxShadow: '0 3px 0 #14532d, 0 0 12px rgba(34,197,94,0.3)',
-            } : {
-              background: 'rgba(255,255,255,0.04)',
-              borderColor: 'rgba(255,255,255,0.08)',
-              color: 'rgba(255,255,255,0.25)',
-            }}
-          >
-            {hasAnything ? '💰 SAT!' : '⏳'}
-          </motion.button>
+
+          {/* Outer glow ring when ready */}
+          <div className="relative w-full">
+            {hasAnything && (
+              <>
+                {/* Animated ring */}
+                <motion.div
+                  className="absolute inset-0 rounded-xl"
+                  animate={{ opacity: [0.6, 0, 0.6], scale: [1, 1.18, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.1, ease: 'easeInOut' }}
+                  style={{ background: 'radial-gradient(ellipse, rgba(34,197,94,0.7) 0%, transparent 70%)', pointerEvents: 'none' }}
+                />
+                {/* Bouncing arrow above button */}
+                <motion.div
+                  className="absolute -top-5 left-1/2 -translate-x-1/2 text-base pointer-events-none select-none"
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ repeat: Infinity, duration: 0.7, ease: 'easeInOut' }}
+                >
+                  👆
+                </motion.div>
+              </>
+            )}
+
+            <motion.button
+              onClick={handleSell}
+              disabled={!hasAnything}
+              whileTap={hasAnything ? { scale: 0.88 } : undefined}
+              animate={hasAnything
+                ? { scale: [1, 1.07, 1], y: [0, -2, 0] }
+                : { scale: 1 }}
+              transition={hasAnything
+                ? { repeat: Infinity, duration: 0.9, ease: 'easeInOut' }
+                : undefined}
+              className="relative w-full py-2.5 rounded-xl font-black text-sm border-2 transition-colors"
+              style={hasAnything ? {
+                background: 'linear-gradient(180deg, #4ade80, #16a34a)',
+                borderColor: '#86efac',
+                color: 'white',
+                textShadow: '0 1px 4px rgba(0,0,0,0.6)',
+                boxShadow: '0 4px 0 #14532d, 0 0 18px rgba(34,197,94,0.65), 0 0 36px rgba(34,197,94,0.3)',
+                letterSpacing: '0.04em',
+              } : {
+                background: 'rgba(255,255,255,0.04)',
+                borderColor: 'rgba(255,255,255,0.08)',
+                color: 'rgba(255,255,255,0.25)',
+              }}
+            >
+              {hasAnything ? '💰 SAT!' : '⏳'}
+            </motion.button>
+          </div>
         </div>
       </div>
     </div>
