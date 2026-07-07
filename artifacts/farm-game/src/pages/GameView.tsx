@@ -70,30 +70,36 @@ function FarmPlot({
           {/* Top info bar */}
           <div
             className="flex items-center justify-between px-2 py-1.5"
-            style={{ background: 'rgba(0,0,0,0.3)' }}
+            style={{ background: 'rgba(0,0,0,0.38)' }}
           >
-            <div className="flex items-center gap-1.5">
-              <div className="bg-[#8b5c1e] border border-[#5c3a21] rounded-md px-1.5 py-0.5 flex items-center gap-1 shadow-inner">
-                <span className="text-sm">{config.emoji}</span>
-                {unlocked && <span className="font-black text-white text-xs">{count}</span>}
+            <div className="flex items-center gap-1.5 min-w-0">
+              {/* Emoji + count badge */}
+              <div className="flex items-center gap-1 rounded-lg px-1.5 py-0.5 shadow-inner flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg, #7a4e1a, #5c3a10)', border: '1px solid #3d2409' }}>
+                <span className="text-sm leading-none">{config.emoji}</span>
+                {unlocked && <span className="font-black text-white leading-none" style={{ fontSize: 11 }}>{count}</span>}
               </div>
-              {unlocked && count > 0 && (
-                <div className="bg-black/30 border border-white/20 rounded-md px-1.5 py-0.5">
-                  <span className="text-[10px] font-black text-green-300">{formatNum(income)} / dk</span>
-                </div>
-              )}
+              {/* Section name */}
+              <div className="flex flex-col min-w-0">
+                <span className="font-black text-white leading-none truncate" style={{ fontSize: 10 }}>{config.name}</span>
+                {unlocked && count > 0 ? (
+                  <span className="font-bold text-green-300 leading-none" style={{ fontSize: 9 }}>📈 {formatNum(income)}/dk</span>
+                ) : unlocked ? (
+                  <span className="font-bold leading-none" style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>Boş</span>
+                ) : null}
+              </div>
             </div>
 
             {unlocked ? (
               <button
                 onClick={onTap}
-                className="w-7 h-7 rounded-full flex items-center justify-center shadow-lg border border-[#5c3a21] active:scale-90 transition-all"
-                style={{ background: 'linear-gradient(135deg, #e8a435, #c47820)' }}
+                className="w-7 h-7 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg, #e8a435, #c47820)', border: '1.5px solid #f5c842', boxShadow: '0 2px 6px rgba(232,164,53,0.4)' }}
               >
                 <Plus size={14} className="text-white" strokeWidth={3} />
               </button>
             ) : (
-              <div className="w-7 h-7 rounded-full bg-black/40 border border-white/20 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-full bg-black/40 border border-white/20 flex items-center justify-center flex-shrink-0">
                 <Lock size={12} className="text-gray-400" />
               </div>
             )}
@@ -243,113 +249,123 @@ function PurchaseSheet({
 
 /* ── Scene Header: Farm buildings & sky ── */
 function FarmScene({ state }: { state: any }) {
-  const [, navigate] = useLocation();
-  const wheatCount = state.sections['wheat']?.count ?? 0;
   const totalUnlocked = SECTIONS.filter(s => state.sections[s.id]?.unlocked).length;
+  const totalIncome = SECTIONS.reduce((sum, s) => {
+    const sec = state.sections[s.id];
+    if (!sec?.unlocked || sec.count === 0) return sum;
+    return sum + sec.count * s.baseRate;
+  }, 0);
 
   return (
     <div
       className="relative flex-shrink-0 overflow-hidden"
       style={{
-        height: 148,
-        background: 'linear-gradient(180deg, #7ecef4 0%, #5cb82a 55%, #4ea824 100%)',
+        height: 156,
+        background: 'linear-gradient(180deg, #4a90d9 0%, #74c04a 62%, #4ea824 100%)',
       }}
     >
-      {/* Sky & clouds */}
-      <div className="absolute inset-x-0 top-0 h-16" style={{ background: 'linear-gradient(180deg, #87ceeb 0%, #b0e0f0 100%)' }} />
-      <div className="absolute top-1 left-0 right-0 h-16 overflow-hidden">
-        <Cloud top="4px"  size={18} delay={0}   duration={22} />
-        <Cloud top="10px" size={14} delay={-8}  duration={30} />
-        <Cloud top="2px"  size={16} delay={-15} duration={26} />
-      </div>
+      {/* Sky gradient */}
+      <div className="absolute inset-x-0 top-0" style={{ height: 78, background: 'linear-gradient(180deg, #2e6db4 0%, #5bb3e8 55%, #a8d8f0 100%)' }} />
 
       {/* Sun */}
-      <div className="absolute top-2 right-4 text-2xl select-none" style={{ animation: 'sunGlow 4s ease-in-out infinite', filter: 'drop-shadow(0 0 8px #fbbf24)' }}>☀️</div>
+      <div className="absolute select-none" style={{ top: 6, right: 12, fontSize: 26, animation: 'sunGlow 4s ease-in-out infinite' }}>☀️</div>
 
-      {/* Background trees row */}
-      <div className="absolute" style={{ top: 36, left: 0, right: 0 }}>
-        <span className="absolute text-3xl opacity-90" style={{ top: 0, left: 4, animation: 'sway 5s ease-in-out infinite' }}>🌳</span>
-        <span className="absolute text-2xl opacity-80" style={{ top: 6, left: 36, animation: 'sway 6s ease-in-out 1s infinite' }}>🌲</span>
-        <span className="absolute text-2xl opacity-80" style={{ top: 4, right: 36, animation: 'sway 5.5s ease-in-out 2s infinite' }}>🌲</span>
-        <span className="absolute text-3xl opacity-90" style={{ top: 0, right: 4, animation: 'sway 4.5s ease-in-out 0.5s infinite' }}>🌳</span>
+      {/* Clouds */}
+      <div className="absolute top-0 left-0 right-0 h-20 overflow-hidden pointer-events-none">
+        <Cloud top="6px"  size={16} delay={0}   duration={24} />
+        <Cloud top="14px" size={12} delay={-9}  duration={32} />
+        <Cloud top="3px"  size={14} delay={-17} duration={28} />
       </div>
 
-      {/* Birds flying across */}
-      <div className="absolute top-8 left-0 right-0 overflow-hidden pointer-events-none">
-        <div style={{ animation: 'birdFly 14s linear -4s infinite', position: 'absolute', top: 0 }}>🐦</div>
-        <div style={{ animation: 'birdFly 18s linear -11s infinite', position: 'absolute', top: 8, fontSize: '10px' }}>🐦</div>
+      {/* Birds */}
+      <div className="absolute left-0 right-0 overflow-hidden pointer-events-none" style={{ top: 16 }}>
+        <div style={{ animation: 'birdFly 16s linear -5s infinite', position: 'absolute', fontSize: 10 }}>🐦</div>
+        <div style={{ animation: 'birdFly 22s linear -12s infinite', position: 'absolute', top: 8, fontSize: 9 }}>🐦</div>
       </div>
 
-      {/* Grass strip */}
-      <div className="absolute inset-x-0" style={{ top: 68, height: 20, background: '#5cb82a' }} />
+      {/* Tree line */}
+      <div className="absolute" style={{ top: 44, left: 0, right: 0 }}>
+        <span className="absolute text-4xl" style={{ top: 0, left: 2, animation: 'sway 5s ease-in-out infinite', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>🌳</span>
+        <span className="absolute text-3xl opacity-80" style={{ top: 8, left: 38, animation: 'sway 6.5s ease-in-out 1s infinite' }}>🌲</span>
+        <span className="absolute text-3xl opacity-80" style={{ top: 6, right: 38, animation: 'sway 5.5s ease-in-out 2s infinite' }}>🌲</span>
+        <span className="absolute text-4xl" style={{ top: 0, right: 2, animation: 'sway 4.5s ease-in-out 0.5s infinite', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>🌳</span>
+      </div>
+
+      {/* Grass base */}
+      <div className="absolute inset-x-0" style={{ top: 76, height: 22, background: 'linear-gradient(180deg, #6acf38 0%, #4ea824 100%)' }} />
 
       {/* Road */}
-      <div className="absolute inset-x-0 flex items-center overflow-hidden" style={{ top: 88, height: 28, background: '#7a6348' }}>
-        <div className="absolute inset-x-0 top-0 h-0.5 bg-black/30" />
-        <div className="absolute inset-x-0 bottom-0 h-0.5 bg-black/20" />
-        {/* Road markings */}
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex gap-3 px-2">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} className="h-0.5 flex-1 bg-yellow-300/50 rounded-full" />
+      <div className="absolute inset-x-0 flex items-center overflow-hidden" style={{ top: 98, height: 26, background: 'linear-gradient(180deg, #6b5840, #5a4a35)' }}>
+        <div className="absolute inset-x-0 top-0 h-px bg-black/25" />
+        <div className="absolute inset-x-0 bottom-0 h-px bg-black/15" />
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex gap-2.5 px-3">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className="h-0.5 flex-1 rounded-full" style={{ background: 'rgba(255,220,60,0.45)' }} />
           ))}
         </div>
-        {/* Delivery truck on road */}
-        <span className="text-xl absolute" style={{ animation: 'truckMove 7s ease-in-out infinite', left: 30 }}>🚛</span>
-        {/* Tractor */}
-        <span className="text-lg absolute" style={{ animation: 'truckMove 12s linear -4s infinite', left: 60, opacity: 0.85 }}>🚜</span>
+        <span className="absolute text-lg" style={{ animation: 'truckMove 8s ease-in-out infinite', left: 20 }}>🚛</span>
+        <span className="absolute text-base" style={{ animation: 'truckMove 13s linear -5s infinite', left: 55, opacity: 0.9 }}>🚜</span>
       </div>
 
-      {/* Fence bottom */}
-      <div className="absolute inset-x-0" style={{ top: 116, height: 8, background: 'linear-gradient(90deg, #8b5c1e 0%, #a06235 50%, #8b5c1e 100%)', opacity: 0.8 }} />
+      {/* Fence strip */}
+      <div className="absolute inset-x-0" style={{ top: 124, height: 7, background: 'linear-gradient(90deg, #7a4e1a, #a06235, #7a4e1a)', opacity: 0.85 }} />
 
-      {/* ── SHOP building (left) ── */}
-      <div className="absolute flex flex-col items-center" style={{ bottom: 8, left: 6 }}>
-        {/* Sign */}
-        <div className="bg-green-600 border border-green-800 text-white text-[8px] font-black px-2 py-0.5 rounded-sm mb-0.5 shadow">
-          💰 SATIŞ
-        </div>
-        {/* Awning */}
-        <div className="w-[68px] h-4 rounded-t overflow-hidden flex shadow-sm">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex-1" style={{ background: i % 2 === 0 ? '#16a34a' : '#15803d' }} />
-          ))}
-        </div>
-        {/* Building body */}
-        <div className="w-[68px] h-10 rounded-b flex items-center justify-center gap-1 border border-gray-300 shadow-md" style={{ background: 'linear-gradient(180deg, #f0fdf4, #dcfce7)' }}>
-          <span className="text-base">🏪</span>
-          <span className="text-[9px] font-black text-green-700 leading-tight">Satış<br/>Noktası</span>
-        </div>
-        {/* Income stats */}
-        <div className="mt-0.5 bg-green-700/90 text-white text-[9px] font-black px-2 py-0.5 rounded shadow">
-          {totalUnlocked} sektör aktif
-        </div>
-      </div>
-
-      {/* ── BARN / SILO (right) ── */}
-      <div className="absolute flex flex-col items-center" style={{ bottom: 8, right: 6 }}>
-        {/* Wheat counter badge */}
-        <div className="mb-0.5 bg-amber-900/80 border border-amber-700 rounded-lg px-2 py-0.5 flex items-center gap-1 shadow">
-          <span className="text-xs">🌾</span>
-          <span className="text-white font-black text-[10px]">{wheatCount}</span>
-        </div>
-        <div className="flex items-end gap-1">
-          {/* Silo cylinder */}
-          <div className="flex flex-col items-center">
-            <div className="w-8 h-4 rounded-t-full" style={{ background: 'linear-gradient(180deg, #d1d5db, #9ca3af)' }} />
-            <div className="w-8 h-8" style={{ background: 'linear-gradient(180deg, #6b7280, #4b5563)' }} />
+      {/* ── LEFT: Market shop ── */}
+      <div className="absolute flex flex-col items-end" style={{ bottom: 4, left: 5 }}>
+        <div className="flex flex-col items-center">
+          {/* Striped awning */}
+          <div className="rounded-t-sm overflow-hidden flex shadow" style={{ width: 62, height: 14 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex-1" style={{ background: i % 2 === 0 ? '#15803d' : '#166534' }} />
+            ))}
           </div>
-          {/* Main barn */}
-          <div className="relative w-[46px] h-14">
-            {/* Roof */}
-            <div className="absolute top-0 inset-x-0 h-7 rounded-t" style={{ background: 'linear-gradient(180deg, #dc2626, #b91c1c)', clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
-            {/* Body */}
-            <div className="absolute bottom-0 inset-x-0 h-8 rounded-sm flex items-center justify-center shadow-md" style={{ background: 'linear-gradient(180deg, #ef4444, #dc2626)', borderTop: '2px solid #991b1b' }}>
-              <div className="w-5 h-6 rounded-t-full" style={{ background: '#7c2d12' }} />
+          {/* Building */}
+          <div className="flex items-center justify-center gap-1 rounded-b border border-white/20 shadow-md" style={{ width: 62, height: 38, background: 'linear-gradient(180deg, #f0fdf4 0%, #d1fae5 100%)' }}>
+            <span style={{ fontSize: 18 }}>🏪</span>
+            <div className="text-center">
+              <div className="text-[8px] font-black text-green-800 leading-none">SATIŞ</div>
+              <div className="text-[7px] font-bold text-green-600 leading-none">NOKTASI</div>
             </div>
           </div>
         </div>
-        <div className="mt-0.5 bg-red-700/90 text-white text-[9px] font-black px-2 py-0.5 rounded shadow">
-          🏚️ Depo
+        {/* Stats badge */}
+        <div className="mt-0.5 flex items-center gap-1 rounded-full px-2 py-0.5 shadow" style={{ background: 'rgba(22,101,52,0.92)', border: '1px solid rgba(74,222,128,0.3)' }}>
+          <span style={{ fontSize: 8 }}>📊</span>
+          <span className="text-white font-black" style={{ fontSize: 8 }}>{totalUnlocked} aktif</span>
+        </div>
+      </div>
+
+      {/* ── CENTER: Farm name plate ── */}
+      <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ bottom: 10 }}>
+        <div className="rounded-xl px-3 py-1 shadow-lg flex flex-col items-center gap-0.5"
+          style={{ background: 'linear-gradient(135deg, #8b5c1e, #c4832e)', border: '2px solid #f5c842', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
+          <div className="text-[8px] font-black text-yellow-200 tracking-widest uppercase leading-none">🌾 ÇİFTLİĞİM</div>
+          <div className="font-black text-white leading-none" style={{ fontSize: 10 }}>
+            📈 {formatNum(Math.round(totalIncome))}/dk
+          </div>
+        </div>
+      </div>
+
+      {/* ── RIGHT: Barn & silo ── */}
+      <div className="absolute flex flex-col items-center" style={{ bottom: 4, right: 5 }}>
+        <div className="flex items-end gap-1">
+          {/* Silo */}
+          <div className="flex flex-col items-center">
+            <div className="rounded-t-full" style={{ width: 20, height: 10, background: 'linear-gradient(180deg, #e5e7eb, #9ca3af)' }} />
+            <div style={{ width: 20, height: 22, background: 'linear-gradient(180deg, #6b7280, #374151)' }} />
+          </div>
+          {/* Barn */}
+          <div className="relative" style={{ width: 44, height: 52 }}>
+            <div className="absolute top-0 inset-x-0" style={{ height: 24, background: 'linear-gradient(180deg, #ef4444, #b91c1c)', clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
+            <div className="absolute bottom-0 inset-x-0 flex items-center justify-center shadow-inner rounded-sm" style={{ height: 30, background: 'linear-gradient(180deg, #f87171, #dc2626)', borderTop: '2px solid #7f1d1d' }}>
+              <div className="rounded-t-full" style={{ width: 14, height: 18, background: '#450a0a' }} />
+            </div>
+          </div>
+        </div>
+        {/* Label */}
+        <div className="mt-0.5 flex items-center gap-1 rounded-full px-2 py-0.5 shadow" style={{ background: 'rgba(127,29,29,0.9)', border: '1px solid rgba(252,165,165,0.3)' }}>
+          <span style={{ fontSize: 8 }}>🏚️</span>
+          <span className="text-white font-black" style={{ fontSize: 8 }}>Depo</span>
         </div>
       </div>
 
@@ -359,12 +375,22 @@ function FarmScene({ state }: { state: any }) {
           to   { left: 110%; }
         }
         @keyframes birdFly {
-          from { left: -20px; transform: scaleX(1); }
-          to   { left: 110%; transform: scaleX(1); }
+          from { left: -20px; }
+          to   { left: 110%; }
         }
         @keyframes sunGlow {
           0%, 100% { filter: drop-shadow(0 0 6px #fbbf24); }
-          50%       { filter: drop-shadow(0 0 14px #f59e0b); }
+          50%       { filter: drop-shadow(0 0 16px #f59e0b); }
+        }
+        @keyframes sway {
+          0%, 100% { transform: rotate(-2deg); }
+          50%       { transform: rotate(2deg); }
+        }
+        @keyframes truckMove {
+          0%   { transform: translateX(0); }
+          50%  { transform: translateX(60vw); }
+          50.01% { transform: translateX(-60px); }
+          100% { transform: translateX(0); }
         }
       `}</style>
     </div>
@@ -513,18 +539,31 @@ export default function GameView() {
           <FarmScene state={state} />
 
           {/* Farm / Animal tab bar */}
-          <div className="flex gap-1 px-2 py-1.5 flex-shrink-0" style={{ background: 'rgba(0,0,0,0.3)' }}>
-            {(['farm', 'animal'] as const).map(tab => (
+          <div className="flex flex-shrink-0 px-2 py-1.5 gap-2" style={{ background: 'rgba(0,0,0,0.35)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            {([
+              { key: 'farm',   emoji: '🌾', label: 'TARLALAR',  count: SECTIONS.filter(s => s.category === 'farm' && state.sections[s.id]?.unlocked).length },
+              { key: 'animal', emoji: '🐄', label: 'HAYVANLAR', count: SECTIONS.filter(s => s.category === 'animal' && state.sections[s.id]?.unlocked).length },
+            ] as const).map(({ key, emoji, label, count }) => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-1.5 rounded-lg font-black text-xs border transition-all ${
-                  activeTab === tab
-                    ? 'bg-white/90 text-green-800 border-white shadow-md'
-                    : 'bg-black/20 text-white/70 border-white/10'
-                }`}
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-xl transition-all active:scale-95"
+                style={activeTab === key ? {
+                  background: 'linear-gradient(135deg, #c4832e, #8b5c1e)',
+                  border: '1.5px solid #f5c842',
+                  boxShadow: '0 2px 8px rgba(196,131,46,0.4)',
+                  paddingTop: 6, paddingBottom: 6,
+                } : {
+                  background: 'rgba(255,255,255,0.07)',
+                  border: '1.5px solid rgba(255,255,255,0.1)',
+                  paddingTop: 6, paddingBottom: 6,
+                }}
               >
-                {tab === 'farm' ? '🌾 Tarlalar' : '🐄 Hayvanlar'}
+                <span style={{ fontSize: 15 }}>{emoji}</span>
+                <div className="flex flex-col items-start">
+                  <span className={`font-black leading-none tracking-wide ${activeTab === key ? 'text-yellow-200' : 'text-white/60'}`} style={{ fontSize: 10 }}>{label}</span>
+                  <span className={`font-bold leading-none ${activeTab === key ? 'text-yellow-300/80' : 'text-white/30'}`} style={{ fontSize: 8 }}>{count} aktif</span>
+                </div>
               </button>
             ))}
           </div>
