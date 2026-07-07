@@ -73,6 +73,42 @@ export default function InvitePage() {
         </button>
       </div>
 
+      {/* Invite Event - NFT Milestones */}
+      <div className="wood-panel p-4 mb-4 relative overflow-hidden">
+        <div className="absolute -top-8 -right-8 w-28 h-28 bg-red-500/10 rounded-full blur-2xl pointer-events-none" />
+        <h3 className="font-black text-sm uppercase tracking-wide text-orange-200 mb-3 flex items-center gap-2">
+          🎁 Davet Olayı — NFT Ödülleri
+        </h3>
+        <p className="text-xs opacity-70 mb-3 font-semibold">Belirli sayıda arkadaş davet edince özel NFT kazanırsın!</p>
+        <div className="space-y-2">
+          {[
+            { count: 1,  reward: 'Mistik Mühür',   emoji: '🔯', rarity: 'Özel',     color: '#a855f7', done: (stats?.totalReferrals ?? 0) >= 1  },
+            { count: 5,  reward: 'Antik Tapınak',  emoji: '🏛️', rarity: 'Epik',     color: '#dc2626', done: (stats?.totalReferrals ?? 0) >= 5  },
+            { count: 10, reward: 'Titan Baltası',  emoji: '🪓', rarity: 'Epik',     color: '#dc2626', done: (stats?.totalReferrals ?? 0) >= 10 },
+            { count: 25, reward: 'Ejder Kulesi',   emoji: '🗼', rarity: 'Epik',     color: '#dc2626', done: (stats?.totalReferrals ?? 0) >= 25 },
+            { count: 50, reward: 'Kader Kilidi',   emoji: '🔐', rarity: 'Epik',     color: '#dc2626', done: (stats?.totalReferrals ?? 0) >= 50 },
+          ].map((item) => (
+            <div key={item.count} className={`flex items-center gap-3 rounded-xl px-3 py-2 border ${item.done ? 'border-green-500/40 bg-green-900/20' : 'border-white/10 bg-black/20'}`}>
+              <div className="text-2xl">{item.emoji}</div>
+              <div className="flex-1 min-w-0">
+                <div className="font-black text-sm text-white leading-tight">{item.reward}</div>
+                <div className="text-[10px] font-bold" style={{ color: item.color }}>{item.rarity} NFT</div>
+              </div>
+              <div className="text-right flex-shrink-0">
+                {item.done ? (
+                  <div className="text-green-400 font-black text-sm">✅ Kazanıldı</div>
+                ) : (
+                  <div className="text-center">
+                    <div className="font-black text-white text-sm">{item.count}</div>
+                    <div className="text-[9px] opacity-50 font-bold">davet</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* How it works */}
       <div className="wood-panel p-4 mb-4">
         <h3 className="font-black text-sm uppercase tracking-wide text-orange-200 mb-3 flex items-center gap-2">
@@ -83,7 +119,7 @@ export default function InvitePage() {
             { step: '1', text: 'Bağlantını arkadaşlarınla paylaş' },
             { step: '2', text: 'Arkadaşın oyuna katılır' },
             { step: '3', text: 'Sen 50 Coin, arkadaşın 25 Coin kazanır' },
-            { step: '4', text: 'Coinleri TL\'ye çevir, çek!' },
+            { step: '4', text: 'Davet sayına göre özel NFT kazan!' },
           ].map((item) => (
             <div key={item.step} className="flex items-center gap-3">
               <div className="w-7 h-7 rounded-full bg-[#f5c842] text-[#5c3a21] font-black flex items-center justify-center text-xs shrink-0">

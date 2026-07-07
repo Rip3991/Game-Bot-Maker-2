@@ -12,7 +12,7 @@ import { useGameEngine } from '../hooks/use-game-engine';
 import { X, ShoppingBag, Repeat2, Inbox, Package, TrendingUp, TrendingDown, Filter } from 'lucide-react';
 import { NftArtwork } from '../components/NftArtwork';
 
-type Rarity = 'common' | 'rare' | 'legendary';
+type Rarity = 'common' | 'rare' | 'epic' | 'special' | 'legendary';
 type TabType = 'cases' | 'mine' | 'market' | 'offers';
 type RarityFilter = 'all' | Rarity;
 
@@ -40,6 +40,8 @@ interface MarketPrice {
 const RARITY: Record<Rarity, { label: string; border: string; glow: string; badge: string; bg: string; text: string; accent: string }> = {
   common:    { label: 'Sıradan',   border: '#6b7280', glow: 'rgba(107,114,128,0.5)',  badge: '#4b5563', bg: '#1f2937', text: '#d1d5db', accent: '#9ca3af' },
   rare:      { label: 'Nadir',     border: '#3b82f6', glow: 'rgba(59,130,246,0.7)',   badge: '#1d4ed8', bg: '#1e3a5f', text: '#93c5fd', accent: '#60a5fa' },
+  epic:      { label: 'Epik',      border: '#dc2626', glow: 'rgba(220,38,38,0.85)',   badge: '#991b1b', bg: '#450a0a', text: '#fca5a5', accent: '#f87171' },
+  special:   { label: 'Özel',      border: '#a855f7', glow: 'rgba(168,85,247,0.8)',   badge: '#7e22ce', bg: '#2e1065', text: '#d8b4fe', accent: '#c084fc' },
   legendary: { label: 'Efsanevi', border: '#f59e0b', glow: 'rgba(245,158,11,0.9)',   badge: '#b45309', bg: '#451a00', text: '#fbbf24', accent: '#fcd34d' },
 };
 
@@ -463,7 +465,9 @@ function CaseOpenOverlay({ caseDef, allNfts, onBalanceSync, onClose, onOpenAnoth
               </div>
             </motion.div>
             {won.rarity === 'legendary' && <motion.div className="text-yellow-300 font-black text-base text-center" animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 1 }}>🎊 EFSANEVİ KAZANIM! 🎊</motion.div>}
-            {won.rarity === 'rare' && <div className="text-blue-300 font-black text-sm text-center">✨ Nadir NFT Kazandın!</div>}
+            {won.rarity === 'epic' && <motion.div className="text-red-400 font-black text-base text-center" animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 1.2 }}>🔥 EPİK KAZANIM! 🔥</motion.div>}
+            {won.rarity === 'special' && <motion.div className="text-purple-300 font-black text-sm text-center" animate={{ scale: [1, 1.04, 1] }} transition={{ repeat: Infinity, duration: 1.4 }}>✨ ÖZEL NFT KAZANDIN! ✨</motion.div>}
+            {won.rarity === 'rare' && <div className="text-blue-300 font-black text-sm text-center">💙 Nadir NFT Kazandın!</div>}
             <div className="flex gap-3 w-full">
               <button onClick={onOpenAnother} className="flex-1 py-3 rounded-2xl font-black text-yellow-900 active:scale-95" style={{ background: 'linear-gradient(135deg, #f5c842, #e6a800)' }}>🎰 Bir Daha</button>
               <button onClick={handleClose} className="flex-1 py-3 rounded-2xl font-black text-white active:scale-95" style={{ background: 'linear-gradient(135deg, #374151, #1f2937)', border: '1px solid #4b5563' }}>✅ Koleksiyona Git</button>
@@ -660,15 +664,25 @@ export default function NftPage() {
                 <div className="flex-1 text-left">
                   <div className="font-black text-white text-base">{c.name}</div>
                   <div className="text-white/70 text-xs font-bold mt-0.5">{c.description}</div>
-                  <div className="flex gap-1 mt-1.5">
+                  <div className="flex flex-wrap gap-1 mt-1.5">
                     <span className="bg-white/10 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">
-                      🟫 {Math.round(c.drops.common * 100)}%
+                      🟫 {Math.round((c.drops.common ?? 0) * 100)}%
                     </span>
                     <span className="bg-blue-500/20 text-blue-300 text-[9px] font-black px-1.5 py-0.5 rounded-full">
-                      🔵 {Math.round(c.drops.rare * 100)}%
+                      🔵 {Math.round((c.drops.rare ?? 0) * 100)}%
                     </span>
+                    {(c.drops as any).epic > 0 && (
+                      <span className="bg-red-600/30 text-red-300 text-[9px] font-black px-1.5 py-0.5 rounded-full">
+                        🔴 {Math.round(((c.drops as any).epic ?? 0) * 100)}%
+                      </span>
+                    )}
+                    {(c.drops as any).special > 0 && (
+                      <span className="bg-purple-500/20 text-purple-300 text-[9px] font-black px-1.5 py-0.5 rounded-full">
+                        🟣 {Math.round(((c.drops as any).special ?? 0) * 100)}%
+                      </span>
+                    )}
                     <span className="bg-yellow-500/20 text-yellow-300 text-[9px] font-black px-1.5 py-0.5 rounded-full">
-                      ⭐ {Math.round(c.drops.legendary * 100)}%
+                      ⭐ {Math.round((c.drops.legendary ?? 0) * 100)}%
                     </span>
                   </div>
                 </div>
@@ -718,17 +732,17 @@ export default function NftPage() {
             </div>
 
             {/* Rarity filter */}
-            <div className="flex gap-1.5 px-3 py-2 border-b border-white/10">
-              {(['all', 'common', 'rare', 'legendary'] as const).map(f => (
+            <div className="flex gap-1 px-3 py-2 border-b border-white/10 overflow-x-auto no-scrollbar">
+              {(['all', 'common', 'rare', 'epic', 'special', 'legendary'] as const).map(f => (
                 <button key={f} onClick={() => setRarityFilter(f)}
-                  className="px-2.5 py-1 rounded-full text-[10px] font-black transition-all"
+                  className="px-2 py-1 rounded-full text-[9px] font-black transition-all flex-shrink-0"
                   style={rarityFilter === f ? {
-                    background: f === 'all' ? '#22c55e' : f === 'common' ? '#6b7280' : f === 'rare' ? '#3b82f6' : '#f59e0b',
+                    background: f === 'all' ? '#22c55e' : f === 'common' ? '#6b7280' : f === 'rare' ? '#3b82f6' : f === 'epic' ? '#dc2626' : f === 'special' ? '#a855f7' : '#f59e0b',
                     color: 'white',
                   } : {
                     background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)',
                   }}>
-                  {f === 'all' ? 'Tümü' : f === 'common' ? 'Sıradan' : f === 'rare' ? 'Nadir' : 'Efsanevi'}
+                  {f === 'all' ? 'Tümü' : f === 'common' ? 'Sıradan' : f === 'rare' ? 'Nadir' : f === 'epic' ? 'Epik' : f === 'special' ? 'Özel' : 'Efsanevi'}
                 </button>
               ))}
             </div>

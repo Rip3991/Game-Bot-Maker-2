@@ -172,6 +172,8 @@ export function NftArtwork({ nftType, emoji, rarity, size = 'card', animated = f
   const art = ART[nftType] ?? FALLBACK;
   const isLarge = size === 'large';
   const isLegendary = rarity === 'legendary';
+  const isEpic = rarity === 'epic';
+  const isSpecial = rarity === 'special';
   const isRare = rarity === 'rare';
 
   const h = isLarge ? 160 : 100;
@@ -215,7 +217,7 @@ export function NftArtwork({ nftType, emoji, rarity, size = 'card', animated = f
         ))}
 
         {/* Scanline texture for rarity */}
-        {(isRare || isLegendary) && (
+        {(isRare || isEpic || isSpecial || isLegendary) && (
           <>
             {Array.from({ length: 8 }).map((_, i) => (
               <line key={i}
@@ -247,7 +249,7 @@ export function NftArtwork({ nftType, emoji, rarity, size = 'card', animated = f
               ...pos,
               opacity: 0.6,
               filter: 'drop-shadow(0 0 3px ' + art.glow + ')',
-              animation: animated && isLegendary
+              animation: animated && (isLegendary || isEpic || isSpecial)
                 ? `nftParticleFloat ${1.5 + i * 0.4}s ease-in-out infinite`
                 : undefined,
             }}
@@ -261,9 +263,11 @@ export function NftArtwork({ nftType, emoji, rarity, size = 'card', animated = f
       <div
         className={`absolute inset-0 flex items-center justify-center ${emojiSize} select-none`}
         style={{
-          filter: `drop-shadow(0 0 ${isLegendary ? 14 : isRare ? 8 : 4}px ${art.glow})`,
+          filter: `drop-shadow(0 0 ${isLegendary ? 14 : isEpic ? 12 : isSpecial ? 10 : isRare ? 8 : 4}px ${art.glow})`,
           animation: animated && isLegendary
             ? 'nftLegendaryFloat 3s ease-in-out infinite'
+            : animated && (isEpic || isSpecial)
+            ? 'nftLegendaryFloat 3.5s ease-in-out infinite'
             : animated && isRare
             ? 'nftRareFloat 4s ease-in-out infinite'
             : undefined,
@@ -284,8 +288,8 @@ export function NftArtwork({ nftType, emoji, rarity, size = 'card', animated = f
         style={{ background: `linear-gradient(90deg, transparent, ${art.accent2}, transparent)`, opacity: 0.4 }}
       />
 
-      {/* Legendary golden overlay shimmer */}
-      {isLegendary && (
+      {/* Legendary/Epic/Special overlay shimmer */}
+      {(isLegendary || isEpic || isSpecial) && (
         <div
           className="absolute inset-0 pointer-events-none nft-shimmer-overlay"
           style={{

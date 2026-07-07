@@ -358,6 +358,23 @@ async function checkAndGrantReferralAchievements(telegramId: string, count: numb
   if (count >= 1) await grantAchievement(telegramId, "social_farmer_1");
   if (count >= 5) await grantAchievement(telegramId, "social_farmer_5");
   if (count >= 10) await grantAchievement(telegramId, "social_farmer_10");
+
+  // NFT milestone rewards for invite events
+  if (count === 1) {
+    await grantNft(telegramId, "mystic_seal").catch(() => {});
+  }
+  if (count === 5) {
+    await grantNft(telegramId, "ancient_temple").catch(() => {});
+  }
+  if (count === 10) {
+    await grantNft(telegramId, "titan_axe").catch(() => {});
+  }
+  if (count === 25) {
+    await grantNft(telegramId, "dragon_tower").catch(() => {});
+  }
+  if (count === 50) {
+    await grantNft(telegramId, "fate_lock").catch(() => {});
+  }
 }
 
 export default router;
