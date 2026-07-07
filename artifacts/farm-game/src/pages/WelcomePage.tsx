@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import mascotFull from '../assets/mascot-full.png';
 import mascotAvatar from '../assets/mascot-avatar.png';
 
-const CHANNEL_USERNAME = import.meta.env.VITE_CHANNEL_USERNAME ?? 'MemberGobot';
+const CHANNEL_USERNAME = import.meta.env.VITE_CHANNEL_USERNAME ?? 'sarininçiftligi';
 
 const SLIDES = [
   {

@@ -5,9 +5,11 @@ import { AchievementsPanel } from '../components/AchievementsPanel';
 import { useUser } from '../hooks/use-user';
 import { useSaveFarmState, useGetOnlineStats, getGetOnlineStatsQueryKey } from '@workspace/api-client-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flame, Plus, Lock } from 'lucide-react';
+import { Flame, Plus, Lock, Volume2, VolumeX } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { formatNum } from '../utils/format';
+import { playCoinSound, playAnimalSound, playUnlockSound, isSoundEnabled, setSoundEnabled } from '../lib/sound';
+import MascotTutorial, { useMascotTutorial } from '../components/MascotTutorial';
 
 export { formatNum } from '../utils/format';
 
@@ -402,6 +404,19 @@ export default function GameView() {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'farm' | 'animal'>('farm');
+  const [soundOn, setSoundOn] = useState(() => {
+    const saved = localStorage.getItem('farm_sound');
+    if (saved === 'off') { setSoundEnabled(false); return false; }
+    return true;
+  });
+  const { showTutorial, doneTutorial } = useMascotTutorial();
+
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    setSoundEnabled(next);
+    localStorage.setItem('farm_sound', next ? 'on' : 'off');
+  };
 
   // Telegram init
   useEffect(() => {
@@ -500,6 +515,20 @@ export default function GameView() {
           <Plus size={14} className="text-yellow-900" strokeWidth={3} />
         </button>
 
+        {/* Sound toggle */}
+        <button
+          onClick={toggleSound}
+          className="w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all active:scale-90"
+          style={soundOn
+            ? { background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.3)' }
+            : { background: 'rgba(0,0,0,0.3)', borderColor: 'rgba(255,255,255,0.1)' }}
+          title={soundOn ? 'Sesi Kapat' : 'Sesi Aç'}
+        >
+          {soundOn
+            ? <Volume2 size={13} className="text-white" />
+            : <VolumeX size={13} className="text-white/50" />}
+        </button>
+
         <div className="flex-1" />
 
         <OnlineCounterPill />
@@ -591,10 +620,28 @@ export default function GameView() {
             config={selectedConfig}
             sectionState={selectedState}
             balance={state.balance}
-            onUnlock={() => { unlockSection(selectedConfig.id); setSelectedId(null); }}
-            onBuy={() => { buyUnit(selectedConfig.id); }}
+            onUnlock={() => {
+              unlockSection(selectedConfig.id);
+              playUnlockSound();
+              setSelectedId(null);
+            }}
+            onBuy={() => {
+              buyUnit(selectedConfig.id);
+              if (selectedConfig.category === 'animal') {
+                playAnimalSound(selectedConfig.id);
+              } else {
+                playCoinSound();
+              }
+            }}
             onClose={() => setSelectedId(null)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* ══ MASCOT TUTORIAL ══ */}
+      <AnimatePresence>
+        {showTutorial && (
+          <MascotTutorial key="mascot-tutorial" onDone={doneTutorial} />
         )}
       </AnimatePresence>
     </div>

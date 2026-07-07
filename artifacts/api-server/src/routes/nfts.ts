@@ -143,7 +143,8 @@ setInterval(() => {
 }, 15000);
 
 function getCurrentPrice(key: NftType): number {
-  const hist = priceHistory.get(key)!;
+  const hist = priceHistory.get(key);
+  if (!hist || hist.length === 0) return 10;
   return hist[hist.length - 1].price;
 }
 
