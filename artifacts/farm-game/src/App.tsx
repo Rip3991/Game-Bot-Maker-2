@@ -18,6 +18,7 @@ import { UserProvider } from './context/UserProvider';
 import { AnimatePresence, motion } from 'framer-motion';
 import React, { useState } from 'react';
 import { WithdrawModal } from './components/WithdrawModal';
+import { AchievementsPanel, useAchievementCount } from './components/AchievementsPanel';
 import { Toaster as SonnerToaster } from 'sonner';
 import { initI18n } from './lib/i18n';
 import LoadingScreen from './components/LoadingScreen';
@@ -36,8 +37,10 @@ const RIGHT_NAV = [
   { label: 'Mağaza', icon: '🌟', path: '/stars' },
 ] as const;
 
-function RightNav() {
+function RightNav({ onAchievementsOpen }: { onAchievementsOpen: () => void }) {
   const [location, navigate] = useLocation();
+  const achievementCount = useAchievementCount();
+
   return (
     <div
       className="flex-shrink-0 flex flex-col items-center py-3 gap-2 overflow-y-auto"
@@ -70,6 +73,27 @@ function RightNav() {
           </button>
         );
       })}
+
+      {/* Achievements button — below Mağaza */}
+      <button
+        onClick={onAchievementsOpen}
+        className="right-nav-btn flex-shrink-0 relative"
+        style={{
+          background: 'linear-gradient(180deg, #7c3aed 0%, #5b21b6 100%)',
+          borderColor: '#4c1d95',
+          boxShadow: '0 2px 8px rgba(124,58,237,0.45)',
+        }}
+      >
+        <span className="text-xl leading-none">🏅</span>
+        <span className="text-[8px] font-black leading-tight text-center text-white">
+          Ödül
+        </span>
+        {achievementCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[7px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center border border-white leading-none">
+            {achievementCount}
+          </span>
+        )}
+      </button>
     </div>
   );
 }
@@ -80,6 +104,7 @@ function Router() {
     () => localStorage.getItem('farm_welcomed_v1') === 'true'
   );
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [achievementsOpen, setAchievementsOpen] = useState(false);
   const { isLoading } = useUser();
 
   // Show loading screen once per session — gate by animation, not by isLoading
@@ -154,9 +179,10 @@ function Router() {
         </div>
 
         {/* Permanent right nav */}
-        <RightNav />
+        <RightNav onAchievementsOpen={() => setAchievementsOpen(true)} />
       </div>
 
+      <AchievementsPanel isOpen={achievementsOpen} onClose={() => setAchievementsOpen(false)} />
       <WithdrawModal isOpen={withdrawOpen} onClose={() => setWithdrawOpen(false)} />
     </div>
   );
