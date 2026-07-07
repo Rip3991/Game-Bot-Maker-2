@@ -5,13 +5,13 @@ import { useUser } from '../hooks/use-user';
 import { useRequestWithdrawal, useGetWithdrawHistory } from '@workspace/api-client-react';
 import { toast } from 'sonner';
 
-const MIN_TL = 50;
-const MAX_TL = 350;
+// Exactly 350 TL per withdrawal — no amount selection needed
+const FIXED_TL = 350;
 
 const METHODS = [
-  { id: 'papara', label: 'Papara', emoji: '💳' },
-  { id: 'iban', label: 'IBAN / Banka', emoji: '🏦' },
-  { id: 'crypto', label: 'Kripto (USDT)', emoji: '🪙' },
+  { id: 'papara', label: 'Papara',       emoji: '💳' },
+  { id: 'iban',   label: 'IBAN / Banka', emoji: '🏦' },
+  { id: 'crypto', label: 'Kripto (USDT)',emoji: '🪙' },
 ] as const;
 
 type Method = typeof METHODS[number]['id'];
@@ -23,28 +23,25 @@ interface WithdrawModalProps {
 
 export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const { user, telegramId } = useUser();
-  const [amount, setAmount] = useState('');
   const [method, setMethod] = useState<Method>('papara');
   const [step, setStep] = useState<'form' | 'success'>('form');
-  const [lastResult, setLastResult] = useState<{ requestId: string; amount: number } | null>(null);
-  
+  const [lastResult, setLastResult] = useState<{ requestId: string } | null>(null);
+
   const withdrawMut = useRequestWithdrawal();
   const { data: history, refetch: refetchHistory } = useGetWithdrawHistory(telegramId);
 
   const balance = user?.balance ?? 0;
-  const amountNum = parseFloat(amount) || 0;
-  const isValidAmount = amountNum >= MIN_TL && amountNum <= Math.min(MAX_TL, balance);
+  const canWithdraw = balance >= FIXED_TL;
 
   const handleSubmit = async () => {
-    if (!isValidAmount) return;
+    if (!canWithdraw) return;
     try {
       const result = await withdrawMut.mutateAsync({
-        data: { telegramId, amount: amountNum, method },
+        data: { telegramId, amount: FIXED_TL, method },
       });
-      setLastResult({ requestId: result.requestId, amount: result.amount });
+      setLastResult({ requestId: result.requestId });
       setStep('success');
       refetchHistory();
-      toast.success(`${amountNum} TL çekim talebiniz alındı!`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Bir hata oluştu';
       toast.error(msg);
@@ -53,7 +50,6 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
   const handleClose = () => {
     setStep('form');
-    setAmount('');
     onClose();
   };
 
@@ -106,47 +102,29 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                     <span className="font-black text-lg text-[#f5c842]">💵 {balance.toFixed(2)} TL</span>
                   </div>
 
-                  {/* Limit info */}
-                  <div className="flex items-start gap-2 mb-4 bg-blue-900/40 border border-blue-500/40 rounded-xl p-3 text-sm">
+                  {/* Fixed amount display */}
+                  <div className="flex flex-col items-center justify-center bg-gradient-to-br from-[#f5c842]/20 to-[#f5c842]/5 border-2 border-[#f5c842]/50 rounded-2xl py-6 mb-4">
+                    <span className="text-5xl font-black text-[#f5c842] drop-shadow-lg">350 TL</span>
+                    <span className="text-sm font-bold text-white/60 mt-1">Sabit Çekim Tutarı</span>
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex items-start gap-2 mb-5 bg-blue-900/40 border border-blue-500/40 rounded-xl p-3 text-sm">
                     <AlertCircle size={16} className="text-blue-400 mt-0.5 shrink-0" />
                     <p className="text-blue-200 leading-snug">
-                      Min çekim: <b>{MIN_TL} TL</b> · Maks çekim: <b>{MAX_TL} TL</b> / işlem. 24 saat içinde işleme alınır.
+                      Her işlemde tam <b>350 TL</b> çekilir. 24 saat içinde işleme alınır. Bakiyeniz yeterli olmadığında çekim yapılamaz.
                     </p>
                   </div>
 
-                  {/* Amount input */}
-                  <label className="block text-sm font-bold text-orange-200 mb-1 uppercase tracking-wide">Çekim Tutarı (TL)</label>
-                  <div className="relative mb-4">
-                    <input
-                      type="number"
-                      min={MIN_TL}
-                      max={Math.min(MAX_TL, balance)}
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder={`${MIN_TL} – ${MAX_TL}`}
-                      className="w-full bg-black/30 border-2 border-white/20 rounded-xl px-4 py-3 font-bold text-lg focus:border-[#f5c842] focus:outline-none transition"
-                    />
-                    <button
-                      onClick={() => setAmount(String(Math.min(MAX_TL, Math.floor(balance))))}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs bg-[#f5c842] text-black font-black px-2 py-1 rounded-lg"
-                    >
-                      MAX
-                    </button>
-                  </div>
-
-                  {/* Quick amounts */}
-                  <div className="grid grid-cols-4 gap-2 mb-4">
-                    {[50, 100, 200, 350].map((val) => (
-                      <button
-                        key={val}
-                        onClick={() => setAmount(String(Math.min(val, Math.floor(balance))))}
-                        disabled={balance < val}
-                        className="bg-black/30 border border-white/20 rounded-lg py-2 text-sm font-bold disabled:opacity-30 hover:bg-white/10 transition"
-                      >
-                        {val} TL
-                      </button>
-                    ))}
-                  </div>
+                  {/* Not enough balance warning */}
+                  {!canWithdraw && (
+                    <div className="flex items-center gap-2 mb-4 bg-red-900/40 border border-red-500/40 rounded-xl p-3 text-sm">
+                      <AlertCircle size={16} className="text-red-400 shrink-0" />
+                      <p className="text-red-200">
+                        Çekim için <b>{FIXED_TL} TL</b> bakiye gerekli. Şu an: <b>{balance.toFixed(2)} TL</b>
+                      </p>
+                    </div>
+                  )}
 
                   {/* Method */}
                   <label className="block text-sm font-bold text-orange-200 mb-2 uppercase tracking-wide">Ödeme Yöntemi</label>
@@ -170,11 +148,11 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                   {/* Submit */}
                   <button
                     onClick={handleSubmit}
-                    disabled={!isValidAmount || withdrawMut.isPending}
+                    disabled={!canWithdraw || withdrawMut.isPending}
                     className="w-full wood-button bg-green-600 border-green-900 text-white font-black text-lg py-4 disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ boxShadow: '0 4px 0 #14532d' }}
                   >
-                    {withdrawMut.isPending ? 'Gönderiliyor...' : `${amountNum > 0 ? amountNum + ' TL ' : ''}Çek 💸`}
+                    {withdrawMut.isPending ? 'Gönderiliyor...' : '💸 350 TL Çek'}
                   </button>
 
                   {/* History */}
@@ -210,8 +188,10 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                     <CheckCircle2 size={40} className="text-white" />
                   </motion.div>
                   <h3 className="font-black text-2xl mb-2">Talep Alındı!</h3>
-                  <p className="text-green-300 font-bold text-lg mb-1">{lastResult?.amount} TL</p>
-                  <p className="opacity-60 text-sm mb-2">Talep No: <span className="font-mono text-xs">{lastResult?.requestId?.slice(0, 12)}...</span></p>
+                  <p className="text-green-300 font-bold text-2xl mb-1">350 TL 💸</p>
+                  <p className="opacity-60 text-sm mb-2">
+                    Talep No: <span className="font-mono text-xs">{lastResult?.requestId?.slice(0, 12)}...</span>
+                  </p>
                   <p className="opacity-70 text-sm px-4 mb-6">24 saat içinde hesabınıza aktarılacaktır.</p>
                   <button onClick={handleClose} className="wood-button w-full font-black py-3">
                     Tamam

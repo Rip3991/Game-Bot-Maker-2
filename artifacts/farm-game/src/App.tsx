@@ -9,14 +9,20 @@ import InvitePage from './pages/InvitePage';
 import StarsShopPage from './pages/StarsShopPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import WelcomePage from './pages/WelcomePage';
+import VaultPage from './pages/VaultPage';
+import NftPage from './pages/NftPage';
 import { useUser } from './hooks/use-user';
 import { UserProvider } from './context/UserProvider';
 import { BottomNav } from './components/BottomNav';
 import { AnimatePresence, motion } from 'framer-motion';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import mascotAvatar from './assets/mascot-avatar.png';
 import { WithdrawModal } from './components/WithdrawModal';
 import { Toaster as SonnerToaster } from 'sonner';
+import { initI18n } from './lib/i18n';
+
+// Init i18n once at module level (Telegram data available before React renders)
+initI18n();
 
 const queryClient = new QueryClient();
 
@@ -62,6 +68,8 @@ function Router() {
             <Switch location={location}>
               <Route path="/" component={GameView} />
               <Route path="/spin" component={SpinPage} />
+              <Route path="/vault" component={VaultPage} />
+              <Route path="/nfts" component={NftPage} />
               <Route path="/invite" component={InvitePage} />
               <Route path="/stars" component={StarsShopPage} />
               <Route path="/leaderboard" component={LeaderboardPage} />
@@ -78,7 +86,7 @@ function Router() {
             onClick={() => setWithdrawOpen(true)}
             className="w-full bg-gradient-to-b from-[#2AABEE] to-[#229ED9] text-white font-black text-lg py-4 rounded-2xl shadow-[0_6px_0_#1b7ea8,0_15px_20px_rgba(0,0,0,0.4)] border-2 border-white/20 active:translate-y-[6px] active:shadow-[0_0px_0_#1b7ea8,0_5px_10px_rgba(0,0,0,0.4)] transition-all pointer-events-auto flex items-center justify-center gap-2"
           >
-            💸 Para Çek (max 350 TL)
+            💸 Para Çek (350 TL)
           </button>
         </div>
       )}

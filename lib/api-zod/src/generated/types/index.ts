@@ -6,12 +6,20 @@
  * OpenAPI spec version: 0.3.0
  */
 
+export * from './acceptTradeOffer200';
 export * from './achievement';
 export * from './farmState';
 export * from './farmStateInput';
 export * from './getLeaderboardParams';
 export * from './healthStatus';
 export * from './leaderboardEntry';
+export * from './nftItem';
+export * from './nftItemRarity';
+export * from './nftListTradeInput';
+export * from './nftTradeAcceptInput';
+export * from './nftTradeOffer';
+export * from './nftTradeOfferInput';
+export * from './nftTradeOfferStatus';
 export * from './onlineStats';
 export * from './referralEntry';
 export * from './referralStats';
@@ -24,6 +32,12 @@ export * from './starPurchaseInput';
 export * from './starPurchaseResult';
 export * from './user';
 export * from './userInitInput';
+export * from './vaultClaimInput';
+export * from './vaultClaimResult';
+export * from './vaultDepositInput';
+export * from './vaultDepositResult';
+export * from './vaultEntry';
+export * from './vaultEntryStatus';
 export * from './withdrawEntry';
 export * from './withdrawInput';
 export * from './withdrawResult';

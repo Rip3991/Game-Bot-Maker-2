@@ -6,14 +6,14 @@ import { toast } from 'sonner';
 import mascotAvatar from '../assets/mascot-avatar.png';
 
 const WHEEL_SEGMENTS = [
-  { prize: '50', icon: '🪙', color: '#a06235', label: '50 Coin', value: 50 },
-  { prize: '100', icon: '🪙', color: '#5ab327', label: '100 Coin', value: 100 },
-  { prize: 'boost', icon: '✨', color: '#8b5cf6', label: '2x Boost', value: 0 },
-  { prize: '200', icon: '🪙', color: '#3b82f6', label: '200 Coin', value: 200 },
-  { prize: 'miss', icon: '❌', color: '#64748b', label: 'Pas', value: 0 },
-  { prize: '500', icon: '🪙', color: '#f97316', label: '500 Coin', value: 500 },
-  { prize: 'jackpot', icon: '🎰', color: '#eab308', label: 'JACKPOT', value: 1000 },
-  { prize: '75', icon: '🪙', color: '#22c55e', label: '75 Coin', value: 75 },
+  { prize: '5',       icon: '🪙', color: '#a06235', label: '5 Coin',      value: 5 },
+  { prize: '10',      icon: '🪙', color: '#5ab327', label: '10 Coin',     value: 10 },
+  { prize: 'boost',   icon: '✨', color: '#8b5cf6', label: '2x Boost',    value: 0 },
+  { prize: '15',      icon: '🪙', color: '#3b82f6', label: '15 Coin',     value: 15 },
+  { prize: 'miss',    icon: '❌', color: '#64748b', label: 'Pas',         value: 0 },
+  { prize: '25',      icon: '🪙', color: '#f97316', label: '25 Coin',     value: 25 },
+  { prize: 'jackpot', icon: '🎰', color: '#eab308', label: 'JACKPOT',     value: 100 },
+  { prize: '8',       icon: '🪙', color: '#22c55e', label: '8 Coin',      value: 8 },
 ];
 
 export default function SpinPage() {

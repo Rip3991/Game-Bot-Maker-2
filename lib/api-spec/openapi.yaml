@@ -21,6 +21,10 @@ tags:
     description: Withdrawal requests
   - name: stats
     description: Live statistics
+  - name: vault
+    description: Vault / coin locking
+  - name: nfts
+    description: NFT collection and trading
 paths:
   /healthz:
     get:
@@ -263,6 +267,186 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/WithdrawEntry"
+
+  /vault/deposit:
+    post:
+      operationId: vaultDeposit
+      tags: [vault]
+      summary: Deposit coins into vault with a lock period
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VaultDepositInput"
+      responses:
+        "200":
+          description: Deposit created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultDepositResult"
+        "400":
+          description: Invalid amount or insufficient coins
+
+  /vault/{telegramId}:
+    get:
+      operationId: getVaultDeposits
+      tags: [vault]
+      summary: Get all vault deposits for a user
+      parameters:
+        - name: telegramId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Vault deposits
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VaultEntry"
+
+  /vault/claim:
+    post:
+      operationId: claimVaultDeposit
+      tags: [vault]
+      summary: Claim a matured vault deposit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VaultClaimInput"
+      responses:
+        "200":
+          description: Coins claimed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultClaimResult"
+        "400":
+          description: Deposit not mature or already claimed
+
+  /nfts/user/{telegramId}:
+    get:
+      operationId: getUserNfts
+      tags: [nfts]
+      summary: Get all NFTs owned by a user
+      parameters:
+        - name: telegramId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User NFTs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NftItem"
+
+  /nfts/list-trade:
+    post:
+      operationId: listNftForTrade
+      tags: [nfts]
+      summary: List or delist an NFT for trading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NftListTradeInput"
+      responses:
+        "200":
+          description: NFT updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NftItem"
+
+  /nfts/market:
+    get:
+      operationId: getNftMarket
+      tags: [nfts]
+      summary: Get all NFTs listed for trade
+      responses:
+        "200":
+          description: Market listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NftItem"
+
+  /nfts/trade/offer:
+    post:
+      operationId: createTradeOffer
+      tags: [nfts]
+      summary: Create a trade offer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NftTradeOfferInput"
+      responses:
+        "200":
+          description: Trade offer created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NftTradeOffer"
+
+  /nfts/trade/offers/{telegramId}:
+    get:
+      operationId: getTradeOffers
+      tags: [nfts]
+      summary: Get incoming trade offers for a user
+      parameters:
+        - name: telegramId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Trade offers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NftTradeOffer"
+
+  /nfts/trade/accept:
+    post:
+      operationId: acceptTradeOffer
+      tags: [nfts]
+      summary: Accept a trade offer (swap NFTs)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NftTradeAcceptInput"
+      responses:
+        "200":
+          description: Trade completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
 
   /stats/online:
     get:
@@ -535,3 +719,154 @@ components:
           type: integer
         totalCoinsInCirculation:
           type: number
+
+    VaultDepositInput:
+      type: object
+      required: [telegramId, coins, lockDays]
+      properties:
+        telegramId:
+          type: string
+        coins:
+          type: integer
+          description: Number of coins to deposit (min 100)
+        lockDays:
+          type: integer
+          description: "Lock period in days: 3, 7, 14, or 30"
+
+    VaultDepositResult:
+      type: object
+      required: [id, coinsDeposited, coinsToReceive, multiplier, maturesAt, lockDays]
+      properties:
+        id:
+          type: string
+        coinsDeposited:
+          type: integer
+        coinsToReceive:
+          type: integer
+        multiplier:
+          type: number
+        maturesAt:
+          type: string
+        lockDays:
+          type: integer
+
+    VaultEntry:
+      type: object
+      required: [id, coinsDeposited, coinsToReceive, multiplier, lockDays, maturesAt, status]
+      properties:
+        id:
+          type: string
+        coinsDeposited:
+          type: integer
+        coinsToReceive:
+          type: integer
+        multiplier:
+          type: number
+        lockDays:
+          type: integer
+        maturesAt:
+          type: string
+        status:
+          type: string
+          enum: [locked, mature, claimed]
+        createdAt:
+          type: string
+
+    VaultClaimInput:
+      type: object
+      required: [telegramId, depositId]
+      properties:
+        telegramId:
+          type: string
+        depositId:
+          type: string
+
+    VaultClaimResult:
+      type: object
+      required: [coinsReceived, newCoinTotal]
+      properties:
+        coinsReceived:
+          type: integer
+        newCoinTotal:
+          type: integer
+
+    NftItem:
+      type: object
+      required: [id, ownerTelegramId, nftType, rarity, name, emoji, mintNumber, isListedForTrade, createdAt]
+      properties:
+        id:
+          type: string
+        ownerTelegramId:
+          type: string
+        nftType:
+          type: string
+        rarity:
+          type: string
+          enum: [common, rare, special, legendary]
+        name:
+          type: string
+        emoji:
+          type: string
+        mintNumber:
+          type: integer
+        isListedForTrade:
+          type: boolean
+        createdAt:
+          type: string
+
+    NftListTradeInput:
+      type: object
+      required: [telegramId, nftId, list]
+      properties:
+        telegramId:
+          type: string
+        nftId:
+          type: string
+        list:
+          type: boolean
+
+    NftTradeOfferInput:
+      type: object
+      required: [offererTelegramId, offeredNftId]
+      properties:
+        offererTelegramId:
+          type: string
+        offeredNftId:
+          type: string
+        targetTelegramId:
+          type: string
+        wantedNftType:
+          type: string
+
+    NftTradeOffer:
+      type: object
+      required: [id, offererTelegramId, offeredNftId, status, createdAt]
+      properties:
+        id:
+          type: string
+        offererTelegramId:
+          type: string
+        offeredNftId:
+          type: string
+        targetTelegramId:
+          type: string
+        wantedNftType:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, rejected, cancelled]
+        createdAt:
+          type: string
+        offeredNft:
+          $ref: "#/components/schemas/NftItem"
+
+    NftTradeAcceptInput:
+      type: object
+      required: [telegramId, offerId, acceptorNftId]
+      properties:
+        telegramId:
+          type: string
+        offerId:
+          type: string
+        acceptorNftId:
+          type: string

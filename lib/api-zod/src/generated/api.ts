@@ -245,6 +245,195 @@ export const GetWithdrawHistoryResponse = zod.array(GetWithdrawHistoryResponseIt
 
 
 /**
+ * @summary Deposit coins into vault with a lock period
+ */
+export const VaultDepositBody = zod.object({
+  "telegramId": zod.string(),
+  "coins": zod.number().describe('Number of coins to deposit (min 100)'),
+  "lockDays": zod.number().describe('Lock period in days: 3, 7, 14, or 30')
+})
+
+export const VaultDepositResponse = zod.object({
+  "id": zod.string(),
+  "coinsDeposited": zod.number(),
+  "coinsToReceive": zod.number(),
+  "multiplier": zod.number(),
+  "maturesAt": zod.string(),
+  "lockDays": zod.number()
+})
+
+
+/**
+ * @summary Get all vault deposits for a user
+ */
+export const GetVaultDepositsParams = zod.object({
+  "telegramId": zod.coerce.string()
+})
+
+export const GetVaultDepositsResponseItem = zod.object({
+  "id": zod.string(),
+  "coinsDeposited": zod.number(),
+  "coinsToReceive": zod.number(),
+  "multiplier": zod.number(),
+  "lockDays": zod.number(),
+  "maturesAt": zod.string(),
+  "status": zod.enum(['locked', 'mature', 'claimed']),
+  "createdAt": zod.string().optional()
+})
+export const GetVaultDepositsResponse = zod.array(GetVaultDepositsResponseItem)
+
+
+/**
+ * @summary Claim a matured vault deposit
+ */
+export const ClaimVaultDepositBody = zod.object({
+  "telegramId": zod.string(),
+  "depositId": zod.string()
+})
+
+export const ClaimVaultDepositResponse = zod.object({
+  "coinsReceived": zod.number(),
+  "newCoinTotal": zod.number()
+})
+
+
+/**
+ * @summary Get all NFTs owned by a user
+ */
+export const GetUserNftsParams = zod.object({
+  "telegramId": zod.coerce.string()
+})
+
+export const GetUserNftsResponseItem = zod.object({
+  "id": zod.string(),
+  "ownerTelegramId": zod.string(),
+  "nftType": zod.string(),
+  "rarity": zod.enum(['common', 'rare', 'special', 'legendary']),
+  "name": zod.string(),
+  "emoji": zod.string(),
+  "mintNumber": zod.number(),
+  "isListedForTrade": zod.boolean(),
+  "createdAt": zod.string()
+})
+export const GetUserNftsResponse = zod.array(GetUserNftsResponseItem)
+
+
+/**
+ * @summary List or delist an NFT for trading
+ */
+export const ListNftForTradeBody = zod.object({
+  "telegramId": zod.string(),
+  "nftId": zod.string(),
+  "list": zod.boolean()
+})
+
+export const ListNftForTradeResponse = zod.object({
+  "id": zod.string(),
+  "ownerTelegramId": zod.string(),
+  "nftType": zod.string(),
+  "rarity": zod.enum(['common', 'rare', 'special', 'legendary']),
+  "name": zod.string(),
+  "emoji": zod.string(),
+  "mintNumber": zod.number(),
+  "isListedForTrade": zod.boolean(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Get all NFTs listed for trade
+ */
+export const GetNftMarketResponseItem = zod.object({
+  "id": zod.string(),
+  "ownerTelegramId": zod.string(),
+  "nftType": zod.string(),
+  "rarity": zod.enum(['common', 'rare', 'special', 'legendary']),
+  "name": zod.string(),
+  "emoji": zod.string(),
+  "mintNumber": zod.number(),
+  "isListedForTrade": zod.boolean(),
+  "createdAt": zod.string()
+})
+export const GetNftMarketResponse = zod.array(GetNftMarketResponseItem)
+
+
+/**
+ * @summary Create a trade offer
+ */
+export const CreateTradeOfferBody = zod.object({
+  "offererTelegramId": zod.string(),
+  "offeredNftId": zod.string(),
+  "targetTelegramId": zod.string().optional(),
+  "wantedNftType": zod.string().optional()
+})
+
+export const CreateTradeOfferResponse = zod.object({
+  "id": zod.string(),
+  "offererTelegramId": zod.string(),
+  "offeredNftId": zod.string(),
+  "targetTelegramId": zod.string().optional(),
+  "wantedNftType": zod.string().optional(),
+  "status": zod.enum(['pending', 'accepted', 'rejected', 'cancelled']),
+  "createdAt": zod.string(),
+  "offeredNft": zod.object({
+  "id": zod.string(),
+  "ownerTelegramId": zod.string(),
+  "nftType": zod.string(),
+  "rarity": zod.enum(['common', 'rare', 'special', 'legendary']),
+  "name": zod.string(),
+  "emoji": zod.string(),
+  "mintNumber": zod.number(),
+  "isListedForTrade": zod.boolean(),
+  "createdAt": zod.string()
+}).optional()
+})
+
+
+/**
+ * @summary Get incoming trade offers for a user
+ */
+export const GetTradeOffersParams = zod.object({
+  "telegramId": zod.coerce.string()
+})
+
+export const GetTradeOffersResponseItem = zod.object({
+  "id": zod.string(),
+  "offererTelegramId": zod.string(),
+  "offeredNftId": zod.string(),
+  "targetTelegramId": zod.string().optional(),
+  "wantedNftType": zod.string().optional(),
+  "status": zod.enum(['pending', 'accepted', 'rejected', 'cancelled']),
+  "createdAt": zod.string(),
+  "offeredNft": zod.object({
+  "id": zod.string(),
+  "ownerTelegramId": zod.string(),
+  "nftType": zod.string(),
+  "rarity": zod.enum(['common', 'rare', 'special', 'legendary']),
+  "name": zod.string(),
+  "emoji": zod.string(),
+  "mintNumber": zod.number(),
+  "isListedForTrade": zod.boolean(),
+  "createdAt": zod.string()
+}).optional()
+})
+export const GetTradeOffersResponse = zod.array(GetTradeOffersResponseItem)
+
+
+/**
+ * @summary Accept a trade offer (swap NFTs)
+ */
+export const AcceptTradeOfferBody = zod.object({
+  "telegramId": zod.string(),
+  "offerId": zod.string(),
+  "acceptorNftId": zod.string()
+})
+
+export const AcceptTradeOfferResponse = zod.object({
+  "success": zod.boolean().optional()
+})
+
+
+/**
  * @summary Get live online player count and stats
  */
 export const GetOnlineStatsResponse = zod.object({

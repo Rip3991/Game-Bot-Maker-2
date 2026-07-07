@@ -7,6 +7,8 @@ import leaderboardRouter from "./leaderboard";
 import starsRouter from "./stars";
 import withdrawRouter from "./withdraw";
 import statsRouter from "./stats";
+import vaultRouter from "./vault";
+import nftsRouter from "./nfts";
 
 const router: IRouter = Router();
 
@@ -18,5 +20,7 @@ router.use(leaderboardRouter);
 router.use(starsRouter);
 router.use(withdrawRouter);
 router.use(statsRouter);
+router.use("/vault", vaultRouter);
+router.use("/nfts", nftsRouter);
 
 export default router;

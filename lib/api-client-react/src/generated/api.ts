@@ -20,11 +20,17 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AcceptTradeOffer200,
   Achievement,
   FarmStateInput,
   GetLeaderboardParams,
   HealthStatus,
   LeaderboardEntry,
+  NftItem,
+  NftListTradeInput,
+  NftTradeAcceptInput,
+  NftTradeOffer,
+  NftTradeOfferInput,
   OnlineStats,
   ReferralStats,
   SpinCooldown,
@@ -35,6 +41,11 @@ import type {
   StarPurchaseResult,
   User,
   UserInitInput,
+  VaultClaimInput,
+  VaultClaimResult,
+  VaultDepositInput,
+  VaultDepositResult,
+  VaultEntry,
   WithdrawEntry,
   WithdrawInput,
   WithdrawResult
@@ -963,6 +974,664 @@ export function useGetWithdrawHistory<TData = Awaited<ReturnType<typeof getWithd
 
 
 
+
+export const getVaultDepositUrl = () => {
+
+
+
+
+  return `/api/vault/deposit`
+}
+
+/**
+ * @summary Deposit coins into vault with a lock period
+ */
+export const vaultDeposit = async (vaultDepositInput: VaultDepositInput, options?: RequestInit): Promise<VaultDepositResult> => {
+
+  return customFetch<VaultDepositResult>(getVaultDepositUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(vaultDepositInput)
+  }
+);}
+
+
+
+
+export const getVaultDepositMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof vaultDeposit>>, TError,{data: BodyType<VaultDepositInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof vaultDeposit>>, TError,{data: BodyType<VaultDepositInput>}, TContext> => {
+
+const mutationKey = ['vaultDeposit'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof vaultDeposit>>, {data: BodyType<VaultDepositInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  vaultDeposit(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VaultDepositMutationResult = NonNullable<Awaited<ReturnType<typeof vaultDeposit>>>
+    export type VaultDepositMutationBody = BodyType<VaultDepositInput>
+    export type VaultDepositMutationError = ErrorType<void>
+
+    /**
+ * @summary Deposit coins into vault with a lock period
+ */
+export const useVaultDeposit = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof vaultDeposit>>, TError,{data: BodyType<VaultDepositInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof vaultDeposit>>,
+        TError,
+        {data: BodyType<VaultDepositInput>},
+        TContext
+      > => {
+      return useMutation(getVaultDepositMutationOptions(options));
+    }
+
+export const getGetVaultDepositsUrl = (telegramId: string,) => {
+
+
+
+
+  return `/api/vault/${telegramId}`
+}
+
+/**
+ * @summary Get all vault deposits for a user
+ */
+export const getVaultDeposits = async (telegramId: string, options?: RequestInit): Promise<VaultEntry[]> => {
+
+  return customFetch<VaultEntry[]>(getGetVaultDepositsUrl(telegramId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetVaultDepositsQueryKey = (telegramId: string,) => {
+    return [
+    `/api/vault/${telegramId}`
+    ] as const;
+    }
+
+
+export const getGetVaultDepositsQueryOptions = <TData = Awaited<ReturnType<typeof getVaultDeposits>>, TError = ErrorType<unknown>>(telegramId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getVaultDeposits>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetVaultDepositsQueryKey(telegramId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getVaultDeposits>>> = ({ signal }) => getVaultDeposits(telegramId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: telegramId !== null && telegramId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getVaultDeposits>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetVaultDepositsQueryResult = NonNullable<Awaited<ReturnType<typeof getVaultDeposits>>>
+export type GetVaultDepositsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get all vault deposits for a user
+ */
+
+export function useGetVaultDeposits<TData = Awaited<ReturnType<typeof getVaultDeposits>>, TError = ErrorType<unknown>>(
+ telegramId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getVaultDeposits>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetVaultDepositsQueryOptions(telegramId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getClaimVaultDepositUrl = () => {
+
+
+
+
+  return `/api/vault/claim`
+}
+
+/**
+ * @summary Claim a matured vault deposit
+ */
+export const claimVaultDeposit = async (vaultClaimInput: VaultClaimInput, options?: RequestInit): Promise<VaultClaimResult> => {
+
+  return customFetch<VaultClaimResult>(getClaimVaultDepositUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(vaultClaimInput)
+  }
+);}
+
+
+
+
+export const getClaimVaultDepositMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof claimVaultDeposit>>, TError,{data: BodyType<VaultClaimInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof claimVaultDeposit>>, TError,{data: BodyType<VaultClaimInput>}, TContext> => {
+
+const mutationKey = ['claimVaultDeposit'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof claimVaultDeposit>>, {data: BodyType<VaultClaimInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  claimVaultDeposit(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClaimVaultDepositMutationResult = NonNullable<Awaited<ReturnType<typeof claimVaultDeposit>>>
+    export type ClaimVaultDepositMutationBody = BodyType<VaultClaimInput>
+    export type ClaimVaultDepositMutationError = ErrorType<void>
+
+    /**
+ * @summary Claim a matured vault deposit
+ */
+export const useClaimVaultDeposit = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof claimVaultDeposit>>, TError,{data: BodyType<VaultClaimInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof claimVaultDeposit>>,
+        TError,
+        {data: BodyType<VaultClaimInput>},
+        TContext
+      > => {
+      return useMutation(getClaimVaultDepositMutationOptions(options));
+    }
+
+export const getGetUserNftsUrl = (telegramId: string,) => {
+
+
+
+
+  return `/api/nfts/user/${telegramId}`
+}
+
+/**
+ * @summary Get all NFTs owned by a user
+ */
+export const getUserNfts = async (telegramId: string, options?: RequestInit): Promise<NftItem[]> => {
+
+  return customFetch<NftItem[]>(getGetUserNftsUrl(telegramId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetUserNftsQueryKey = (telegramId: string,) => {
+    return [
+    `/api/nfts/user/${telegramId}`
+    ] as const;
+    }
+
+
+export const getGetUserNftsQueryOptions = <TData = Awaited<ReturnType<typeof getUserNfts>>, TError = ErrorType<unknown>>(telegramId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUserNfts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUserNftsQueryKey(telegramId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserNfts>>> = ({ signal }) => getUserNfts(telegramId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: telegramId !== null && telegramId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUserNfts>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetUserNftsQueryResult = NonNullable<Awaited<ReturnType<typeof getUserNfts>>>
+export type GetUserNftsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get all NFTs owned by a user
+ */
+
+export function useGetUserNfts<TData = Awaited<ReturnType<typeof getUserNfts>>, TError = ErrorType<unknown>>(
+ telegramId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUserNfts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetUserNftsQueryOptions(telegramId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListNftForTradeUrl = () => {
+
+
+
+
+  return `/api/nfts/list-trade`
+}
+
+/**
+ * @summary List or delist an NFT for trading
+ */
+export const listNftForTrade = async (nftListTradeInput: NftListTradeInput, options?: RequestInit): Promise<NftItem> => {
+
+  return customFetch<NftItem>(getListNftForTradeUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(nftListTradeInput)
+  }
+);}
+
+
+
+
+export const getListNftForTradeMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof listNftForTrade>>, TError,{data: BodyType<NftListTradeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof listNftForTrade>>, TError,{data: BodyType<NftListTradeInput>}, TContext> => {
+
+const mutationKey = ['listNftForTrade'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof listNftForTrade>>, {data: BodyType<NftListTradeInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  listNftForTrade(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ListNftForTradeMutationResult = NonNullable<Awaited<ReturnType<typeof listNftForTrade>>>
+    export type ListNftForTradeMutationBody = BodyType<NftListTradeInput>
+    export type ListNftForTradeMutationError = ErrorType<unknown>
+
+    /**
+ * @summary List or delist an NFT for trading
+ */
+export const useListNftForTrade = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof listNftForTrade>>, TError,{data: BodyType<NftListTradeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof listNftForTrade>>,
+        TError,
+        {data: BodyType<NftListTradeInput>},
+        TContext
+      > => {
+      return useMutation(getListNftForTradeMutationOptions(options));
+    }
+
+export const getGetNftMarketUrl = () => {
+
+
+
+
+  return `/api/nfts/market`
+}
+
+/**
+ * @summary Get all NFTs listed for trade
+ */
+export const getNftMarket = async ( options?: RequestInit): Promise<NftItem[]> => {
+
+  return customFetch<NftItem[]>(getGetNftMarketUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetNftMarketQueryKey = () => {
+    return [
+    `/api/nfts/market`
+    ] as const;
+    }
+
+
+export const getGetNftMarketQueryOptions = <TData = Awaited<ReturnType<typeof getNftMarket>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getNftMarket>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetNftMarketQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getNftMarket>>> = ({ signal }) => getNftMarket({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getNftMarket>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetNftMarketQueryResult = NonNullable<Awaited<ReturnType<typeof getNftMarket>>>
+export type GetNftMarketQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get all NFTs listed for trade
+ */
+
+export function useGetNftMarket<TData = Awaited<ReturnType<typeof getNftMarket>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getNftMarket>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetNftMarketQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateTradeOfferUrl = () => {
+
+
+
+
+  return `/api/nfts/trade/offer`
+}
+
+/**
+ * @summary Create a trade offer
+ */
+export const createTradeOffer = async (nftTradeOfferInput: NftTradeOfferInput, options?: RequestInit): Promise<NftTradeOffer> => {
+
+  return customFetch<NftTradeOffer>(getCreateTradeOfferUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(nftTradeOfferInput)
+  }
+);}
+
+
+
+
+export const getCreateTradeOfferMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTradeOffer>>, TError,{data: BodyType<NftTradeOfferInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTradeOffer>>, TError,{data: BodyType<NftTradeOfferInput>}, TContext> => {
+
+const mutationKey = ['createTradeOffer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTradeOffer>>, {data: BodyType<NftTradeOfferInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createTradeOffer(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTradeOfferMutationResult = NonNullable<Awaited<ReturnType<typeof createTradeOffer>>>
+    export type CreateTradeOfferMutationBody = BodyType<NftTradeOfferInput>
+    export type CreateTradeOfferMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a trade offer
+ */
+export const useCreateTradeOffer = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTradeOffer>>, TError,{data: BodyType<NftTradeOfferInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createTradeOffer>>,
+        TError,
+        {data: BodyType<NftTradeOfferInput>},
+        TContext
+      > => {
+      return useMutation(getCreateTradeOfferMutationOptions(options));
+    }
+
+export const getGetTradeOffersUrl = (telegramId: string,) => {
+
+
+
+
+  return `/api/nfts/trade/offers/${telegramId}`
+}
+
+/**
+ * @summary Get incoming trade offers for a user
+ */
+export const getTradeOffers = async (telegramId: string, options?: RequestInit): Promise<NftTradeOffer[]> => {
+
+  return customFetch<NftTradeOffer[]>(getGetTradeOffersUrl(telegramId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTradeOffersQueryKey = (telegramId: string,) => {
+    return [
+    `/api/nfts/trade/offers/${telegramId}`
+    ] as const;
+    }
+
+
+export const getGetTradeOffersQueryOptions = <TData = Awaited<ReturnType<typeof getTradeOffers>>, TError = ErrorType<unknown>>(telegramId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTradeOffers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTradeOffersQueryKey(telegramId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTradeOffers>>> = ({ signal }) => getTradeOffers(telegramId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: telegramId !== null && telegramId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTradeOffers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTradeOffersQueryResult = NonNullable<Awaited<ReturnType<typeof getTradeOffers>>>
+export type GetTradeOffersQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get incoming trade offers for a user
+ */
+
+export function useGetTradeOffers<TData = Awaited<ReturnType<typeof getTradeOffers>>, TError = ErrorType<unknown>>(
+ telegramId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTradeOffers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTradeOffersQueryOptions(telegramId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getAcceptTradeOfferUrl = () => {
+
+
+
+
+  return `/api/nfts/trade/accept`
+}
+
+/**
+ * @summary Accept a trade offer (swap NFTs)
+ */
+export const acceptTradeOffer = async (nftTradeAcceptInput: NftTradeAcceptInput, options?: RequestInit): Promise<AcceptTradeOffer200> => {
+
+  return customFetch<AcceptTradeOffer200>(getAcceptTradeOfferUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(nftTradeAcceptInput)
+  }
+);}
+
+
+
+
+export const getAcceptTradeOfferMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptTradeOffer>>, TError,{data: BodyType<NftTradeAcceptInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof acceptTradeOffer>>, TError,{data: BodyType<NftTradeAcceptInput>}, TContext> => {
+
+const mutationKey = ['acceptTradeOffer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptTradeOffer>>, {data: BodyType<NftTradeAcceptInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  acceptTradeOffer(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AcceptTradeOfferMutationResult = NonNullable<Awaited<ReturnType<typeof acceptTradeOffer>>>
+    export type AcceptTradeOfferMutationBody = BodyType<NftTradeAcceptInput>
+    export type AcceptTradeOfferMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Accept a trade offer (swap NFTs)
+ */
+export const useAcceptTradeOffer = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptTradeOffer>>, TError,{data: BodyType<NftTradeAcceptInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof acceptTradeOffer>>,
+        TError,
+        {data: BodyType<NftTradeAcceptInput>},
+        TContext
+      > => {
+      return useMutation(getAcceptTradeOfferMutationOptions(options));
+    }
 
 export const getGetOnlineStatsUrl = () => {
 

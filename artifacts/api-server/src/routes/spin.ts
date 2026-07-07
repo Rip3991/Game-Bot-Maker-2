@@ -5,18 +5,20 @@ import { DailySpinBody } from "@workspace/api-zod";
 
 const router = Router();
 
+// Reduced rewards — coins are valuable, don't give them away cheaply
 const SPIN_SEGMENTS = [
-  { label: "50 Coin", prizeType: "coins" as const, coinsEarned: 50, segmentIndex: 0 },
-  { label: "100 Coin", prizeType: "coins" as const, coinsEarned: 100, segmentIndex: 1 },
-  { label: "2x Boost 1 Saat", prizeType: "boost" as const, coinsEarned: 0, segmentIndex: 2 },
-  { label: "200 Coin", prizeType: "coins" as const, coinsEarned: 200, segmentIndex: 3 },
-  { label: "Şansını Zorla", prizeType: "miss" as const, coinsEarned: 0, segmentIndex: 4 },
-  { label: "500 Coin", prizeType: "coins" as const, coinsEarned: 500, segmentIndex: 5 },
-  { label: "JACKPOT 1000", prizeType: "jackpot" as const, coinsEarned: 1000, segmentIndex: 6 },
-  { label: "75 Coin", prizeType: "coins" as const, coinsEarned: 75, segmentIndex: 7 },
+  { label: "5 Coin",     prizeType: "coins" as const, coinsEarned: 5,   segmentIndex: 0 },
+  { label: "10 Coin",    prizeType: "coins" as const, coinsEarned: 10,  segmentIndex: 1 },
+  { label: "2x Boost",   prizeType: "boost" as const, coinsEarned: 0,   segmentIndex: 2 },
+  { label: "15 Coin",    prizeType: "coins" as const, coinsEarned: 15,  segmentIndex: 3 },
+  { label: "Pas",        prizeType: "miss"  as const, coinsEarned: 0,   segmentIndex: 4 },
+  { label: "25 Coin",    prizeType: "coins" as const, coinsEarned: 25,  segmentIndex: 5 },
+  { label: "JACKPOT 100",prizeType: "jackpot" as const, coinsEarned: 100, segmentIndex: 6 },
+  { label: "8 Coin",     prizeType: "coins" as const, coinsEarned: 8,   segmentIndex: 7 },
 ];
 
-const WEIGHTS = [15, 20, 8, 15, 15, 15, 2, 10];
+// Higher miss/low-reward weight — more tension, more value when you do win
+const WEIGHTS = [18, 16, 5, 14, 22, 12, 3, 10];
 
 function weightedRandom(): number {
   const total = WEIGHTS.reduce((a, b) => a + b, 0);

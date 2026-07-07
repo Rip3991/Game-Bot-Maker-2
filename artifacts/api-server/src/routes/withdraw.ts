@@ -6,8 +6,8 @@ import crypto from "crypto";
 
 const router = Router();
 
-const MIN_WITHDRAW_TL = 50;
-const MAX_WITHDRAW_TL = 350; // 350 TL withdrawal cap per request
+const MIN_WITHDRAW_TL = 350;
+const MAX_WITHDRAW_TL = 350; // exactly 350 TL per request
 
 // POST /withdraw/request
 router.post("/withdraw/request", async (req, res): Promise<void> => {

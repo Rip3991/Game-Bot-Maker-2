@@ -167,7 +167,120 @@ export interface OnlineStats {
   totalCoinsInCirculation: number;
 }
 
+export interface VaultDepositInput {
+  telegramId: string;
+  /** Number of coins to deposit (min 100) */
+  coins: number;
+  /** Lock period in days: 3, 7, 14, or 30 */
+  lockDays: number;
+}
+
+export interface VaultDepositResult {
+  id: string;
+  coinsDeposited: number;
+  coinsToReceive: number;
+  multiplier: number;
+  maturesAt: string;
+  lockDays: number;
+}
+
+export type VaultEntryStatus = typeof VaultEntryStatus[keyof typeof VaultEntryStatus];
+
+
+export const VaultEntryStatus = {
+  locked: 'locked',
+  mature: 'mature',
+  claimed: 'claimed',
+} as const;
+
+export interface VaultEntry {
+  id: string;
+  coinsDeposited: number;
+  coinsToReceive: number;
+  multiplier: number;
+  lockDays: number;
+  maturesAt: string;
+  status: VaultEntryStatus;
+  createdAt?: string;
+}
+
+export interface VaultClaimInput {
+  telegramId: string;
+  depositId: string;
+}
+
+export interface VaultClaimResult {
+  coinsReceived: number;
+  newCoinTotal: number;
+}
+
+export type NftItemRarity = typeof NftItemRarity[keyof typeof NftItemRarity];
+
+
+export const NftItemRarity = {
+  common: 'common',
+  rare: 'rare',
+  special: 'special',
+  legendary: 'legendary',
+} as const;
+
+export interface NftItem {
+  id: string;
+  ownerTelegramId: string;
+  nftType: string;
+  rarity: NftItemRarity;
+  name: string;
+  emoji: string;
+  mintNumber: number;
+  isListedForTrade: boolean;
+  createdAt: string;
+}
+
+export interface NftListTradeInput {
+  telegramId: string;
+  nftId: string;
+  list: boolean;
+}
+
+export interface NftTradeOfferInput {
+  offererTelegramId: string;
+  offeredNftId: string;
+  targetTelegramId?: string;
+  wantedNftType?: string;
+}
+
+export type NftTradeOfferStatus = typeof NftTradeOfferStatus[keyof typeof NftTradeOfferStatus];
+
+
+export const NftTradeOfferStatus = {
+  pending: 'pending',
+  accepted: 'accepted',
+  rejected: 'rejected',
+  cancelled: 'cancelled',
+} as const;
+
+export interface NftTradeOffer {
+  id: string;
+  offererTelegramId: string;
+  offeredNftId: string;
+  targetTelegramId?: string;
+  wantedNftType?: string;
+  status: NftTradeOfferStatus;
+  createdAt: string;
+  offeredNft?: NftItem;
+}
+
+export interface NftTradeAcceptInput {
+  telegramId: string;
+  offerId: string;
+  acceptorNftId: string;
+}
+
 export type GetLeaderboardParams = {
 limit?: number;
+};
+
+export type AcceptTradeOffer200 = {
+  success?: boolean;
 };
 

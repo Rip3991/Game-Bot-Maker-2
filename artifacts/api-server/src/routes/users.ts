@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { eq, desc, sql } from "drizzle-orm";
 import { db, usersTable, referralsTable, achievementsTable } from "@workspace/db";
+import { grantNft } from "./nfts";
 import {
   InitUserBody,
   GetUserParams,
@@ -174,6 +175,16 @@ router.put("/users/:telegramId/farm-state", async (req, res): Promise<void> => {
   if (user && Number(user.coins) >= 1000) {
     await grantAchievement(telegramId, "coin_collector");
   }
+
+  // Grant NFTs on farm max-level milestones (non-critical, swallow errors)
+  try {
+    if (farmState.wheat  >= 10) await grantNft(telegramId, "golden_wheat");
+    if (farmState.chicken >= 10) await grantNft(telegramId, "diamond_chicken");
+    if (farmState.cow    >= 10) await grantNft(telegramId, "royal_cow");
+    if (farmState.wheat  >= 1 && farmState.chicken >= 1 && farmState.cow >= 1) {
+      await grantNft(telegramId, "farm_pioneer");
+    }
+  } catch { /* non-critical */ }
 
   const updated = await db
     .update(usersTable)

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { GameState, FARM_CONFIG } from '../hooks/use-game-engine';
+import { GameState, SECTIONS } from '../hooks/use-game-engine';
 
 interface ConveyorBeltProps {
   state: GameState;
@@ -16,37 +16,34 @@ export const ConveyorBelt: React.FC<ConveyorBeltProps> = ({ state }) => {
   const [items, setItems] = useState<MovingItem[]>([]);
   const nextId = useRef(0);
 
-  // Spawner logic
+  // Spawner logic — one interval per unlocked section
   useEffect(() => {
     const intervals: ReturnType<typeof setInterval>[] = [];
 
-    Object.entries(state.farms).forEach(([type, level]) => {
-      const config = FARM_CONFIG[type as keyof typeof FARM_CONFIG];
-      const ratePerSec = (level * config.baseRate) / 60;
-      
-      if (ratePerSec > 0) {
-        // We limit visual spawn rate slightly so it doesn't get completely chaotic
-        const ms = Math.max(250, 1000 / ratePerSec); 
-        
-        intervals.push(setInterval(() => {
-          setItems(prev => {
-            // Keep maximum 30 items on screen to prevent lag
-            if (prev.length > 30) return prev;
-            return [...prev, {
-              id: `${type}-${nextId.current++}`,
-              emoji: config.emoji,
-              leftOffset: Math.random() * 40 - 20, // -20px to +20px offset
-              time: Date.now()
-            }];
-          });
-        }, ms));
-      }
+    SECTIONS.forEach(cfg => {
+      const sec = state.sections[cfg.id];
+      if (!sec?.unlocked || sec.count === 0) return;
+
+      const ratePerSec = (sec.count * cfg.baseRate) / 60;
+      const ms = Math.max(300, 1200 / ratePerSec);
+
+      intervals.push(setInterval(() => {
+        setItems(prev => {
+          if (prev.length > 35) return prev;
+          return [...prev, {
+            id: `${cfg.id}-${nextId.current++}`,
+            emoji: cfg.emoji,
+            leftOffset: Math.random() * 36 - 18,
+            time: Date.now(),
+          }];
+        });
+      }, ms));
     });
 
     return () => intervals.forEach(clearInterval);
-  }, [state.farms]);
+  }, [state.sections]);
 
-  // Cleanup logic
+  // Cleanup items older than 4 s
   useEffect(() => {
     const cleanup = setInterval(() => {
       const now = Date.now();
@@ -56,28 +53,29 @@ export const ConveyorBelt: React.FC<ConveyorBeltProps> = ({ state }) => {
   }, []);
 
   return (
-    <div className="w-24 h-full border-l-4 border-[#5c3a21] bg-[#455a64] relative flex flex-col shadow-[-5px_0_15px_rgba(0,0,0,0.3)] z-0">
-      {/* Barn Header */}
-      <div className="h-28 w-full bg-red-700 border-b-4 border-red-900 relative z-30 shadow-md flex items-end justify-center pb-2">
-        {/* Barn Roof */}
-        <div className="absolute top-0 left-0 right-0 h-12 bg-red-800" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }}></div>
-        <span className="text-5xl drop-shadow-xl z-10 animate-bounce-idle">🏚️</span>
+    <div className="w-16 h-full border-l-2 border-white/10 bg-gradient-to-b from-[#0d1a05] to-[#1a2e08] relative flex flex-col shadow-[-4px_0_12px_rgba(0,0,0,0.4)] z-0 overflow-hidden">
+      {/* Barn icon at top */}
+      <div className="h-14 flex items-center justify-center bg-black/30 border-b border-white/10 flex-shrink-0">
+        <span className="text-2xl drop-shadow-lg">🏚️</span>
       </div>
 
-      {/* Belt Container */}
-      <div className="flex-1 conveyor-bg conveyor-belt-texture overflow-hidden relative border-x-4 border-gray-600/30">
-        {/* Shadow overlays for depth */}
-        <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-black/40 to-transparent z-20"></div>
-        <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/40 to-transparent z-20"></div>
-        
-        {/* Floating Items */}
+      {/* Belt area */}
+      <div className="flex-1 relative overflow-hidden">
+        {/* Scrolling stripe texture */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none belt-stripe" />
+
+        {/* Gradient overlays */}
+        <div className="absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-black/50 to-transparent z-10 pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/50 to-transparent z-10 pointer-events-none" />
+
+        {/* Floating items */}
         {items.map(item => (
           <div
             key={item.id}
-            className="absolute text-3xl drop-shadow-md z-10 will-change-transform"
+            className="absolute text-xl drop-shadow-md z-5 will-change-transform select-none pointer-events-none"
             style={{
               left: `calc(50% + ${item.leftOffset}px)`,
-              bottom: '-10%',
+              bottom: '-8%',
               transform: 'translateX(-50%)',
               animation: 'floatUp 4s linear forwards',
             }}
@@ -89,10 +87,19 @@ export const ConveyorBelt: React.FC<ConveyorBeltProps> = ({ state }) => {
 
       <style>{`
         @keyframes floatUp {
-          0% { transform: translate(-50%, 0) rotate(0deg); opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { transform: translate(-50%, -120vh) rotate(360deg); opacity: 0; }
+          0%   { transform: translate(-50%, 0) rotate(0deg); opacity: 0; }
+          8%   { opacity: 1; }
+          90%  { opacity: 1; }
+          100% { transform: translate(-50%, -110vh) rotate(360deg); opacity: 0; }
+        }
+        @keyframes stripeScroll {
+          0%   { background-position: 0 0; }
+          100% { background-position: 0 -40px; }
+        }
+        .belt-stripe {
+          background-image: repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(255,255,255,0.6) 20px, rgba(255,255,255,0.6) 22px);
+          background-size: 100% 200%;
+          animation: stripeScroll 0.8s linear infinite;
         }
       `}</style>
     </div>
