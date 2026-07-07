@@ -95,10 +95,13 @@ router.get("/telegram/set-webhook", async (req, res): Promise<void> => {
     return;
   }
 
-  const host =
-    req.headers["x-forwarded-host"] ||
-    req.headers.host ||
-    process.env.REPLIT_DEV_DOMAIN;
+  const devDomain = process.env.REPLIT_DEV_DOMAIN;
+  const domains = process.env.REPLIT_DOMAINS;
+  const host = (domains ? domains.split(",")[0].trim() : null) ?? devDomain;
+  if (!host) {
+    res.status(500).json({ error: "Could not determine host domain (REPLIT_DEV_DOMAIN / REPLIT_DOMAINS not set)" });
+    return;
+  }
   const webhookUrl = `https://${host}/api/telegram/webhook`;
 
   const result = await sendTelegramRequest("setWebhook", {
