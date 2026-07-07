@@ -7,9 +7,11 @@ interface MarketPanelProps {
   storage: Record<string, number>;
   gameState: GameState;
   onSell: () => SaleRecord[];
+  autoSell: boolean;
+  onToggleAutoSell: () => void;
 }
 
-export function MarketPanel({ storage, gameState, onSell }: MarketPanelProps) {
+export function MarketPanel({ storage, gameState, onSell, autoSell, onToggleAutoSell }: MarketPanelProps) {
   const [lastSale, setLastSale] = useState<SaleRecord[] | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [totalEarned, setTotalEarned] = useState(0);
@@ -53,7 +55,9 @@ export function MarketPanel({ storage, gameState, onSell }: MarketPanelProps) {
               style={{ background: 'linear-gradient(135deg, #1a3d08, #2e6012)' }}
             >
               <div className="bg-yellow-400/20 px-3 py-1.5 flex items-center justify-between">
-                <span className="font-black text-yellow-300 text-xs">🎉 Satış Tamamlandı!</span>
+                <span className="font-black text-yellow-300 text-xs">
+                  {autoSell ? '🤖 Otomatik Satış!' : '🎉 Satış Tamamlandı!'}
+                </span>
                 <span className="font-black text-yellow-300 text-base">+{formatNum(totalEarned)} TL</span>
               </div>
               <div className="px-2 py-1.5 flex flex-wrap gap-1.5">
@@ -77,6 +81,29 @@ export function MarketPanel({ storage, gameState, onSell }: MarketPanelProps) {
         <span className="text-sm">🏪</span>
         <span className="font-black text-green-300 text-[11px] uppercase tracking-widest">Pazar Yeri</span>
         <div className="flex-1" />
+
+        {/* Auto-sell toggle */}
+        <button
+          onClick={onToggleAutoSell}
+          className="flex items-center gap-1 rounded-full px-2 py-0.5 border transition-all active:scale-90"
+          style={autoSell ? {
+            background: 'linear-gradient(135deg, #16a34a, #15803d)',
+            borderColor: '#4ade80',
+            boxShadow: '0 0 8px rgba(74,222,128,0.5)',
+          } : {
+            background: 'rgba(255,255,255,0.06)',
+            borderColor: 'rgba(255,255,255,0.15)',
+          }}
+        >
+          <span className="text-[9px]">🤖</span>
+          <span
+            className="font-black text-[9px]"
+            style={{ color: autoSell ? '#bbf7d0' : 'rgba(255,255,255,0.4)' }}
+          >
+            {autoSell ? 'OTO-SAT: AÇIK' : 'OTO-SAT'}
+          </span>
+        </button>
+
         {unlockedSections.map(cfg => (
           <div key={cfg.id} className="flex items-center gap-0.5">
             <span className="text-[10px]">{cfg.emoji}</span>
@@ -101,7 +128,7 @@ export function MarketPanel({ storage, gameState, onSell }: MarketPanelProps) {
           <div className="flex-1 flex flex-wrap gap-1 overflow-hidden">
             {storedItems.length === 0 ? (
               <div className="text-white/30 text-[10px] italic py-1">
-                Henüz ürün yok...
+                {autoSell ? '🤖 Otomatik satılıyor...' : 'Henüz ürün yok...'}
               </div>
             ) : (
               storedItems.map(cfg => {
@@ -113,7 +140,7 @@ export function MarketPanel({ storage, gameState, onSell }: MarketPanelProps) {
                     initial={{ scale: 0.7, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     className="flex items-center gap-0.5 rounded-lg px-1.5 py-0.5 border border-green-500/20"
-                    style={{ background: 'rgba(34,197,94,0.07)' }}
+                    style={{ background: autoSell ? 'rgba(74,222,128,0.1)' : 'rgba(34,197,94,0.07)' }}
                   >
                     <span className="text-xs">{cfg.emoji}</span>
                     <span className="text-white font-black text-[10px]">{qty}</span>
@@ -126,12 +153,12 @@ export function MarketPanel({ storage, gameState, onSell }: MarketPanelProps) {
 
           {/* Arrow to sales */}
           {hasAnything && (
-            <div className="flex-shrink-0 text-green-400/60 text-xs animate-pulse">→</div>
+            <div className={`flex-shrink-0 text-xs ${autoSell ? 'text-green-400 animate-pulse' : 'text-green-400/60 animate-pulse'}`}>→</div>
           )}
 
           {/* Sales point label */}
           <div className="flex-shrink-0 flex flex-col items-center">
-            <span className="text-base">💰</span>
+            <span className="text-base">{autoSell ? '🤖' : '💰'}</span>
             <span className="text-[8px] text-white/40 font-bold">Satış</span>
           </div>
         </div>
@@ -151,16 +178,14 @@ export function MarketPanel({ storage, gameState, onSell }: MarketPanelProps) {
 
           {/* Outer glow ring when ready */}
           <div className="relative w-full">
-            {hasAnything && (
+            {hasAnything && !autoSell && (
               <>
-                {/* Animated ring */}
                 <motion.div
                   className="absolute inset-0 rounded-xl"
                   animate={{ opacity: [0.6, 0, 0.6], scale: [1, 1.18, 1] }}
                   transition={{ repeat: Infinity, duration: 1.1, ease: 'easeInOut' }}
                   style={{ background: 'radial-gradient(ellipse, rgba(34,197,94,0.7) 0%, transparent 70%)', pointerEvents: 'none' }}
                 />
-                {/* Bouncing arrow above button */}
                 <motion.div
                   className="absolute -top-5 left-1/2 -translate-x-1/2 text-base pointer-events-none select-none"
                   animate={{ y: [0, -5, 0] }}
@@ -171,32 +196,46 @@ export function MarketPanel({ storage, gameState, onSell }: MarketPanelProps) {
               </>
             )}
 
-            <motion.button
-              onClick={handleSell}
-              disabled={!hasAnything}
-              whileTap={hasAnything ? { scale: 0.88 } : undefined}
-              animate={hasAnything
-                ? { scale: [1, 1.07, 1], y: [0, -2, 0] }
-                : { scale: 1 }}
-              transition={hasAnything
-                ? { repeat: Infinity, duration: 0.9, ease: 'easeInOut' }
-                : undefined}
-              className="relative w-full py-2.5 rounded-xl font-black text-sm border-2 transition-colors"
-              style={hasAnything ? {
-                background: 'linear-gradient(180deg, #4ade80, #16a34a)',
-                borderColor: '#86efac',
-                color: 'white',
-                textShadow: '0 1px 4px rgba(0,0,0,0.6)',
-                boxShadow: '0 4px 0 #14532d, 0 0 18px rgba(34,197,94,0.65), 0 0 36px rgba(34,197,94,0.3)',
-                letterSpacing: '0.04em',
-              } : {
-                background: 'rgba(255,255,255,0.04)',
-                borderColor: 'rgba(255,255,255,0.08)',
-                color: 'rgba(255,255,255,0.25)',
-              }}
-            >
-              {hasAnything ? '💰 SAT!' : '⏳'}
-            </motion.button>
+            {autoSell ? (
+              <div
+                className="relative w-full py-2.5 rounded-xl font-black text-[11px] border-2 text-center"
+                style={{
+                  background: 'linear-gradient(180deg, #16a34a, #15803d)',
+                  borderColor: '#4ade80',
+                  color: '#bbf7d0',
+                  boxShadow: '0 4px 0 #14532d, 0 0 12px rgba(74,222,128,0.4)',
+                }}
+              >
+                🤖 OTO
+              </div>
+            ) : (
+              <motion.button
+                onClick={handleSell}
+                disabled={!hasAnything}
+                whileTap={hasAnything ? { scale: 0.88 } : undefined}
+                animate={hasAnything
+                  ? { scale: [1, 1.07, 1], y: [0, -2, 0] }
+                  : { scale: 1 }}
+                transition={hasAnything
+                  ? { repeat: Infinity, duration: 0.9, ease: 'easeInOut' }
+                  : undefined}
+                className="relative w-full py-2.5 rounded-xl font-black text-sm border-2 transition-colors"
+                style={hasAnything ? {
+                  background: 'linear-gradient(180deg, #4ade80, #16a34a)',
+                  borderColor: '#86efac',
+                  color: 'white',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.6)',
+                  boxShadow: '0 4px 0 #14532d, 0 0 18px rgba(34,197,94,0.65), 0 0 36px rgba(34,197,94,0.3)',
+                  letterSpacing: '0.04em',
+                } : {
+                  background: 'rgba(255,255,255,0.04)',
+                  borderColor: 'rgba(255,255,255,0.08)',
+                  color: 'rgba(255,255,255,0.25)',
+                }}
+              >
+                {hasAnything ? '💰 SAT!' : '⏳'}
+              </motion.button>
+            )}
           </div>
         </div>
       </div>

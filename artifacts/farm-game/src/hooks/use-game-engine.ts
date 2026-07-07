@@ -129,9 +129,22 @@ export const makeInitialState = (): GameState => ({
 });
 
 const SAVE_KEY = 'farmGameState_v6';
+const AUTO_SELL_KEY = 'farmAutoSell_v1';
 export const WELCOME_BONUS = 150;
 
 export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {}) {
+  const [autoSell, setAutoSell] = useState<boolean>(() => {
+    try { return localStorage.getItem(AUTO_SELL_KEY) === 'true'; } catch { return false; }
+  });
+
+  const toggleAutoSell = useCallback(() => {
+    setAutoSell(prev => {
+      const next = !prev;
+      try { localStorage.setItem(AUTO_SELL_KEY, String(next)); } catch { /* */ }
+      return next;
+    });
+  }, []);
+
   const [state, setState] = useState<GameState>(() => {
     try {
       const saved = localStorage.getItem(SAVE_KEY);
@@ -233,6 +246,32 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
     return () => clearInterval(interval);
   }, []);
 
+  // Auto-sell every 30 sec when enabled
+  const autoSellRef = useRef(autoSell);
+  autoSellRef.current = autoSell;
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!autoSellRef.current) return;
+      const current = stateRef.current;
+      const hasProducts = SECTIONS.some(cfg => Math.floor(current.storage[cfg.id] ?? 0) > 0);
+      if (!hasProducts) return;
+      setState(prev => {
+        const newStorage = { ...prev.storage };
+        let totalEarned = 0;
+        SECTIONS.forEach(cfg => {
+          const amt = Math.floor(prev.storage[cfg.id] ?? 0);
+          if (amt > 0) {
+            totalEarned += amt * cfg.sellPrice;
+            newStorage[cfg.id] = (prev.storage[cfg.id] ?? 0) - amt;
+          }
+        });
+        if (totalEarned === 0) return prev;
+        return { ...prev, balance: prev.balance + totalEarned, storage: newStorage };
+      });
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   const unlockSection = useCallback((id: string) => {
     const cfg = SECTIONS.find(s => s.id === id)!;
     setState(prev => {
@@ -299,5 +338,5 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
     setState(prev => ({ ...prev, balance: amount }));
   }, []);
 
-  return { state, unlockSection, buyUnit, sellProducts, incomePerMin, showWelcomeBonus, setShowWelcomeBonus, setBalance };
+  return { state, unlockSection, buyUnit, sellProducts, incomePerMin, showWelcomeBonus, setShowWelcomeBonus, setBalance, autoSell, toggleAutoSell };
 }
