@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * Farm Idle Game API
- * OpenAPI spec version: 0.2.0
+ * OpenAPI spec version: 0.3.0
  */
 import {
   useMutation,
@@ -25,6 +25,7 @@ import type {
   GetLeaderboardParams,
   HealthStatus,
   LeaderboardEntry,
+  OnlineStats,
   ReferralStats,
   SpinCooldown,
   SpinInput,
@@ -33,7 +34,10 @@ import type {
   StarPurchaseInput,
   StarPurchaseResult,
   User,
-  UserInitInput
+  UserInitInput,
+  WithdrawEntry,
+  WithdrawInput,
+  WithdrawResult
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -801,6 +805,230 @@ export function useGetReferralStats<TData = Awaited<ReturnType<typeof getReferra
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetReferralStatsQueryOptions(telegramId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRequestWithdrawalUrl = () => {
+
+
+
+
+  return `/api/withdraw/request`
+}
+
+/**
+ * @summary Submit a withdrawal request (max 350 TL)
+ */
+export const requestWithdrawal = async (withdrawInput: WithdrawInput, options?: RequestInit): Promise<WithdrawResult> => {
+
+  return customFetch<WithdrawResult>(getRequestWithdrawalUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(withdrawInput)
+  }
+);}
+
+
+
+
+export const getRequestWithdrawalMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestWithdrawal>>, TError,{data: BodyType<WithdrawInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestWithdrawal>>, TError,{data: BodyType<WithdrawInput>}, TContext> => {
+
+const mutationKey = ['requestWithdrawal'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestWithdrawal>>, {data: BodyType<WithdrawInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  requestWithdrawal(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestWithdrawalMutationResult = NonNullable<Awaited<ReturnType<typeof requestWithdrawal>>>
+    export type RequestWithdrawalMutationBody = BodyType<WithdrawInput>
+    export type RequestWithdrawalMutationError = ErrorType<void>
+
+    /**
+ * @summary Submit a withdrawal request (max 350 TL)
+ */
+export const useRequestWithdrawal = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestWithdrawal>>, TError,{data: BodyType<WithdrawInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestWithdrawal>>,
+        TError,
+        {data: BodyType<WithdrawInput>},
+        TContext
+      > => {
+      return useMutation(getRequestWithdrawalMutationOptions(options));
+    }
+
+export const getGetWithdrawHistoryUrl = (telegramId: string,) => {
+
+
+
+
+  return `/api/withdraw/history/${telegramId}`
+}
+
+/**
+ * @summary Get withdrawal history for a user
+ */
+export const getWithdrawHistory = async (telegramId: string, options?: RequestInit): Promise<WithdrawEntry[]> => {
+
+  return customFetch<WithdrawEntry[]>(getGetWithdrawHistoryUrl(telegramId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetWithdrawHistoryQueryKey = (telegramId: string,) => {
+    return [
+    `/api/withdraw/history/${telegramId}`
+    ] as const;
+    }
+
+
+export const getGetWithdrawHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getWithdrawHistory>>, TError = ErrorType<unknown>>(telegramId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWithdrawHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetWithdrawHistoryQueryKey(telegramId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWithdrawHistory>>> = ({ signal }) => getWithdrawHistory(telegramId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: telegramId !== null && telegramId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWithdrawHistory>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetWithdrawHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getWithdrawHistory>>>
+export type GetWithdrawHistoryQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get withdrawal history for a user
+ */
+
+export function useGetWithdrawHistory<TData = Awaited<ReturnType<typeof getWithdrawHistory>>, TError = ErrorType<unknown>>(
+ telegramId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getWithdrawHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetWithdrawHistoryQueryOptions(telegramId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetOnlineStatsUrl = () => {
+
+
+
+
+  return `/api/stats/online`
+}
+
+/**
+ * @summary Get live online player count and stats
+ */
+export const getOnlineStats = async ( options?: RequestInit): Promise<OnlineStats> => {
+
+  return customFetch<OnlineStats>(getGetOnlineStatsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetOnlineStatsQueryKey = () => {
+    return [
+    `/api/stats/online`
+    ] as const;
+    }
+
+
+export const getGetOnlineStatsQueryOptions = <TData = Awaited<ReturnType<typeof getOnlineStats>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getOnlineStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOnlineStatsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOnlineStats>>> = ({ signal }) => getOnlineStats({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOnlineStats>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetOnlineStatsQueryResult = NonNullable<Awaited<ReturnType<typeof getOnlineStats>>>
+export type GetOnlineStatsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get live online player count and stats
+ */
+
+export function useGetOnlineStats<TData = Awaited<ReturnType<typeof getOnlineStats>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getOnlineStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetOnlineStatsQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

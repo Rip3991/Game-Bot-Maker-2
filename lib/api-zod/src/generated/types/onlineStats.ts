@@ -6,6 +6,8 @@
  * OpenAPI spec version: 0.3.0
  */
 
-export interface SpinInput {
-  telegramId: string;
+export interface OnlineStats {
+  onlineCount: number;
+  totalPlayers: number;
+  totalCoinsInCirculation: number;
 }

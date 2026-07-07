@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.3.0
  */
 
-export interface SpinInput {
-  telegramId: string;
+export interface WithdrawEntry {
+  id: string;
+  amount: number;
+  method: string;
+  status: string;
+  createdAt: string;
 }

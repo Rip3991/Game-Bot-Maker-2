@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * Farm Idle Game API
- * OpenAPI spec version: 0.2.0
+ * OpenAPI spec version: 0.3.0
  */
 
 export * from './achievement';
@@ -12,6 +12,7 @@ export * from './farmStateInput';
 export * from './getLeaderboardParams';
 export * from './healthStatus';
 export * from './leaderboardEntry';
+export * from './onlineStats';
 export * from './referralEntry';
 export * from './referralStats';
 export * from './spinCooldown';
@@ -23,3 +24,7 @@ export * from './starPurchaseInput';
 export * from './starPurchaseResult';
 export * from './user';
 export * from './userInitInput';
+export * from './withdrawEntry';
+export * from './withdrawInput';
+export * from './withdrawResult';
+export * from './withdrawResultStatus';

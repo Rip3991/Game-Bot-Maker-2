@@ -16,12 +16,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name ?? "Demo Çiftçi";
       const username =
         window.Telegram?.WebApp?.initDataUnsafe?.user?.username ?? null;
-      const initData = window.Telegram?.WebApp?.initData ?? "";
-      const urlParams = new URLSearchParams(initData);
-      const referredBy = urlParams.get("start_param") ?? null;
+
+      // Correct way to read start_param — from initDataUnsafe, not from initData string
+      const startParam =
+        window.Telegram?.WebApp?.initDataUnsafe?.start_param ?? null;
 
       const data = await initUserMut.mutateAsync({
-        data: { telegramId, firstName, username, referredBy },
+        data: { telegramId, firstName, username, referredBy: startParam },
       });
       setUser(data);
     } catch (e) {

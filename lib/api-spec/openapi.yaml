@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Api
-  version: 0.2.0
+  version: 0.3.0
   description: Farm Idle Game API
 servers:
   - url: /api
@@ -17,6 +17,10 @@ tags:
     description: Leaderboard
   - name: stars
     description: Telegram Stars shop
+  - name: withdraw
+    description: Withdrawal requests
+  - name: stats
+    description: Live statistics
 paths:
   /healthz:
     get:
@@ -217,6 +221,61 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReferralStats"
+
+  /withdraw/request:
+    post:
+      operationId: requestWithdrawal
+      tags: [withdraw]
+      summary: Submit a withdrawal request (max 350 TL)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WithdrawInput"
+      responses:
+        "200":
+          description: Withdrawal request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WithdrawResult"
+        "400":
+          description: Invalid amount or insufficient balance
+
+  /withdraw/history/{telegramId}:
+    get:
+      operationId: getWithdrawHistory
+      tags: [withdraw]
+      summary: Get withdrawal history for a user
+      parameters:
+        - name: telegramId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Withdrawal history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WithdrawEntry"
+
+  /stats/online:
+    get:
+      operationId: getOnlineStats
+      tags: [stats]
+      summary: Get live online player count and stats
+      responses:
+        "200":
+          description: Online stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnlineStats"
 
 components:
   schemas:
@@ -419,3 +478,60 @@ components:
           type: string
         coinsEarned:
           type: integer
+
+    WithdrawInput:
+      type: object
+      required: [telegramId, amount, method]
+      properties:
+        telegramId:
+          type: string
+        amount:
+          type: number
+          description: Amount in TL to withdraw (min 50, max 350)
+        method:
+          type: string
+          description: "Withdrawal method: papara, iban, crypto"
+
+    WithdrawResult:
+      type: object
+      required: [success, requestId, amount, status, message, newBalance]
+      properties:
+        success:
+          type: boolean
+        requestId:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        message:
+          type: string
+        newBalance:
+          type: number
+
+    WithdrawEntry:
+      type: object
+      required: [id, amount, method, status, createdAt]
+      properties:
+        id:
+          type: string
+        amount:
+          type: number
+        method:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+
+    OnlineStats:
+      type: object
+      required: [onlineCount, totalPlayers, totalCoinsInCirculation]
+      properties:
+        onlineCount:
+          type: integer
+        totalPlayers:
+          type: integer
+        totalCoinsInCirculation:
+          type: number

@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * Farm Idle Game API
- * OpenAPI spec version: 0.2.0
+ * OpenAPI spec version: 0.3.0
  */
 export interface HealthStatus {
   status: string;
@@ -125,6 +125,46 @@ export interface ReferralStats {
   coinsFromReferrals: number;
   referralLink: string;
   recentReferrals: ReferralEntry[];
+}
+
+export interface WithdrawInput {
+  telegramId: string;
+  /** Amount in TL to withdraw (min 50, max 350) */
+  amount: number;
+  /** Withdrawal method: papara, iban, crypto */
+  method: string;
+}
+
+export type WithdrawResultStatus = typeof WithdrawResultStatus[keyof typeof WithdrawResultStatus];
+
+
+export const WithdrawResultStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface WithdrawResult {
+  success: boolean;
+  requestId: string;
+  amount: number;
+  status: WithdrawResultStatus;
+  message: string;
+  newBalance: number;
+}
+
+export interface WithdrawEntry {
+  id: string;
+  amount: number;
+  method: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface OnlineStats {
+  onlineCount: number;
+  totalPlayers: number;
+  totalCoinsInCirculation: number;
 }
 
 export type GetLeaderboardParams = {

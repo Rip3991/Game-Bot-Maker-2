@@ -15,6 +15,8 @@ import { BottomNav } from './components/BottomNav';
 import { AnimatePresence, motion } from 'framer-motion';
 import React, { useState } from 'react';
 import mascotAvatar from './assets/mascot-avatar.png';
+import { WithdrawModal } from './components/WithdrawModal';
+import { Toaster as SonnerToaster } from 'sonner';
 
 const queryClient = new QueryClient();
 
@@ -23,6 +25,7 @@ function Router() {
   const [isWelcomed, setIsWelcomed] = useState(
     () => localStorage.getItem('farm_welcomed_v1') === 'true'
   );
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
   const { isLoading } = useUser();
 
   if (!isWelcomed) {
@@ -32,12 +35,12 @@ function Router() {
   if (isLoading) {
     return (
       <div className="flex flex-col h-[100dvh] w-full max-w-md mx-auto bg-[#5ab327] items-center justify-center shadow-2xl">
-        <motion.img 
-          src={mascotAvatar} 
+        <motion.img
+          src={mascotAvatar}
           alt="Sarı"
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-          className="w-24 h-24 drop-shadow-xl mb-6 bg-yellow-400 rounded-full border-4 border-white shadow-inner" 
+          className="w-24 h-24 drop-shadow-xl mb-6 bg-yellow-400 rounded-full border-4 border-white shadow-inner"
         />
         <div className="font-black text-white text-xl drop-shadow-md animate-pulse">Yükleniyor...</div>
       </div>
@@ -68,25 +71,22 @@ function Router() {
         </AnimatePresence>
       </div>
 
-      {/* Global Withdraw Button Container (appears just above Bottom Nav) */}
+      {/* Withdraw button — only on main game screen */}
       {location === '/' && (
         <div className="absolute bottom-[80px] inset-x-0 p-4 bg-gradient-to-t from-black/50 to-transparent z-40 pointer-events-none">
-          <button 
-            onClick={() => {
-              if (window.Telegram?.WebApp) {
-                window.Telegram.WebApp.showAlert("Ödemeniz işleniyor! / Payment processing!");
-              } else {
-                alert("Ödemeniz işleniyor! / Payment processing!");
-              }
-            }}
+          <button
+            onClick={() => setWithdrawOpen(true)}
             className="w-full bg-gradient-to-b from-[#2AABEE] to-[#229ED9] text-white font-black text-lg py-4 rounded-2xl shadow-[0_6px_0_#1b7ea8,0_15px_20px_rgba(0,0,0,0.4)] border-2 border-white/20 active:translate-y-[6px] active:shadow-[0_0px_0_#1b7ea8,0_5px_10px_rgba(0,0,0,0.4)] transition-all pointer-events-auto flex items-center justify-center gap-2"
           >
-            Telegram'dan Çek <span className="text-xl">📩</span>
+            💸 Para Çek (max 350 TL)
           </button>
         </div>
       )}
 
       <BottomNav />
+
+      {/* Withdraw modal */}
+      <WithdrawModal isOpen={withdrawOpen} onClose={() => setWithdrawOpen(false)} />
     </div>
   );
 }
@@ -100,6 +100,7 @@ function App() {
             <Router />
           </WouterRouter>
           <Toaster />
+          <SonnerToaster position="top-center" richColors />
         </TooltipProvider>
       </UserProvider>
     </QueryClientProvider>

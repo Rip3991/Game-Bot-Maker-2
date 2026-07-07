@@ -6,6 +6,10 @@ function getBotToken(): string | undefined {
   return process.env.TELEGRAM_BOT_TOKEN;
 }
 
+function getBotUsername(): string {
+  return process.env.BOT_USERNAME ?? "MemberGobot";
+}
+
 function getGameUrl(): string {
   const domains = process.env.REPLIT_DOMAINS || process.env.REPLIT_DEV_DOMAIN || "";
   const primary = domains.split(",")[0].trim();
@@ -40,7 +44,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
     message?: {
       chat: { id: number };
       text?: string;
-      from?: { first_name?: string };
+      from?: { first_name?: string; id?: number };
     };
   };
 
@@ -53,6 +57,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
   const chatId = message.chat.id;
   const text = (message.text ?? "").trim();
   const firstName = message.from?.first_name ?? "Çiftçi";
+  const userId = message.from?.id;
 
   if (text === "/start" || text.startsWith("/start ")) {
     const gameUrl = getGameUrl();
@@ -70,16 +75,28 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
     // Extract referral param: /start ref_<telegramId>
     const startParam = text.replace("/start", "").trim();
     const refParam = startParam.startsWith("ref_") ? startParam : "";
-    const appUrl = refParam ? `${gameUrl}?startapp=${refParam}` : gameUrl;
+
+    // Build the Mini App URL — pass startapp param for referral tracking
+    // Format: https://t.me/{botUsername}?startapp={refParam} is for direct bot links
+    // For inline button web_app, we embed the startapp in the URL query
+    const appUrl = refParam
+      ? `${gameUrl}?startapp=${refParam}`
+      : gameUrl;
+
+    // Referral invite link for sharing
+    const botUsername = getBotUsername();
+    const inviteUrl = userId
+      ? `https://t.me/${botUsername}?start=ref_${userId}`
+      : `https://t.me/${botUsername}`;
 
     await sendTelegramRequest("sendMessage", {
       chat_id: chatId,
-      text: `🌾 <b>Merhaba ${firstName}!</b> Çiftliğine hoş geldin!\n\n🐄 İneklerin sütünü bekliyor\n🐔 Tavukların yumurtasını bekliyor\n🌾 Tarlan mahsulünü bekliyor\n\n🪙 Arkadaşlarını davet et, <b>500 Coin</b> kazan!\n🎡 Her gün çarkı çevir, ödül kazan!\n⭐ Coinleri Telegram Stars'a çevir!\n\nOynamak için aşağıdaki butona tıkla:`,
+      text: `🌾 <b>Merhaba ${firstName}!</b> Sarı'nın Çiftliği'ne hoş geldin!\n\n🐄 İneklerin sütünü bekliyor\n🐔 Tavukların yumurtasını bekliyor\n🌾 Tarlan mahsulünü bekliyor\n\n🪙 Her arkadaş davetinde <b>50 Coin</b> kazan!\n🎡 Her gün çarkı çevir, ödül kazan!\n💸 350 TL'ye kadar çekim yapabilirsin!\n\nOynamak için aşağıdaki butona tıkla 👇`,
       parse_mode: "HTML",
       reply_markup: {
         inline_keyboard: [
           [{ text: "🚜 Çiftliği Aç", web_app: { url: appUrl } }],
-          [{ text: "👥 Arkadaş Davet Et", switch_inline_query: `Çiftlik oyununu oyna! Her davet = 500 Coin ${gameUrl}` }],
+          [{ text: "👥 Arkadaş Davet Et & 50 Coin Kazan", url: `https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent("Benimle Sarı'nın Çiftliği'ni oyna! Davet bonusu kazan 🌾🪙")}` }],
         ],
       },
     });

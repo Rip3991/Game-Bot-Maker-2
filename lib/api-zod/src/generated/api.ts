@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * Farm Idle Game API
- * OpenAPI spec version: 0.2.0
+ * OpenAPI spec version: 0.3.0
  */
 import * as zod from 'zod';
 
@@ -205,6 +205,52 @@ export const GetReferralStatsResponse = zod.object({
   "joinedAt": zod.string(),
   "coinsEarned": zod.number()
 }))
+})
+
+
+/**
+ * @summary Submit a withdrawal request (max 350 TL)
+ */
+export const RequestWithdrawalBody = zod.object({
+  "telegramId": zod.string(),
+  "amount": zod.number().describe('Amount in TL to withdraw (min 50, max 350)'),
+  "method": zod.string().describe('Withdrawal method: papara, iban, crypto')
+})
+
+export const RequestWithdrawalResponse = zod.object({
+  "success": zod.boolean(),
+  "requestId": zod.string(),
+  "amount": zod.number(),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "message": zod.string(),
+  "newBalance": zod.number()
+})
+
+
+/**
+ * @summary Get withdrawal history for a user
+ */
+export const GetWithdrawHistoryParams = zod.object({
+  "telegramId": zod.coerce.string()
+})
+
+export const GetWithdrawHistoryResponseItem = zod.object({
+  "id": zod.string(),
+  "amount": zod.number(),
+  "method": zod.string(),
+  "status": zod.string(),
+  "createdAt": zod.string()
+})
+export const GetWithdrawHistoryResponse = zod.array(GetWithdrawHistoryResponseItem)
+
+
+/**
+ * @summary Get live online player count and stats
+ */
+export const GetOnlineStatsResponse = zod.object({
+  "onlineCount": zod.number(),
+  "totalPlayers": zod.number(),
+  "totalCoinsInCirculation": zod.number()
 })
 
 

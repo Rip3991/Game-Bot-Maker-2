@@ -10,16 +10,19 @@ import {
 
 const router = Router();
 
-const REFERRAL_COINS = 500;
-const REFERRAL_BONUS_FOR_REFERRED = 100;
+// 50 coins per referral (changed from 500 — keeps costs reasonable for owner)
+const REFERRAL_COINS = 50;
+const REFERRAL_BONUS_FOR_REFERRED = 25;
 
 const ACHIEVEMENT_DEFINITIONS = [
   { key: "first_upgrade", title: "İlk Mahsul", description: "İlk çiftlik yükseltmeni yap", icon: "🌾" },
   { key: "coin_collector", title: "Para Basmak", description: "1000 coin kazan", icon: "🪙" },
   { key: "social_farmer_1", title: "Sosyal Çiftçi", description: "1 arkadaş davet et", icon: "👥" },
   { key: "social_farmer_5", title: "Lider Çiftçi", description: "5 arkadaş davet et", icon: "👑" },
+  { key: "social_farmer_10", title: "Efsane Çiftçi", description: "10 arkadaş davet et", icon: "🏆" },
   { key: "weekly_streak", title: "Haftalık Seri", description: "7 gün üst üste giriş yap", icon: "🔥" },
   { key: "jackpot", title: "Büyük Kazanan", description: "Çarkta jackpot çevir", icon: "🎰" },
+  { key: "first_withdraw", title: "İlk Çekim", description: "İlk para çekimini yap", icon: "💸" },
 ];
 
 // POST /users/init
@@ -30,8 +33,18 @@ router.post("/users/init", async (req, res): Promise<void> => {
     return;
   }
 
-  const { telegramId, firstName, username, referredBy } = parsed.data;
+  const { telegramId, firstName, username, referredBy: rawReferredBy } = parsed.data;
   const now = new Date();
+
+  // Strip "ref_" prefix from referral param (link format: ?start=ref_<telegramId>)
+  const referredBy = rawReferredBy
+    ? rawReferredBy.startsWith("ref_")
+      ? rawReferredBy.slice(4)
+      : rawReferredBy
+    : null;
+
+  // Update online heartbeat
+  onlineHeartbeats.set(telegramId, now);
 
   let existing = await db.query.usersTable.findFirst({
     where: eq(usersTable.telegramId, telegramId),
@@ -41,7 +54,6 @@ router.post("/users/init", async (req, res): Promise<void> => {
     // New user — grant referral bonus if applicable
     let startCoins = 0;
     if (referredBy && referredBy !== telegramId) {
-      // Give the referred user a welcome bonus
       startCoins = REFERRAL_BONUS_FOR_REFERRED;
     }
 
@@ -80,7 +92,6 @@ router.post("/users/init", async (req, res): Promise<void> => {
           coinsEarned: REFERRAL_COINS,
         });
 
-        // Check social achievements for referrer
         const updatedReferrer = await db.query.usersTable.findFirst({
           where: eq(usersTable.telegramId, referredBy),
         });
@@ -110,7 +121,6 @@ router.post("/users/init", async (req, res): Promise<void> => {
 
     existing = { ...existing, firstName, username: username ?? null, streakCount: newStreak };
 
-    // Check weekly streak achievement
     if (newStreak >= 7) {
       await grantAchievement(telegramId, "weekly_streak");
     }
@@ -154,6 +164,15 @@ router.put("/users/:telegramId/farm-state", async (req, res): Promise<void> => {
   const maxLevel = Math.max(farmState.wheat, farmState.chicken, farmState.cow);
   if (maxLevel > 1) {
     await grantAchievement(telegramId, "first_upgrade");
+  }
+
+  // Check coin achievements
+  const user = await db.query.usersTable.findFirst({
+    where: eq(usersTable.telegramId, telegramId),
+    columns: { coins: true },
+  });
+  if (user && Number(user.coins) >= 1000) {
+    await grantAchievement(telegramId, "coin_collector");
   }
 
   const updated = await db
@@ -219,7 +238,8 @@ router.get("/referrals/stats/:telegramId", async (req, res): Promise<void> => {
     limit: 10,
   });
 
-  const botUsername = process.env.BOT_USERNAME ?? "yourfarmbot";
+  // Use BOT_USERNAME env var — set to MemberGobot in production
+  const botUsername = process.env.BOT_USERNAME ?? "MemberGobot";
   const referralLink = `https://t.me/${botUsername}?start=ref_${telegramId}`;
   const totalCoins = referrals.reduce((s, r) => s + r.coinsEarned, 0);
 
@@ -244,6 +264,19 @@ router.get("/referrals/stats/:telegramId", async (req, res): Promise<void> => {
     recentReferrals,
   });
 });
+
+// --- Online heartbeat tracking (in-memory, resets on server restart) ---
+export const onlineHeartbeats = new Map<string, Date>();
+const ONLINE_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+
+export function getOnlineCount(): number {
+  const cutoff = new Date(Date.now() - ONLINE_WINDOW_MS);
+  let count = 0;
+  for (const ts of onlineHeartbeats.values()) {
+    if (ts >= cutoff) count++;
+  }
+  return count;
+}
 
 // --- Helpers ---
 
@@ -275,6 +308,7 @@ async function grantAchievement(telegramId: string, key: string) {
 async function checkAndGrantReferralAchievements(telegramId: string, count: number) {
   if (count >= 1) await grantAchievement(telegramId, "social_farmer_1");
   if (count >= 5) await grantAchievement(telegramId, "social_farmer_5");
+  if (count >= 10) await grantAchievement(telegramId, "social_farmer_10");
 }
 
 export default router;
