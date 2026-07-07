@@ -150,6 +150,27 @@ body {
   color: white;
 }
 
+/* ── NFT Artwork Animations ── */
+@keyframes nftLegendaryFloat {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-4px) scale(1.05); }
+}
+@keyframes nftRareFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-3px); }
+}
+@keyframes nftParticleFloat {
+  0%, 100% { transform: translateY(0px); opacity: 0.6; }
+  50% { transform: translateY(-3px); opacity: 0.9; }
+}
+@keyframes nftShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.nft-shimmer-overlay {
+  animation: nftShimmer 2.5s ease-in-out infinite;
+}
+
 /* ── Animations ── */
 @keyframes sway {
   0%, 100% { transform: rotate(-3deg); }

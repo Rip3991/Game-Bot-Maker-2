@@ -10,6 +10,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useGameEngine } from '../hooks/use-game-engine';
 import { X, ShoppingBag, Repeat2, Inbox, Package } from 'lucide-react';
+import { NftArtwork } from '../components/NftArtwork';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -108,18 +109,17 @@ function CaseOpenReel({
   }, []);
 
   return (
-    <div className="relative overflow-hidden rounded-xl" style={{ width: VISIBLE * CARD_W, height: 104, border: '2px solid rgba(255,255,255,0.2)' }}>
+    <div className="relative overflow-hidden rounded-xl" style={{ width: VISIBLE * CARD_W, height: 106, border: '2px solid rgba(255,255,255,0.2)' }}>
       {/* Center pointer */}
       <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[82px] pointer-events-none z-20"
         style={{ border: '2px solid #f59e0b', borderRadius: 10, background: 'rgba(245,158,11,0.08)', boxShadow: '0 0 20px rgba(245,158,11,0.5)' }} />
 
-      <div ref={reelRef} className="flex gap-1 py-2 px-1 absolute" style={{ willChange: 'transform' }}>
+      <div ref={reelRef} className="flex gap-1 py-0.5 px-1 absolute" style={{ willChange: 'transform' }}>
         {reel.current.map((item, i) => {
           const r = RARITY[item.rarity];
           return (
-            <div key={i} style={{ width: CARD_W - 4, flexShrink: 0, background: r.bg, border: `2px solid ${r.border}`, borderRadius: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, height: 84 }}>
-              <span style={{ fontSize: 32 }}>{item.emoji}</span>
-              <span style={{ fontSize: 9, color: r.text, fontWeight: 900, textAlign: 'center', lineHeight: 1.1 }}>{item.name}</span>
+            <div key={i} style={{ width: CARD_W - 4, flexShrink: 0, border: `2px solid ${r.border}`, borderRadius: 10, overflow: 'hidden', height: 100 }}>
+              <NftArtwork nftType={item.key} emoji={item.emoji} rarity={item.rarity} size="card" animated={false} />
             </div>
           );
         })}
@@ -150,98 +150,107 @@ function NftCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.85 }}
+      initial={{ opacity: 0, scale: 0.88 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="rounded-2xl flex flex-col items-center p-3 gap-2 relative overflow-hidden"
+      className="rounded-2xl flex flex-col relative overflow-hidden"
       style={{
-        background: r.bg,
+        background: '#0a0a14',
         border: `2px solid ${r.border}`,
-        boxShadow: `0 0 18px ${r.glow}, inset 0 0 30px rgba(0,0,0,0.4)`,
+        boxShadow: `0 0 20px ${r.glow}, 0 4px 16px rgba(0,0,0,0.6)`,
       }}
     >
-      {/* Rarity shimmer strip */}
-      <div className="absolute top-0 inset-x-0 h-1 rounded-t-2xl" style={{ background: r.border }} />
+      {/* ── Artwork area ── */}
+      <NftArtwork
+        nftType={nft.nftType}
+        emoji={nft.emoji}
+        rarity={nft.rarity}
+        size="card"
+        animated={true}
+      />
 
-      {/* Badge */}
-      <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full text-[9px] font-black" style={{ background: r.badge, color: r.text }}>
+      {/* Rarity badge — overlaid on artwork */}
+      <div
+        className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-black shadow-lg"
+        style={{ background: r.badge, color: r.text, border: `1px solid ${r.border}` }}
+      >
         {r.label}
       </div>
 
-      {/* Emoji */}
-      <motion.div
-        className="text-5xl mt-1 drop-shadow-lg"
-        animate={nft.rarity === 'legendary' ? { scale: [1, 1.06, 1], rotate: [-2, 2, -2] } : {}}
-        transition={{ repeat: Infinity, duration: 3 }}
-      >
-        {nft.emoji}
-      </motion.div>
-
-      {/* Name + mint */}
-      <div className="text-center">
-        <div className="font-black text-white text-xs leading-tight">{nft.name}</div>
-        <div className="text-[10px] font-bold mt-0.5" style={{ color: r.text }}>#{nft.mintNumber}</div>
-      </div>
-
-      {/* Sell price */}
-      {nft.sellPrice && (
-        <div className="text-[10px] font-black text-yellow-300">💰 {nft.sellPrice?.toLocaleString()} TL</div>
-      )}
-
-      {/* Actions */}
-      {owned && (
-        <div className="w-full space-y-1.5">
-          <button
-            onClick={() => onSell?.(nft)}
-            className="w-full py-1.5 rounded-xl text-xs font-black transition-all active:scale-95"
-            style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', color: 'white', border: '1px solid #166534' }}
-          >
-            💵 Sat
-          </button>
-          <button
-            onClick={() => onTrade?.(nft)}
-            className="w-full py-1.5 rounded-xl text-xs font-black transition-all active:scale-95"
-            style={{
-              background: nft.isListedForTrade
-                ? 'linear-gradient(135deg, #7f1d1d, #991b1b)'
-                : 'linear-gradient(135deg, #1d4ed8, #1e40af)',
-              color: 'white',
-              border: `1px solid ${nft.isListedForTrade ? '#991b1b' : '#1e40af'}`,
-            }}
-          >
-            {nft.isListedForTrade ? '⬇️ Geri Al' : '🔄 Takasa Çıkar'}
-          </button>
+      {/* Trade indicator */}
+      {nft.isListedForTrade && (
+        <div className="absolute top-2 right-2 bg-blue-600/90 border border-blue-400 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">
+          🔄
         </div>
       )}
 
-      {/* Offer for market items */}
-      {!owned && myNfts && (
-        <div className="w-full">
-          {offerOpen ? (
-            <div className="space-y-1">
-              <p className="text-[10px] text-white/60 text-center font-bold">Hangi NFT'ni ver?</p>
-              {myNfts.map(myNft => (
-                <button
-                  key={myNft.id}
-                  onClick={() => { onOffer?.(myNft, nft); setOfferOpen(false); }}
-                  className="w-full text-[10px] font-bold py-1 rounded-lg active:scale-95"
-                  style={{ background: '#1d4ed8', color: 'white', border: '1px solid #1e40af' }}
-                >
-                  {myNft.emoji} {myNft.name}
-                </button>
-              ))}
-              <button onClick={() => setOfferOpen(false)} className="w-full text-[10px] py-0.5 text-white/40">İptal</button>
-            </div>
-          ) : (
+      {/* ── Info + actions ── */}
+      <div className="flex flex-col gap-1.5 p-2.5 pt-2">
+        {/* Name + mint */}
+        <div>
+          <div className="font-black text-white text-[11px] leading-tight truncate">{nft.name}</div>
+          <div className="flex items-center justify-between mt-0.5">
+            <div className="text-[9px] font-bold" style={{ color: r.text }}>#{nft.mintNumber}</div>
+            {nft.sellPrice && (
+              <div className="text-[9px] font-black text-yellow-300">💰 {nft.sellPrice.toLocaleString()}</div>
+            )}
+          </div>
+        </div>
+
+        {/* Actions */}
+        {owned && (
+          <div className="flex gap-1">
             <button
-              onClick={() => myNfts.length > 0 ? setOfferOpen(true) : toast.error('Önce bir NFT edin!')}
-              className="w-full py-1.5 rounded-xl text-xs font-black active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #1d4ed8, #1e40af)', color: 'white', border: '1px solid #1e40af' }}
+              onClick={() => onSell?.(nft)}
+              className="flex-1 py-1.5 rounded-lg text-[10px] font-black transition-all active:scale-95"
+              style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', color: 'white' }}
             >
-              🤝 Teklif Ver
+              💵 Sat
             </button>
-          )}
-        </div>
-      )}
+            <button
+              onClick={() => onTrade?.(nft)}
+              className="flex-1 py-1.5 rounded-lg text-[10px] font-black transition-all active:scale-95"
+              style={{
+                background: nft.isListedForTrade
+                  ? 'linear-gradient(135deg, #7f1d1d, #991b1b)'
+                  : 'linear-gradient(135deg, #1d4ed8, #1e40af)',
+                color: 'white',
+              }}
+            >
+              {nft.isListedForTrade ? '⬇️ Al' : '🔄 Takas'}
+            </button>
+          </div>
+        )}
+
+        {/* Offer for market items */}
+        {!owned && myNfts && (
+          <div className="w-full">
+            {offerOpen ? (
+              <div className="space-y-1">
+                <p className="text-[10px] text-white/60 text-center font-bold">Hangi NFT'ni ver?</p>
+                {myNfts.map(myNft => (
+                  <button
+                    key={myNft.id}
+                    onClick={() => { onOffer?.(myNft, nft); setOfferOpen(false); }}
+                    className="w-full text-[10px] font-bold py-1 rounded-lg active:scale-95"
+                    style={{ background: '#1d4ed8', color: 'white', border: '1px solid #1e40af' }}
+                  >
+                    {myNft.emoji} {myNft.name}
+                  </button>
+                ))}
+                <button onClick={() => setOfferOpen(false)} className="w-full text-[10px] py-0.5 text-white/40">İptal</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => myNfts.length > 0 ? setOfferOpen(true) : toast.error('Önce bir NFT edin!')}
+                className="w-full py-1.5 rounded-lg text-[10px] font-black active:scale-95"
+                style={{ background: 'linear-gradient(135deg, #1d4ed8, #1e40af)', color: 'white' }}
+              >
+                🤝 Teklif Ver
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }
@@ -390,41 +399,53 @@ function CaseOpenOverlay({
 
       <AnimatePresence>
         {phase === 'result' && won && (
-          <motion.div className="flex flex-col items-center gap-5 px-6"
+          <motion.div className="flex flex-col items-center gap-4 px-6 w-full max-w-xs"
             initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 280, damping: 20 }}>
 
-            {/* Winner card */}
-            <motion.div className="rounded-3xl p-6 flex flex-col items-center gap-3"
-              style={{ background: r.bg, border: `3px solid ${r.border}`, boxShadow: `0 0 60px ${r.glow}`, minWidth: 200 }}
+            {/* Winner card with full NftArtwork */}
+            <motion.div
+              className="w-full rounded-2xl overflow-hidden"
+              style={{ border: `3px solid ${r.border}`, boxShadow: `0 0 60px ${r.glow}` }}
               animate={{ boxShadow: [`0 0 30px ${r.glow}`, `0 0 80px ${r.glow}`, `0 0 30px ${r.glow}`] }}
-              transition={{ repeat: Infinity, duration: 2 }}>
-              <motion.span className="text-8xl"
-                animate={{ scale: [1, 1.1, 1], rotate: [-5, 5, -5] }}
-                transition={{ repeat: Infinity, duration: 2 }}>
-                {won.emoji}
-              </motion.span>
-              <div className="text-center">
-                <div className="font-black text-white text-xl">{won.name}</div>
-                <div className="font-black text-lg mt-1" style={{ color: r.text }}>{r.label}</div>
-                <div className="text-white/50 text-sm">#{won.mintNumber}</div>
-              </div>
-              {won.sellPrice && (
-                <div className="bg-black/30 rounded-xl px-4 py-1.5">
-                  <span className="text-yellow-300 font-black">💰 {won.sellPrice.toLocaleString()} TL değerinde</span>
+              transition={{ repeat: Infinity, duration: 2 }}
+            >
+              {/* Large artwork */}
+              <NftArtwork
+                nftType={won.nftType}
+                emoji={won.emoji}
+                rarity={won.rarity}
+                size="large"
+                animated={true}
+              />
+
+              {/* Info strip */}
+              <div className="px-4 py-3 flex flex-col gap-1" style={{ background: '#0a0a14' }}>
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-white text-base leading-tight">{won.name}</span>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full" style={{ background: r.badge, color: r.text }}>{r.label}</span>
                 </div>
-              )}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white/40">#{won.mintNumber}</span>
+                  {won.sellPrice && (
+                    <span className="text-sm font-black text-yellow-300">💰 {won.sellPrice.toLocaleString()} TL</span>
+                  )}
+                </div>
+              </div>
             </motion.div>
 
-            {/* Confetti-ish label */}
+            {/* Legendary banner */}
             {won.rarity === 'legendary' && (
-              <motion.div className="text-yellow-300 font-black text-lg text-center"
+              <motion.div className="text-yellow-300 font-black text-base text-center"
                 animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 1 }}>
                 🎊 EFSANEVİ KAZANIM! 🎊
               </motion.div>
             )}
+            {won.rarity === 'rare' && (
+              <div className="text-blue-300 font-black text-sm text-center">✨ Nadir NFT Kazandın!</div>
+            )}
 
-            <div className="flex gap-3 w-full max-w-xs">
+            <div className="flex gap-3 w-full">
               <button onClick={onOpenAnother}
                 className="flex-1 py-3 rounded-2xl font-black text-yellow-900 active:scale-95"
                 style={{ background: 'linear-gradient(135deg, #f5c842, #e6a800)' }}>
