@@ -242,7 +242,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       reply_markup: {
         inline_keyboard: [
           [{ text: "🌾 Oyuna Giriş Yap", web_app: { url: appUrl } }],
-          [{ text: "📢 Duyuru Kanalı", url: `https://t.me/${announcementChannel}` }],
+          [{ text: "📢 Kanalımıza Katıl", url: `https://t.me/${announcementChannel}` }],
           [{ text: "👥 Arkadaş Davet Et, Coin Kazan", url: `https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent("Benimle Sarı'nın Çiftliği'ni oyna! Davet bonusu kazan 🌾🪙")}` }],
         ],
       },
