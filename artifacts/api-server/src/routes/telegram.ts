@@ -83,10 +83,11 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       ? `${gameUrl}?startapp=${refParam}`
       : gameUrl;
 
-    // Referral invite link for sharing
+    // Referral invite link for sharing — ?startapp= opens the Mini App directly
+    // and sets initDataUnsafe.start_param so the referral is tracked
     const botUsername = getBotUsername();
     const inviteUrl = userId
-      ? `https://t.me/${botUsername}?start=ref_${userId}`
+      ? `https://t.me/${botUsername}?startapp=ref_${userId}`
       : `https://t.me/${botUsername}`;
 
     await sendTelegramRequest("sendMessage", {

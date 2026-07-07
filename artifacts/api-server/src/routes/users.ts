@@ -97,7 +97,8 @@ router.post("/users/init", async (req, res): Promise<void> => {
           where: eq(usersTable.telegramId, referredBy),
         });
         if (updatedReferrer) {
-          await checkAndGrantReferralAchievements(referredBy, updatedReferrer.totalReferrals + 1);
+          // totalReferrals already incremented in DB — use the fetched value directly
+          await checkAndGrantReferralAchievements(referredBy, updatedReferrer.totalReferrals);
         }
       }
     }
@@ -178,11 +179,11 @@ router.put("/users/:telegramId/farm-state", async (req, res): Promise<void> => {
 
   // Grant NFTs on farm max-level milestones (non-critical, swallow errors)
   try {
-    if (farmState.wheat  >= 10) await grantNft(telegramId, "golden_wheat");
-    if (farmState.chicken >= 10) await grantNft(telegramId, "diamond_chicken");
-    if (farmState.cow    >= 10) await grantNft(telegramId, "royal_cow");
-    if (farmState.wheat  >= 1 && farmState.chicken >= 1 && farmState.cow >= 1) {
-      await grantNft(telegramId, "farm_pioneer");
+    if (farmState.wheat   >= 10) await grantNft(telegramId, "golden_bee");
+    if (farmState.chicken >= 10) await grantNft(telegramId, "tropical_parrot");
+    if (farmState.cow     >= 10) await grantNft(telegramId, "golden_turtle");
+    if (farmState.wheat   >= 1 && farmState.chicken >= 1 && farmState.cow >= 1) {
+      await grantNft(telegramId, "lucky_clover");
     }
   } catch { /* non-critical */ }
 
@@ -251,7 +252,8 @@ router.get("/referrals/stats/:telegramId", async (req, res): Promise<void> => {
 
   // Use BOT_USERNAME env var — set to MemberGobot in production
   const botUsername = process.env.BOT_USERNAME ?? "MemberGobot";
-  const referralLink = `https://t.me/${botUsername}?start=ref_${telegramId}`;
+  // ?startapp= opens the Mini App directly and sets initDataUnsafe.start_param
+  const referralLink = `https://t.me/${botUsername}?startapp=ref_${telegramId}`;
   const totalCoins = referrals.reduce((s, r) => s + r.coinsEarned, 0);
 
   const recentReferrals = await Promise.all(

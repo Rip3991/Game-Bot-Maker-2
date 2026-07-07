@@ -240,5 +240,9 @@ export function useGameEngine() {
     return sum;
   }, 0);
 
-  return { state, unlockSection, buyUnit, incomePerMin, showWelcomeBonus, setShowWelcomeBonus };
+  const setBalance = useCallback((amount: number) => {
+    setState(prev => ({ ...prev, balance: amount }));
+  }, []);
+
+  return { state, unlockSection, buyUnit, incomePerMin, showWelcomeBonus, setShowWelcomeBonus, setBalance };
 }
