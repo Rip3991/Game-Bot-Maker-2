@@ -18,11 +18,12 @@ export type CoinPackageId = (typeof COIN_PACKAGES)[number]["id"];
 
 // ── Coin Shop items (spend Coins on in-game rewards) ──────────────────────────
 export const COIN_SHOP_ITEMS = [
-  { id: "extra_spin", coins: 20,  emoji: "🎡", label: "Ekstra Çark Hakkı",   desc: "Çark bekleme süresini sıfırla",      action: "reset_spin"              },
-  { id: "tl_mini",    coins: 30,  emoji: "💰", label: "Mini TL Bonusu",      desc: "+500 TL anında bakiyene eklenir",    action: "add_tl",  value: 500   },
-  { id: "tl_big",     coins: 80,  emoji: "🏆", label: "Büyük TL Bonusu",     desc: "+2.000 TL anında bakiyene eklenir",  action: "add_tl",  value: 2000  },
-  { id: "nft_case",   coins: 120, emoji: "💎", label: "Ücretsiz NFT Kasası", desc: "Rastgele bir Çiftlik Kasası açılır", action: "open_case"               },
-  { id: "tl_ultra",   coins: 200, emoji: "🚀", label: "Ultra TL Paketi",     desc: "+6.000 TL anında bakiyene eklenir",  action: "add_tl",  value: 6000  },
+  { id: "extra_spin", coins: 20,  emoji: "🎡", label: "Ekstra Çark Hakkı",   desc: "Çark bekleme süresini sıfırla",                   action: "reset_spin"     },
+  { id: "tl_mini",    coins: 30,  emoji: "💰", label: "Mini TL Bonusu",      desc: "+500 TL anında bakiyene eklenir",                  action: "add_tl", value: 500   },
+  { id: "auto_sell",  coins: 75,  emoji: "🤖", label: "Otomatik Satış",      desc: "Ürünler 30 sn'de bir otomatik satılır — kalıcı!", action: "unlock_auto_sell" },
+  { id: "tl_big",     coins: 80,  emoji: "🏆", label: "Büyük TL Bonusu",     desc: "+2.000 TL anında bakiyene eklenir",                action: "add_tl", value: 2000  },
+  { id: "nft_case",   coins: 120, emoji: "💎", label: "Ücretsiz NFT Kasası", desc: "Rastgele bir Çiftlik Kasası açılır",               action: "open_case"      },
+  { id: "tl_ultra",   coins: 200, emoji: "🚀", label: "Ultra TL Paketi",     desc: "+6.000 TL anında bakiyene eklenir",                action: "add_tl", value: 6000  },
 ] as const;
 
 export type CoinShopItemId = (typeof COIN_SHOP_ITEMS)[number]["id"];
@@ -160,6 +161,10 @@ router.post("/stars/coin-shop/buy", async (req, res): Promise<void> => {
     if (item.action === "open_case") {
       const nft = await mintFreeNftFromCase(telegramId, "farm_case");
       extra = { nftWon: nft };
+    }
+
+    if (item.action === "unlock_auto_sell") {
+      extra = { autoSellUnlocked: true };
     }
   } catch {
     // Reward failed — refund coins to keep economy consistent

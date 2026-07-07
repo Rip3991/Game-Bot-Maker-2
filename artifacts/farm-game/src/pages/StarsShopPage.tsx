@@ -3,6 +3,7 @@ import { useUser } from '../hooks/use-user';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { Star, ShoppingBag, Zap, RefreshCw } from 'lucide-react';
+import { AUTO_SELL_PURCHASED_KEY } from '../hooks/use-game-engine';
 
 const API = `${import.meta.env.BASE_URL}api`;
 
@@ -34,6 +35,9 @@ export default function StarsShopPage() {
   const [loadingPkg, setLoadingPkg] = useState<string | null>(null);
   const [loadingItem, setLoadingItem] = useState<string | null>(null);
   const [lastWon, setLastWon] = useState<{ emoji: string; name: string } | null>(null);
+  const [autoSellOwned, setAutoSellOwned] = useState<boolean>(() => {
+    try { return localStorage.getItem(AUTO_SELL_PURCHASED_KEY) === 'true'; } catch { return false; }
+  });
 
   useEffect(() => {
     fetch(`${API}/stars/coin-packages`).then(r => r.json()).then(setPackages).catch(() => {});
@@ -108,6 +112,11 @@ export default function StarsShopPage() {
       } else if (data.nftWon) {
         setLastWon({ emoji: data.nftWon.emoji, name: data.nftWon.name });
         toast.success(`💎 NFT kazandın: ${data.nftWon.emoji} ${data.nftWon.name}!`);
+      } else if (data.autoSellUnlocked) {
+        try { localStorage.setItem(AUTO_SELL_PURCHASED_KEY, 'true'); } catch { /* */ }
+        try { localStorage.setItem('farmAutoSell_v1', 'true'); } catch { /* */ }
+        setAutoSellOwned(true);
+        toast.success('🤖 Otomatik Satış aktif edildi! Ürünlerin artık otomatik satılacak!');
       }
     } catch (e: any) {
       toast.error(e.message || 'Satın alma başarısız');
@@ -287,23 +296,35 @@ export default function StarsShopPage() {
               </div>
 
               {shopItems.map((item) => {
-                const canAfford = coins >= item.coins;
+                const isOwned = item.id === 'auto_sell' && autoSellOwned;
+                const canAfford = !isOwned && coins >= item.coins;
                 const isLoading = loadingItem === item.id;
                 return (
                   <motion.div
                     key={item.id}
                     whileTap={canAfford ? { scale: 0.97 } : {}}
-                    className="rounded-2xl overflow-hidden"
+                    className="rounded-2xl overflow-hidden relative"
                     style={{
-                      background: canAfford
-                        ? 'linear-gradient(135deg, #1a2e1a, #162816)'
-                        : 'linear-gradient(135deg, #1a1a1a, #111)',
-                      border: canAfford ? '1px solid rgba(74,200,74,0.3)' : '1px solid rgba(255,255,255,0.06)',
+                      background: isOwned
+                        ? 'linear-gradient(135deg, #0f2d1a, #0a1f12)'
+                        : canAfford
+                          ? 'linear-gradient(135deg, #1a2e1a, #162816)'
+                          : 'linear-gradient(135deg, #1a1a1a, #111)',
+                      border: isOwned
+                        ? '1.5px solid rgba(74,222,128,0.5)'
+                        : canAfford ? '1px solid rgba(74,200,74,0.3)' : '1px solid rgba(255,255,255,0.06)',
+                      boxShadow: isOwned ? '0 0 12px rgba(74,222,128,0.15)' : 'none',
                     }}
                   >
+                    {/* Owned badge */}
+                    {isOwned && (
+                      <div className="absolute top-0 right-0 bg-green-500 text-white text-[8px] font-black px-2 py-0.5 rounded-bl-xl flex items-center gap-1">
+                        ✓ ALINDI
+                      </div>
+                    )}
                     <button
-                      onClick={() => handleBuyItem(item)}
-                      disabled={!canAfford || isLoading}
+                      onClick={() => !isOwned && handleBuyItem(item)}
+                      disabled={isOwned || (!canAfford) || isLoading}
                       className="w-full flex items-center gap-3 px-4 py-3.5"
                     >
                       {/* Emoji */}
@@ -311,20 +332,30 @@ export default function StarsShopPage() {
 
                       {/* Info */}
                       <div className="flex-1 text-left">
-                        <div className="font-black text-white text-sm">{item.label}</div>
+                        <div className="font-black text-sm" style={{ color: isOwned ? '#4ade80' : 'white' }}>{item.label}</div>
                         <div className="text-white/50 text-[10px] font-bold mt-0.5">{item.desc}</div>
+                        {isOwned && (
+                          <div className="text-green-400 text-[9px] font-black mt-0.5">🤖 Aktif — ürünler otomatik satılıyor</div>
+                        )}
                       </div>
 
                       {/* Price + CTA */}
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <div className="flex items-center gap-1">
-                          <span className="text-sm">🪙</span>
-                          <span className={`font-black text-base ${canAfford ? 'text-yellow-300' : 'text-white/30'}`}>{item.coins}</span>
-                        </div>
+                        {!isOwned && (
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm">🪙</span>
+                            <span className={`font-black text-base ${canAfford ? 'text-yellow-300' : 'text-white/30'}`}>{item.coins}</span>
+                          </div>
+                        )}
                         {isLoading ? (
                           <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.8 }}>
                             <RefreshCw size={14} className="text-green-400" />
                           </motion.div>
+                        ) : isOwned ? (
+                          <div className="px-2.5 py-1 rounded-lg text-[11px] font-black"
+                            style={{ background: 'rgba(74,222,128,0.15)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.3)' }}>
+                            ✓ Aktif
+                          </div>
                         ) : (
                           <div className="px-2.5 py-1 rounded-lg text-[11px] font-black"
                             style={canAfford

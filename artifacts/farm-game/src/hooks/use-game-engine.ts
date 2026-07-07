@@ -130,12 +130,26 @@ export const makeInitialState = (): GameState => ({
 
 const SAVE_KEY = 'farmGameState_v6';
 const AUTO_SELL_KEY = 'farmAutoSell_v1';
+export const AUTO_SELL_PURCHASED_KEY = 'farmAutoSellPurchased_v1';
 export const WELCOME_BONUS = 150;
 
 export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {}) {
+  const [autoSellPurchased, setAutoSellPurchased] = useState<boolean>(() => {
+    try { return localStorage.getItem(AUTO_SELL_PURCHASED_KEY) === 'true'; } catch { return false; }
+  });
+
   const [autoSell, setAutoSell] = useState<boolean>(() => {
+    const purchased = (() => { try { return localStorage.getItem(AUTO_SELL_PURCHASED_KEY) === 'true'; } catch { return false; } })();
+    if (!purchased) return false;
     try { return localStorage.getItem(AUTO_SELL_KEY) === 'true'; } catch { return false; }
   });
+
+  const unlockAutoSell = useCallback(() => {
+    try { localStorage.setItem(AUTO_SELL_PURCHASED_KEY, 'true'); } catch { /* */ }
+    setAutoSellPurchased(true);
+    setAutoSell(true);
+    try { localStorage.setItem(AUTO_SELL_KEY, 'true'); } catch { /* */ }
+  }, []);
 
   const toggleAutoSell = useCallback(() => {
     setAutoSell(prev => {
@@ -338,5 +352,5 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
     setState(prev => ({ ...prev, balance: amount }));
   }, []);
 
-  return { state, unlockSection, buyUnit, sellProducts, incomePerMin, showWelcomeBonus, setShowWelcomeBonus, setBalance, autoSell, toggleAutoSell };
+  return { state, unlockSection, buyUnit, sellProducts, incomePerMin, showWelcomeBonus, setShowWelcomeBonus, setBalance, autoSell, toggleAutoSell, autoSellPurchased, unlockAutoSell };
 }
