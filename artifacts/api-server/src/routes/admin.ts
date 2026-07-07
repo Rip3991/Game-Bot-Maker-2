@@ -6,14 +6,34 @@ const router = Router();
 
 const ADMIN_KEY = process.env.ADMIN_KEY ?? "sariadmin2024";
 
+function getAdminIds(): string[] {
+  return (process.env.ADMIN_TELEGRAM_IDS ?? "").split(",").map(s => s.trim()).filter(Boolean);
+}
+
+function isAdminTelegramId(id?: string): boolean {
+  if (!id) return false;
+  return getAdminIds().includes(id);
+}
+
 function checkAdmin(req: any, res: any): boolean {
   const key = req.headers["x-admin-key"] ?? req.query.key;
-  if (key !== ADMIN_KEY) {
+  const tgId = req.headers["x-telegram-id"] as string | undefined;
+  if (key !== ADMIN_KEY && !isAdminTelegramId(tgId)) {
     res.status(401).json({ error: "Yetkisiz erişim" });
     return false;
   }
   return true;
 }
+
+// GET /admin/auth-check — verify admin access by telegram ID (no password needed for admin IDs)
+router.get("/admin/auth-check", (req, res): void => {
+  const tgId = req.headers["x-telegram-id"] as string | undefined;
+  if (isAdminTelegramId(tgId)) {
+    res.json({ isAdmin: true });
+  } else {
+    res.status(401).json({ isAdmin: false });
+  }
+});
 
 // GET /admin/users — list all users
 router.get("/admin/users", async (req, res): Promise<void> => {

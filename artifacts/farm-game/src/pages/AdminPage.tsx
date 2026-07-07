@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Shield, Users, Plus, Coins, RefreshCw, Search } from 'lucide-react';
+import { Shield, Users, Plus, RefreshCw, Search, LogOut } from 'lucide-react';
+import { useUser } from '../hooks/use-user';
 
 const API = `${import.meta.env.BASE_URL}api`;
 const ADMIN_KEY_STORAGE = 'farm_admin_key';
@@ -36,9 +37,12 @@ function timeAgo(iso: string | null) {
 }
 
 export default function AdminPage() {
+  const { telegramId } = useUser();
+
   const [key, setKey] = useState(() => localStorage.getItem(ADMIN_KEY_STORAGE) ?? '');
   const [authed, setAuthed] = useState(false);
   const [keyInput, setKeyInput] = useState('');
+  const [authMode, setAuthMode] = useState<'telegram' | 'password'>('telegram');
 
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,18 +54,25 @@ export default function AdminPage() {
   const [submitting, setSubmitting] = useState(false);
   const [onlineCount, setOnlineCount] = useState<number | null>(null);
 
-  const fetchUsers = async (k: string) => {
+  /** Build auth headers — prefer Telegram ID auth, fall back to password key */
+  const authHeaders = useCallback((): Record<string, string> => {
+    if (authMode === 'telegram') {
+      return { 'x-telegram-id': telegramId };
+    }
+    return { 'x-admin-key': key };
+  }, [authMode, telegramId, key]);
+
+  const fetchUsers = useCallback(async (headers: Record<string, string>) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/admin/users`, { headers: { 'x-admin-key': k } });
-      if (res.status === 401) { toast.error('Yanlış şifre'); setAuthed(false); return; }
+      const res = await fetch(`${API}/admin/users`, { headers });
+      if (res.status === 401) { toast.error('Yetki reddedildi'); setAuthed(false); return; }
       const data = await res.json();
       setUsers(data);
       setAuthed(true);
-      localStorage.setItem(ADMIN_KEY_STORAGE, k);
     } catch { toast.error('Sunucu hatası'); }
     setLoading(false);
-  };
+  }, []);
 
   const fetchOnline = async () => {
     try {
@@ -71,11 +82,28 @@ export default function AdminPage() {
     } catch {}
   };
 
+  /** Try auto-login via Telegram ID on mount */
   useEffect(() => {
-    if (key) fetchUsers(key);
+    const tryAutoAuth = async () => {
+      if (!telegramId || telegramId === 'demo_user') return;
+      try {
+        const res = await fetch(`${API}/admin/auth-check`, {
+          headers: { 'x-telegram-id': telegramId },
+        });
+        if (res.ok) {
+          setAuthMode('telegram');
+          await fetchUsers({ 'x-telegram-id': telegramId });
+        } else if (key) {
+          // Fallback: try saved password key
+          setAuthMode('password');
+          await fetchUsers({ 'x-admin-key': key });
+        }
+      } catch {}
+    };
+    tryAutoAuth();
     fetchOnline();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [telegramId]);
 
   useEffect(() => {
     const id = setInterval(fetchOnline, 30000);
@@ -84,8 +112,18 @@ export default function AdminPage() {
 
   const handleLogin = () => {
     if (!keyInput.trim()) return;
-    setKey(keyInput.trim());
-    fetchUsers(keyInput.trim());
+    const k = keyInput.trim();
+    setKey(k);
+    localStorage.setItem(ADMIN_KEY_STORAGE, k);
+    setAuthMode('password');
+    fetchUsers({ 'x-admin-key': k });
+  };
+
+  const handleLogout = () => {
+    setAuthed(false);
+    setKey('');
+    setKeyInput('');
+    localStorage.removeItem(ADMIN_KEY_STORAGE);
   };
 
   const handleAddBalance = async () => {
@@ -96,14 +134,14 @@ export default function AdminPage() {
     try {
       const res = await fetch(`${API}/admin/add-balance`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': key },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ telegramId: selected.telegramId, amount }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      toast.success(`✅ ${selected.firstName}'e ${fmtNum(amount)} TL eklendi! Yeni bakiye: ${fmtNum(data.newBalance)} TL`);
+      toast.success(`✅ ${selected.firstName}'e ${fmtNum(amount)} TL eklendi! Yeni: ${fmtNum(data.newBalance)} TL`);
       setAddAmount('');
-      await fetchUsers(key);
+      await fetchUsers(authHeaders());
       setSelected(u => u ? { ...u, balance: data.newBalance.toString() } : null);
     } catch (e: any) { toast.error(e.message); }
     setSubmitting(false);
@@ -117,14 +155,14 @@ export default function AdminPage() {
     try {
       const res = await fetch(`${API}/admin/add-coins`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': key },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ telegramId: selected.telegramId, amount }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       toast.success(`✅ ${selected.firstName}'e ${fmtNum(amount)} Coin eklendi!`);
       setAddCoins('');
-      await fetchUsers(key);
+      await fetchUsers(authHeaders());
     } catch (e: any) { toast.error(e.message); }
     setSubmitting(false);
   };
@@ -170,13 +208,21 @@ export default function AdminPage() {
         style={{ background: 'rgba(0,0,0,0.6)' }}>
         <Shield size={16} className="text-yellow-400" />
         <span className="font-black text-yellow-300">Yönetici Paneli</span>
+        {authMode === 'telegram' && (
+          <span className="text-[9px] bg-green-500/20 border border-green-500/30 rounded-full px-1.5 py-0.5 text-green-300 font-bold">
+            Telegram ID
+          </span>
+        )}
         <div className="flex-1" />
         <div className="flex items-center gap-1 bg-green-500/20 border border-green-500/30 rounded-full px-2 py-0.5">
           <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
           <span className="text-green-300 font-black text-[10px]">{onlineCount ?? '...'} aktif</span>
         </div>
-        <button onClick={() => fetchUsers(key)} className="p-1.5 rounded-lg bg-white/5 active:scale-90">
+        <button onClick={() => fetchUsers(authHeaders())} className="p-1.5 rounded-lg bg-white/5 active:scale-90">
           <RefreshCw size={14} className="text-white/50" />
+        </button>
+        <button onClick={handleLogout} className="p-1.5 rounded-lg bg-white/5 active:scale-90">
+          <LogOut size={14} className="text-red-400/70" />
         </button>
       </div>
 
@@ -251,7 +297,6 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Expand: add balance/coins */}
             <AnimatePresence>
               {selected?.telegramId === u.telegramId && (
                 <motion.div

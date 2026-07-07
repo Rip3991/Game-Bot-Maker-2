@@ -38,9 +38,13 @@ const RIGHT_NAV = [
   { label: 'Mağaza', icon: '🌟', path: '/stars' },
 ] as const;
 
+const ADMIN_IDS = ['8652151076'];
+
 function RightNav({ onAchievementsOpen, musicOn, onMusicToggle }: { onAchievementsOpen: () => void; musicOn: boolean; onMusicToggle: () => void }) {
   const [location, navigate] = useLocation();
   const achievementCount = useAchievementCount();
+  const { telegramId } = useUser();
+  const isAdmin = ADMIN_IDS.includes(telegramId);
 
   return (
     <div
@@ -113,6 +117,26 @@ function RightNav({ onAchievementsOpen, musicOn, onMusicToggle }: { onAchievemen
           {musicOn ? 'Müzik' : 'Sessiz'}
         </span>
       </button>
+
+      {/* Admin button — only for admin users */}
+      {isAdmin && (
+        <button
+          onClick={() => navigate('/admin')}
+          className="right-nav-btn flex-shrink-0"
+          style={{
+            background: location === '/admin'
+              ? 'linear-gradient(180deg, #dc2626 0%, #991b1b 100%)'
+              : 'rgba(220,38,38,0.2)',
+            borderColor: '#7f1d1d',
+            boxShadow: location === '/admin' ? '0 2px 8px rgba(220,38,38,0.5)' : 'none',
+          }}
+        >
+          <span className="text-xl leading-none">🛡️</span>
+          <span className="text-[8px] font-black leading-tight text-center text-red-300">
+            Admin
+          </span>
+        </button>
+      )}
     </div>
   );
 }
