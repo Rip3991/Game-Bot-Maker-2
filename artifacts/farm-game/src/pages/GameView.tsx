@@ -346,28 +346,6 @@ function FarmScene({ state }: { state: any }) {
         </div>
       </div>
 
-      {/* ── RIGHT: Barn & silo ── */}
-      <div className="absolute flex flex-col items-center" style={{ bottom: 4, right: 5 }}>
-        <div className="flex items-end gap-1">
-          {/* Silo */}
-          <div className="flex flex-col items-center">
-            <div className="rounded-t-full" style={{ width: 20, height: 10, background: 'linear-gradient(180deg, #e5e7eb, #9ca3af)' }} />
-            <div style={{ width: 20, height: 22, background: 'linear-gradient(180deg, #6b7280, #374151)' }} />
-          </div>
-          {/* Barn */}
-          <div className="relative" style={{ width: 44, height: 52 }}>
-            <div className="absolute top-0 inset-x-0" style={{ height: 24, background: 'linear-gradient(180deg, #ef4444, #b91c1c)', clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
-            <div className="absolute bottom-0 inset-x-0 flex items-center justify-center shadow-inner rounded-sm" style={{ height: 30, background: 'linear-gradient(180deg, #f87171, #dc2626)', borderTop: '2px solid #7f1d1d' }}>
-              <div className="rounded-t-full" style={{ width: 14, height: 18, background: '#450a0a' }} />
-            </div>
-          </div>
-        </div>
-        {/* Label */}
-        <div className="mt-0.5 flex items-center gap-1 rounded-full px-2 py-0.5 shadow" style={{ background: 'rgba(127,29,29,0.9)', border: '1px solid rgba(252,165,165,0.3)' }}>
-          <span style={{ fontSize: 8 }}>🏚️</span>
-          <span className="text-white font-black" style={{ fontSize: 8 }}>Depo</span>
-        </div>
-      </div>
 
       <style>{`
         @keyframes cloudDrift {
