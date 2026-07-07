@@ -79,19 +79,8 @@ function Router() {
         </AnimatePresence>
       </div>
 
-      {/* Withdraw button — only on main game screen */}
-      {location === '/' && (
-        <div className="absolute bottom-[80px] inset-x-0 p-4 bg-gradient-to-t from-black/50 to-transparent z-40 pointer-events-none">
-          <button
-            onClick={() => setWithdrawOpen(true)}
-            className="w-full bg-gradient-to-b from-[#2AABEE] to-[#229ED9] text-white font-black text-lg py-4 rounded-2xl shadow-[0_6px_0_#1b7ea8,0_15px_20px_rgba(0,0,0,0.4)] border-2 border-white/20 active:translate-y-[6px] active:shadow-[0_0px_0_#1b7ea8,0_5px_10px_rgba(0,0,0,0.4)] transition-all pointer-events-auto flex items-center justify-center gap-2"
-          >
-            💸 Para Çek (350 TL)
-          </button>
-        </div>
-      )}
-
-      <BottomNav />
+      {/* BottomNav only on non-game pages (game has its own right-side nav) */}
+      {location !== '/' && <BottomNav />}
 
       {/* Withdraw modal */}
       <WithdrawModal isOpen={withdrawOpen} onClose={() => setWithdrawOpen(false)} />

@@ -3,7 +3,7 @@
 @plugin "@tailwindcss/typography";
 
 @theme inline {
-  --color-background: #5ab327;
+  --color-background: #4ea824;
   --font-sans: 'Nunito', sans-serif;
   --color-gold: #f5c842;
   --color-wood-light: #d48c48;
@@ -22,7 +22,7 @@
 
 body {
   font-family: 'Nunito', sans-serif;
-  background-color: #5ab327;
+  background-color: #4ea824;
   color: white;
   overflow: hidden;
   user-select: none;
@@ -30,12 +30,21 @@ body {
   touch-action: manipulation;
 }
 
-/* Wood UI Components */
+/* ── Grass background ── */
+.grass-bg {
+  background-color: #4ea824;
+  background-image:
+    radial-gradient(ellipse 3px 4px at 20% 30%, rgba(0,0,0,0.08) 0%, transparent 100%),
+    radial-gradient(ellipse 2px 3px at 60% 15%, rgba(255,255,255,0.06) 0%, transparent 100%),
+    radial-gradient(ellipse 4px 3px at 80% 60%, rgba(0,0,0,0.07) 0%, transparent 100%);
+}
+
+/* ── Wood UI Components ── */
 .wood-panel {
   background: #a06235;
-  border: 4px solid #5c3a21;
-  border-radius: 16px;
-  box-shadow: inset 0 0 15px rgba(0,0,0,0.4), 0 6px 10px rgba(0,0,0,0.3);
+  border: 3px solid #5c3a21;
+  border-radius: 14px;
+  box-shadow: inset 0 0 12px rgba(0,0,0,0.35), 0 4px 8px rgba(0,0,0,0.3);
   background-image: repeating-linear-gradient(
     45deg,
     transparent,
@@ -47,16 +56,16 @@ body {
 
 .wood-button {
   background: #d48c48;
-  border: 4px solid #5c3a21;
-  border-radius: 12px;
-  box-shadow: 0 5px 0 #5c3a21, 0 8px 10px rgba(0,0,0,0.3);
-  transition: transform 0.1s, box-shadow 0.1s;
+  border: 3px solid #5c3a21;
+  border-radius: 10px;
+  box-shadow: 0 4px 0 #5c3a21, 0 6px 10px rgba(0,0,0,0.3);
+  transition: transform 0.08s, box-shadow 0.08s;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
 }
 
 .wood-button:active:not(:disabled) {
-  transform: translateY(5px);
-  box-shadow: 0 0 0 #5c3a21, 0 3px 5px rgba(0,0,0,0.3);
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #5c3a21, 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .wood-button:disabled {
@@ -65,33 +74,83 @@ body {
   cursor: not-allowed;
 }
 
-/* Conveyor Styles */
-.conveyor-bg {
-  background: linear-gradient(90deg, #90a4ae 0%, #cfd8dc 20%, #90a4ae 80%, #607d8b 100%);
+/* ── Farm plot (tilled soil) ── */
+.farm-plot-soil {
+  background-color: #8b5e3c;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      rgba(0,0,0,0.08) 0px, rgba(0,0,0,0.08) 1px,
+      transparent 1px, transparent 18px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,0.08) 0px, rgba(0,0,0,0.08) 1px,
+      transparent 1px, transparent 14px
+    );
+  border-radius: 8px;
+}
+
+/* ── Conveyor / Rail track ── */
+.conveyor-rail {
+  background: linear-gradient(180deg, #9e9e9e 0%, #bdbdbd 40%, #9e9e9e 100%);
   position: relative;
 }
 
-@keyframes scrollConveyor {
-  0% { background-position: 0 0; }
-  100% { background-position: 0 -40px; }
+.conveyor-rail::before,
+.conveyor-rail::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: #616161;
 }
 
-.conveyor-belt-texture {
+.conveyor-rail::before { left: 0; }
+.conveyor-rail::after { right: 0; }
+
+/* sleepers (horizontal ties) */
+.rail-ties {
   position: absolute;
   inset: 0;
-  opacity: 0.15;
   background-image: repeating-linear-gradient(
     0deg,
-    transparent,
+    transparent 0px,
     transparent 20px,
-    #000 20px,
-    #000 40px
+    rgba(100,60,20,0.5) 20px,
+    rgba(100,60,20,0.5) 26px
   );
-  background-size: 100% 200%;
-  animation: scrollConveyor 1s linear infinite;
 }
 
-/* Animations */
+/* ── Right nav buttons ── */
+.right-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  min-height: 52px;
+  background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.8);
+  cursor: pointer;
+  transition: transform 0.1s;
+  gap: 2px;
+}
+
+.right-nav-btn:active {
+  transform: scale(0.94);
+}
+
+.right-nav-btn.active {
+  background: linear-gradient(180deg, #4ea824 0%, #3d8b1c 100%);
+  border-color: #2e6612;
+  color: white;
+}
+
+/* ── Animations ── */
 @keyframes sway {
   0%, 100% { transform: rotate(-3deg); }
   50% { transform: rotate(4deg); }
@@ -103,17 +162,46 @@ body {
 
 @keyframes bounceIdle {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  50% { transform: translateY(-5px); }
 }
 .animate-bounce-idle {
   animation: bounceIdle 2s ease-in-out infinite;
+}
+
+@keyframes floatUp {
+  0%   { transform: translate(-50%, 0) rotate(0deg); opacity: 0; }
+  8%   { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translate(-50%, -110vh) rotate(360deg); opacity: 0; }
+}
+
+@keyframes truckMove {
+  0%   { transform: translateX(-60px); }
+  40%  { transform: translateX(0px); }
+  60%  { transform: translateX(0px); }
+  100% { transform: translateX(60px); }
+}
+.truck-anim {
+  animation: truckMove 6s ease-in-out infinite;
 }
 
 .spin-wheel-shadow {
   box-shadow: 0 0 40px rgba(245, 200, 66, 0.4), inset 0 0 20px rgba(0,0,0,0.5);
 }
 
-/* Custom Scrollbar for Farm column */
+/* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 0px;
+}
+
+/* ── Top balance bar ── */
+.top-balance-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 2px solid rgba(255,255,255,0.4);
+  background: rgba(0,0,0,0.25);
+  backdrop-filter: blur(4px);
 }
