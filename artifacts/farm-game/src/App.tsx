@@ -16,10 +16,10 @@ import { useUser } from './hooks/use-user';
 import { UserProvider } from './context/UserProvider';
 import { AnimatePresence, motion } from 'framer-motion';
 import React, { useState } from 'react';
-import mascotAvatar from './assets/mascot-avatar.png';
 import { WithdrawModal } from './components/WithdrawModal';
 import { Toaster as SonnerToaster } from 'sonner';
 import { initI18n } from './lib/i18n';
+import LoadingScreen from './components/LoadingScreen';
 
 initI18n();
 
@@ -81,21 +81,37 @@ function Router() {
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const { isLoading } = useUser();
 
+  // Show loading screen once per session — gate by animation, not by isLoading
+  // (the 2.4s animation outlasts the API call in all realistic cases)
+  const [screenDone, setScreenDone] = useState(
+    () => sessionStorage.getItem('farm_loaded') === '1'
+  );
+
+  const handleScreenDone = () => {
+    sessionStorage.setItem('farm_loaded', '1');
+    setScreenDone(true);
+  };
+
   if (!isWelcomed) {
     return <WelcomePage onComplete={() => setIsWelcomed(true)} />;
   }
 
+  // First load this session: show the full animated intro screen
+  if (!screenDone) {
+    return (
+      <AnimatePresence mode="wait">
+        <LoadingScreen key="loading-screen" onDone={handleScreenDone} />
+      </AnimatePresence>
+    );
+  }
+
+  // Screen done but API still loading (rare / slow network): lightweight fallback
   if (isLoading) {
     return (
-      <div className="flex flex-col h-[100dvh] w-full max-w-md mx-auto bg-[#4ea824] items-center justify-center shadow-2xl">
-        <motion.img
-          src={mascotAvatar}
-          alt="Sarı"
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
-          className="w-24 h-24 drop-shadow-xl mb-6 bg-yellow-400 rounded-full border-4 border-white shadow-inner"
-        />
-        <div className="font-black text-white text-xl drop-shadow-md animate-pulse">Yükleniyor...</div>
+      <div className="flex flex-col h-[100dvh] w-full max-w-md mx-auto items-center justify-center"
+        style={{ background: 'linear-gradient(180deg, #2e6012 0%, #4ea824 100%)' }}>
+        <motion.div className="text-5xl" animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>🌾</motion.div>
+        <div className="mt-4 font-black text-white text-lg">Hazırlanıyor...</div>
       </div>
     );
   }

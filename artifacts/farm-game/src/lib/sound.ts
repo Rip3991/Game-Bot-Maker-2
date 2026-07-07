@@ -6,12 +6,36 @@
 let ctx: AudioContext | null = null;
 let enabled = true;
 
+/* ── Unlock audio on first user gesture (browser autoplay policy) ── */
+// Creates ctx if not yet created AND resumes it if suspended.
+// Must run inside a user-gesture handler to satisfy autoplay policy.
+if (typeof document !== 'undefined') {
+  const unlock = () => {
+    try {
+      if (!ctx) {
+        ctx = new (window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      }
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+    } catch {
+      // AudioContext not supported — sounds simply won't play
+    }
+  };
+  document.addEventListener('touchstart', unlock, { once: true, capture: true });
+  document.addEventListener('touchend',   unlock, { once: true, capture: true });
+  document.addEventListener('click',      unlock, { once: true, capture: true });
+  document.addEventListener('keydown',    unlock, { once: true, capture: true });
+}
+
 function getCtx(): AudioContext | null {
   if (!enabled) return null;
   try {
     if (!ctx) {
       ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     }
+    // Always try to resume (safe to call repeatedly)
     if (ctx.state === 'suspended') {
       ctx.resume().catch(() => {});
     }

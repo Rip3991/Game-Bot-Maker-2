@@ -52,6 +52,42 @@ export const NFT_DEFS = {
   sea_trident:     { emoji: "🔱", name: "Deniz Mızrağı",        rarity: "rare" as const,      mintLimit: 500,   sellPrice: 6500, bg: "#1e3a5f" },
   phoenix_feather: { emoji: "🔥", name: "Anka Kuşu Tüyü",       rarity: "rare" as const,      mintLimit: 400,   sellPrice: 7000, bg: "#1e3a5f" },
 
+  // ─── SIRADAN EK (Common +10) ─────────────────────────────────────────────
+  pepper_farm:     { emoji: "🌶️", name: "Acı Biber",             rarity: "common" as const,    mintLimit: 35000, sellPrice: 95,   bg: "#4a5568" },
+  pumpkin_patch:   { emoji: "🎃", name: "Balkabağı",             rarity: "common" as const,    mintLimit: 32000, sellPrice: 105,  bg: "#4a5568" },
+  grapes_vine:     { emoji: "🍇", name: "Üzüm Salkımı",         rarity: "common" as const,    mintLimit: 30000, sellPrice: 125,  bg: "#4a5568" },
+  watermelon_farm: { emoji: "🍉", name: "Çiftlik Karpuzu",      rarity: "common" as const,    mintLimit: 28000, sellPrice: 115,  bg: "#4a5568" },
+  lemon_grove:     { emoji: "🍋", name: "Taze Limon",           rarity: "common" as const,    mintLimit: 26000, sellPrice: 90,   bg: "#4a5568" },
+  strawberry_patch:{ emoji: "🍓", name: "Çilek Tarlası",        rarity: "common" as const,    mintLimit: 24000, sellPrice: 150,  bg: "#4a5568" },
+  blueberry_wild:  { emoji: "🫐", name: "Yaban Mersini",        rarity: "common" as const,    mintLimit: 20000, sellPrice: 170,  bg: "#4a5568" },
+  pear_fresh:      { emoji: "🍐", name: "Taze Armut",           rarity: "common" as const,    mintLimit: 22000, sellPrice: 100,  bg: "#4a5568" },
+  broccoli_fresh:  { emoji: "🥦", name: "Organik Brokoli",      rarity: "common" as const,    mintLimit: 18000, sellPrice: 88,   bg: "#4a5568" },
+  pineapple_farm:  { emoji: "🍍", name: "Tropikal Ananas",      rarity: "common" as const,    mintLimit: 19000, sellPrice: 145,  bg: "#4a5568" },
+
+  // ─── NADİR EK (Rare +10) ─────────────────────────────────────────────────
+  peacock_tail:    { emoji: "🦚", name: "Tavus Tüyü",           rarity: "rare" as const,      mintLimit: 850,   sellPrice: 4300, bg: "#1e3a5f" },
+  coral_branch:    { emoji: "🪸", name: "Nadir Mercan Dalı",    rarity: "rare" as const,      mintLimit: 650,   sellPrice: 5800, bg: "#1e3a5f" },
+  wise_owl:        { emoji: "🦉", name: "Bilge Baykuş",         rarity: "rare" as const,      mintLimit: 1100,  sellPrice: 3700, bg: "#1e3a5f" },
+  compass_ancient: { emoji: "🧭", name: "Antika Pusula",        rarity: "rare" as const,      mintLimit: 480,   sellPrice: 6200, bg: "#1e3a5f" },
+  dolphin_spirit:  { emoji: "🐬", name: "Yunus Ruhu",           rarity: "rare" as const,      mintLimit: 920,   sellPrice: 4100, bg: "#1e3a5f" },
+  jellyfish_rare:  { emoji: "🪼", name: "Nadir Denizanası",     rarity: "rare" as const,      mintLimit: 560,   sellPrice: 5300, bg: "#1e3a5f" },
+  amber_fossil:    { emoji: "🪲", name: "Kehribar Fosili",      rarity: "rare" as const,      mintLimit: 720,   sellPrice: 4700, bg: "#1e3a5f" },
+  white_crane:     { emoji: "🕊️", name: "Beyaz Turna",          rarity: "rare" as const,      mintLimit: 440,   sellPrice: 5900, bg: "#1e3a5f" },
+  panda_spirit:    { emoji: "🐼", name: "Panda Ruhu",           rarity: "rare" as const,      mintLimit: 980,   sellPrice: 3900, bg: "#1e3a5f" },
+  moon_wolf:       { emoji: "🐺", name: "Ay Kurdu",             rarity: "rare" as const,      mintLimit: 380,   sellPrice: 6800, bg: "#1e3a5f" },
+
+  // ─── EFSANEVİ EK (Legendary +10) ─────────────────────────────────────────
+  comet_shard:     { emoji: "☄️", name: "Kuyruklu Yıldız",      rarity: "legendary" as const, mintLimit: 28,    sellPrice: 450000,  bg: "#5c3a00" },
+  hourglass_anc:   { emoji: "⏳", name: "Antik Kum Saati",      rarity: "legendary" as const, mintLimit: 38,    sellPrice: 320000,  bg: "#5c3a00" },
+  soul_lantern:    { emoji: "🪔", name: "Ruh Kandili",           rarity: "legendary" as const, mintLimit: 33,    sellPrice: 380000,  bg: "#5c3a00" },
+  infinity_ring:   { emoji: "💍", name: "Sonsuzluk Yüzüğü",    rarity: "legendary" as const, mintLimit: 25,    sellPrice: 580000,  bg: "#5c3a00" },
+  ankh_amulet:     { emoji: "📿", name: "Ankh Tılsımı",         rarity: "legendary" as const, mintLimit: 42,    sellPrice: 280000,  bg: "#5c3a00" },
+  nebula_core:     { emoji: "🌀", name: "Nebula Çekirdeği",     rarity: "legendary" as const, mintLimit: 22,    sellPrice: 490000,  bg: "#5c3a00" },
+  olympus_shield:  { emoji: "🛡️", name: "Olimpus Kalkanı",      rarity: "legendary" as const, mintLimit: 18,    sellPrice: 720000,  bg: "#5c3a00" },
+  void_pearl:      { emoji: "🫧", name: "Void İncisi",           rarity: "legendary" as const, mintLimit: 15,    sellPrice: 840000,  bg: "#5c3a00" },
+  phoenix_core:    { emoji: "❤️‍🔥", name: "Anka Kalbi",           rarity: "legendary" as const, mintLimit: 12,    sellPrice: 960000,  bg: "#5c3a00" },
+  serpent_crown:   { emoji: "🐍", name: "Yılan Tacı",           rarity: "legendary" as const, mintLimit: 8,     sellPrice: 1200000, bg: "#5c3a00" },
+
   // ─── EFSANEVİ (Legendary) ────────────────────────────────────────────────
   golden_crown:    { emoji: "👑", name: "Altın Taç",            rarity: "legendary" as const, mintLimit: 300,   sellPrice: 25000,  bg: "#5c3a00" },
   dragon_egg:      { emoji: "🥚", name: "Ejder Yumurtası",      rarity: "legendary" as const, mintLimit: 250,   sellPrice: 30000,  bg: "#5c3a00" },
