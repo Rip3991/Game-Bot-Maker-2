@@ -7,85 +7,86 @@ export interface SectionConfig {
   emoji: string;
   name: string;
   category: SectionCategory;
-  unlockCost: number;   // TL to unlock the section
-  unitCost: number;     // TL per additional unit
-  baseRate: number;     // TL per minute per unit
+  unlockCost: number;
+  unitCost: number;
+  baseRate: number;
+  sellPrice: number;
   maxUnits: number;
   description: string;
-  scene: string[];      // background decorations
+  scene: string[];
 }
 
 export const SECTIONS: SectionConfig[] = [
   // ——— TARLALAR (FARMS) ———
   {
     id: 'wheat', emoji: '🌾', name: 'Buğday Tarlası', category: 'farm',
-    unlockCost: 0, unitCost: 25, baseRate: 1.2, maxUnits: 20,
+    unlockCost: 0, unitCost: 25, baseRate: 1.2, sellPrice: 5, maxUnits: 20,
     description: 'Başlangıç çiftliğin', scene: ['🌳', '🌲'],
   },
   {
     id: 'corn', emoji: '🌽', name: 'Mısır Tarlası', category: 'farm',
-    unlockCost: 250, unitCost: 120, baseRate: 4, maxUnits: 20,
+    unlockCost: 250, unitCost: 120, baseRate: 4, sellPrice: 10, maxUnits: 20,
     description: 'Altın mısır başakları', scene: ['🌻', '🌿'],
   },
   {
     id: 'tomato', emoji: '🍅', name: 'Domates Bahçesi', category: 'farm',
-    unlockCost: 1800, unitCost: 600, baseRate: 14, maxUnits: 15,
+    unlockCost: 1800, unitCost: 600, baseRate: 14, sellPrice: 25, maxUnits: 15,
     description: 'Taze kırmızı domatesler', scene: ['🌿', '🪴'],
   },
   {
     id: 'sunflower', emoji: '🌻', name: 'Ayçiçeği Tarlası', category: 'farm',
-    unlockCost: 10000, unitCost: 3000, baseRate: 60, maxUnits: 12,
+    unlockCost: 10000, unitCost: 3000, baseRate: 60, sellPrice: 100, maxUnits: 12,
     description: 'Yağlık ayçiçeği tarlası', scene: ['☀️', '🌿'],
   },
   // ——— HAYVANLAR (ANIMALS) ———
   {
     id: 'chicken', emoji: '🐔', name: 'Tavuk Kümesi', category: 'animal',
-    unlockCost: 400, unitCost: 80, baseRate: 3, maxUnits: 20,
+    unlockCost: 400, unitCost: 80, baseRate: 3, sellPrice: 8, maxUnits: 20,
     description: 'Yumurta ve et üretimi', scene: ['🏚️', '🌾'],
   },
   {
     id: 'cow', emoji: '🐄', name: 'İnek Ahırı', category: 'animal',
-    unlockCost: 2500, unitCost: 700, baseRate: 12, maxUnits: 15,
+    unlockCost: 2500, unitCost: 700, baseRate: 12, sellPrice: 30, maxUnits: 15,
     description: 'Süt ve et üretimi', scene: ['🏠', '🌿'],
   },
   {
     id: 'sheep', emoji: '🐑', name: 'Koyun Ağılı', category: 'animal',
-    unlockCost: 8000, unitCost: 2000, baseRate: 35, maxUnits: 15,
+    unlockCost: 8000, unitCost: 2000, baseRate: 35, sellPrice: 80, maxUnits: 15,
     description: 'Yün ve süt üretimi', scene: ['⛰️', '🌿'],
   },
   {
     id: 'pig', emoji: '🐷', name: 'Domuz Çiftliği', category: 'animal',
-    unlockCost: 25000, unitCost: 6000, baseRate: 100, maxUnits: 12,
+    unlockCost: 25000, unitCost: 6000, baseRate: 100, sellPrice: 200, maxUnits: 12,
     description: 'Et ve şarküteri ürünleri', scene: ['🏡', '🌱'],
   },
   {
     id: 'horse', emoji: '🐴', name: 'At Ahırı', category: 'animal',
-    unlockCost: 70000, unitCost: 18000, baseRate: 280, maxUnits: 10,
+    unlockCost: 70000, unitCost: 18000, baseRate: 280, sellPrice: 500, maxUnits: 10,
     description: 'Prestijli at yetiştiriciliği', scene: ['🏟️', '🌿'],
   },
   {
     id: 'rabbit', emoji: '🐰', name: 'Tavşan Çiftliği', category: 'animal',
-    unlockCost: 180000, unitCost: 45000, baseRate: 650, maxUnits: 20,
+    unlockCost: 180000, unitCost: 45000, baseRate: 650, sellPrice: 1200, maxUnits: 20,
     description: 'Hızlı üreyen tavşanlar', scene: ['🌸', '🌿'],
   },
   {
     id: 'duck', emoji: '🦆', name: 'Ördek Göleti', category: 'animal',
-    unlockCost: 400000, unitCost: 100000, baseRate: 1400, maxUnits: 15,
+    unlockCost: 400000, unitCost: 100000, baseRate: 1400, sellPrice: 2500, maxUnits: 15,
     description: 'Gölet kenarında ördekler', scene: ['💧', '🌊'],
   },
   {
     id: 'goat', emoji: '🐐', name: 'Keçi Çiftliği', category: 'animal',
-    unlockCost: 900000, unitCost: 220000, baseRate: 3000, maxUnits: 12,
+    unlockCost: 900000, unitCost: 220000, baseRate: 3000, sellPrice: 5000, maxUnits: 12,
     description: 'Peynir ve süt üretimi', scene: ['⛰️', '🌿'],
   },
   {
     id: 'turkey', emoji: '🦃', name: 'Hindi Çiftliği', category: 'animal',
-    unlockCost: 2000000, unitCost: 500000, baseRate: 6500, maxUnits: 10,
+    unlockCost: 2000000, unitCost: 500000, baseRate: 6500, sellPrice: 10000, maxUnits: 10,
     description: 'Premium hindi yetiştiriciliği', scene: ['🌳', '🍂'],
   },
   {
     id: 'bee', emoji: '🐝', name: 'Arı Kovanı', category: 'animal',
-    unlockCost: 5000000, unitCost: 1200000, baseRate: 15000, maxUnits: 20,
+    unlockCost: 5000000, unitCost: 1200000, baseRate: 15000, sellPrice: 25000, maxUnits: 20,
     description: 'Organik bal üretimi', scene: ['🌸', '🌼'],
   },
 ];
@@ -97,9 +98,19 @@ export interface SectionState {
   count: number;
 }
 
+export interface SaleRecord {
+  id: string;
+  emoji: string;
+  name: string;
+  qty: number;
+  unitPrice: number;
+  total: number;
+}
+
 export interface GameState {
   balance: number;
   sections: Record<string, SectionState>;
+  storage: Record<string, number>;
   lastSaved: number;
   welcomeBonusClaimed: boolean;
 }
@@ -112,11 +123,12 @@ const defaultSection = (cfg: SectionConfig): SectionState => ({
 export const makeInitialState = (): GameState => ({
   balance: 0,
   sections: Object.fromEntries(SECTIONS.map(cfg => [cfg.id, defaultSection(cfg)])),
+  storage: Object.fromEntries(SECTIONS.map(cfg => [cfg.id, 0])),
   lastSaved: Date.now(),
   welcomeBonusClaimed: false,
 });
 
-const SAVE_KEY = 'farmGameState_v5';
+const SAVE_KEY = 'farmGameState_v6';
 export const WELCOME_BONUS = 150;
 
 export function useGameEngine() {
@@ -128,22 +140,28 @@ export function useGameEngine() {
         const now = Date.now();
         const deltaSec = Math.max(0, (now - parsed.lastSaved) / 1000);
 
-        // Offline earnings
-        let offline = 0;
-        SECTIONS.forEach(cfg => {
-          const s = parsed.sections?.[cfg.id];
-          if (s?.unlocked && s.count > 0) {
-            offline += (s.count * cfg.baseRate / 60) * deltaSec;
-          }
-        });
-
-        // Merge new sections (for updates that add sections)
         const sections: Record<string, SectionState> = {
           ...Object.fromEntries(SECTIONS.map(cfg => [cfg.id, defaultSection(cfg)])),
           ...parsed.sections,
         };
 
-        return { ...parsed, sections, balance: parsed.balance + offline, lastSaved: now };
+        const storage: Record<string, number> = {
+          ...Object.fromEntries(SECTIONS.map(cfg => [cfg.id, 0])),
+          ...(parsed.storage ?? {}),
+        };
+
+        SECTIONS.forEach(cfg => {
+          const s = sections[cfg.id];
+          if (s?.unlocked && s.count > 0) {
+            const ratePerSec = (s.count * cfg.baseRate) / cfg.sellPrice / 60;
+            storage[cfg.id] = Math.min(
+              (storage[cfg.id] ?? 0) + ratePerSec * deltaSec,
+              s.count * cfg.maxUnits * 10,
+            );
+          }
+        });
+
+        return { ...parsed, sections, storage, lastSaved: now };
       }
     } catch (e) {
       console.error('Failed to load save', e);
@@ -154,14 +172,12 @@ export function useGameEngine() {
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  // Welcome bonus (once) — check initial state, apply outside updater
   const [showWelcomeBonus, setShowWelcomeBonus] = useState(false);
   useEffect(() => {
     setState(prev => {
       if (prev.welcomeBonusClaimed) return prev;
       return { ...prev, balance: prev.balance + WELCOME_BONUS, welcomeBonusClaimed: true };
     });
-    // Read directly from ref to avoid closure capture issues
     const wasAlreadyClaimed = stateRef.current.welcomeBonusClaimed;
     if (!wasAlreadyClaimed) {
       setShowWelcomeBonus(true);
@@ -169,7 +185,7 @@ export function useGameEngine() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Real-time accumulation (20 ticks/sec)
+  // Real-time product accumulation (20 ticks/sec)
   useEffect(() => {
     let lastTime = Date.now();
     const interval = setInterval(() => {
@@ -177,15 +193,29 @@ export function useGameEngine() {
       const deltaSec = (now - lastTime) / 1000;
       lastTime = now;
       const current = stateRef.current;
-      let total = 0;
+
+      let hasChange = false;
+      const storageUpdates: Record<string, number> = {};
+
       SECTIONS.forEach(cfg => {
         const s = current.sections[cfg.id];
         if (s?.unlocked && s.count > 0) {
-          total += (s.count * cfg.baseRate / 60) * deltaSec;
+          const ratePerSec = (s.count * cfg.baseRate) / cfg.sellPrice / 60;
+          const cap = s.count * 200;
+          const current_amount = current.storage[cfg.id] ?? 0;
+          const newAmt = Math.min(current_amount + ratePerSec * deltaSec, cap);
+          if (newAmt !== current_amount) {
+            storageUpdates[cfg.id] = newAmt;
+            hasChange = true;
+          }
         }
       });
-      if (total > 0) {
-        setState(prev => ({ ...prev, balance: prev.balance + total }));
+
+      if (hasChange) {
+        setState(prev => ({
+          ...prev,
+          storage: { ...prev.storage, ...storageUpdates },
+        }));
       }
     }, 50);
     return () => clearInterval(interval);
@@ -233,7 +263,28 @@ export function useGameEngine() {
     });
   }, []);
 
-  // Total income per minute
+  const sellProducts = useCallback((): SaleRecord[] => {
+    const records: SaleRecord[] = [];
+    setState(prev => {
+      const newStorage = { ...prev.storage };
+      let totalEarned = 0;
+
+      SECTIONS.forEach(cfg => {
+        const amt = Math.floor(prev.storage[cfg.id] ?? 0);
+        if (amt > 0) {
+          const total = amt * cfg.sellPrice;
+          totalEarned += total;
+          records.push({ id: cfg.id, emoji: cfg.emoji, name: cfg.name, qty: amt, unitPrice: cfg.sellPrice, total });
+          newStorage[cfg.id] = (prev.storage[cfg.id] ?? 0) - amt;
+        }
+      });
+
+      if (records.length === 0) return prev;
+      return { ...prev, balance: prev.balance + totalEarned, storage: newStorage };
+    });
+    return records;
+  }, []);
+
   const incomePerMin = SECTIONS.reduce((sum, cfg) => {
     const s = state.sections[cfg.id];
     if (s?.unlocked && s.count > 0) return sum + s.count * cfg.baseRate;
@@ -244,5 +295,5 @@ export function useGameEngine() {
     setState(prev => ({ ...prev, balance: amount }));
   }, []);
 
-  return { state, unlockSection, buyUnit, incomePerMin, showWelcomeBonus, setShowWelcomeBonus, setBalance };
+  return { state, unlockSection, buyUnit, sellProducts, incomePerMin, showWelcomeBonus, setShowWelcomeBonus, setBalance };
 }
