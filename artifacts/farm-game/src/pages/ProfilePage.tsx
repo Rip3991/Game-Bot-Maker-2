@@ -108,7 +108,7 @@ export default function ProfilePage({ telegramId }: Props) {
         style={{ background: 'linear-gradient(135deg, #1a3a0a, #2a5c14)', borderBottom: '2px solid rgba(255,255,255,0.08)' }}>
 
         {/* Back button */}
-        <button onClick={() => navigate(-1 as any)}
+        <button onClick={() => window.history.back()}
           className="absolute top-3 left-3 w-8 h-8 rounded-full bg-black/30 border border-white/15 flex items-center justify-center text-white/70 text-sm active:opacity-70 z-10">
           ←
         </button>

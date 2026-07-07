@@ -10,6 +10,7 @@ import { useLocation } from 'wouter';
 import { formatNum } from '../utils/format';
 import { playCoinSound, playAnimalSound, playUnlockSound, isSoundEnabled, setSoundEnabled } from '../lib/sound';
 import MascotTutorial, { useMascotTutorial } from '../components/MascotTutorial';
+import mascotAvatar from '../assets/mascot-avatar.png';
 import { LiveNftShowcase } from '../components/LiveNftShowcase';
 import { SellHintMascot } from '../components/SellHintMascot';
 import { FarmBackground } from '../components/FarmBackground';
@@ -179,6 +180,18 @@ function FarmPlot({
   );
 }
 
+/* ── Mascot tip messages per section ── */
+const MASCOT_TIPS: Record<string, string> = {
+  wheat:     'Buğday tarlası al! Ne kadar çok tarlana sahip olursan, o kadar çok TL kazanırsın! 🌾',
+  corn:      'Mısır tarlası çok daha fazla TL üretir! Birkaç tane al, farkı gör! 🌽',
+  tomato:    'Domates bahçesi güçlü bir gelir kaynağı! Satın al ve büyü! 🍅',
+  sunflower: 'Ayçiçeği tarlası en verimli tarlalardan biri! Bir an bile bekleme! 🌻',
+  chicken:   'Tavuk kümesi sürekli üretir! Ne kadar çok olursa o kadar iyi! 🐔',
+  cow:       'İnek ahırı büyük kazançlar sağlar! Süt ve et = para demek! 🐄',
+  sheep:     'Koyun yün + süt üretir, çift kazanç! Hemen al! 🐑',
+  pig:       'Domuz çiftliği en yüksek geliri verir! Büyük yatırım, büyük kazanç! 🐷',
+};
+
 /* ── Purchase / Unlock bottom sheet ── */
 function PurchaseSheet({
   config,
@@ -201,6 +214,13 @@ function PurchaseSheet({
   const canAfford = balance >= cost;
   const action = isLocked ? onUnlock : onBuy;
   const income = config.baseRate;
+  const tip = MASCOT_TIPS[config.id];
+  // Show mascot tip when: not maxed, section is wheat OR count is 0
+  const showTip = !isMaxed && (config.id === 'wheat' || sectionState.count === 0);
+
+  // Earned per additional unit projection
+  const currentIncome = sectionState.count * config.baseRate;
+  const nextIncome = (sectionState.count + 1) * config.baseRate;
 
   return (
     <motion.div
@@ -212,24 +232,82 @@ function PurchaseSheet({
     >
       <div className="fixed inset-0 -z-10" onClick={onClose} />
 
+      {/* Mascot speech bubble */}
+      <AnimatePresence>
+        {showTip && tip && (
+          <motion.div
+            className="flex items-end gap-2 mb-2 px-1"
+            initial={{ opacity: 0, y: 16, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            transition={{ type: 'spring', damping: 22, stiffness: 260 }}
+          >
+            {/* Mascot avatar */}
+            <motion.img
+              src={mascotAvatar}
+              alt="Sarı"
+              className="w-14 h-14 rounded-full flex-shrink-0 object-cover"
+              style={{ border: '3px solid #fbbf24', boxShadow: '0 0 14px rgba(251,191,36,0.55)', background: '#f5c842' }}
+              animate={{ y: [0, -5, 0] }}
+              transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+            />
+            {/* Bubble */}
+            <div className="relative flex-1 rounded-2xl rounded-bl-none px-3.5 py-2.5 shadow-xl"
+              style={{
+                background: 'linear-gradient(135deg, #fffbeb, #fef3c7)',
+                border: '2px solid #fbbf24',
+                boxShadow: '0 4px 16px rgba(251,191,36,0.4)',
+              }}>
+              {/* Tail */}
+              <div className="absolute -bottom-2 left-4 w-4 h-4 overflow-hidden">
+                <div className="w-4 h-4 rotate-45 bg-fbbf24" style={{ background: '#fbbf24', transform: 'rotate(45deg) translateY(-50%)' }} />
+              </div>
+              <p className="text-yellow-900 font-black text-xs leading-snug">{tip}</p>
+              {/* Income preview */}
+              {!isLocked && !isMaxed && (
+                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                  <div className="flex items-center gap-1 bg-green-100 border border-green-300 rounded-full px-2 py-0.5">
+                    <span className="text-green-700 font-black text-[10px]">Şimdi: {formatNum(currentIncome)}/dk</span>
+                  </div>
+                  <span className="text-yellow-700 text-[10px] font-black">→</span>
+                  <div className="flex items-center gap-1 bg-green-200 border border-green-400 rounded-full px-2 py-0.5">
+                    <span className="text-green-800 font-black text-[10px]">Alırsan: {formatNum(nextIncome)}/dk 🚀</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main sheet */}
       <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: 'linear-gradient(180deg, #c4832e, #8b5c1e)', padding: '3px', boxShadow: '0 -4px 0 #5c3a21, 0 8px 20px rgba(0,0,0,0.5)' }}>
         <div className="rounded-xl bg-[#a06235] p-4 flex items-center gap-4">
           <div className="w-16 h-16 rounded-xl flex items-center justify-center bg-black/20 border border-[#5c3a21] flex-shrink-0 shadow-inner relative overflow-hidden">
             <div className="absolute inset-0 farm-plot-soil opacity-30" />
-            <span className="text-4xl relative z-10">{config.emoji}</span>
+            <motion.span
+              className="text-4xl relative z-10"
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ repeat: Infinity, duration: 1.8 }}
+            >{config.emoji}</motion.span>
           </div>
 
           <div className="flex-1">
             <div className="font-black text-white text-base">{config.name}</div>
             <div className="text-yellow-200 text-xs font-bold mb-1">{config.description}</div>
             {!isLocked && !isMaxed && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <div className="text-green-300 text-[11px] font-bold bg-black/20 px-1.5 py-0.5 rounded-md">
                   +{formatNum(income)} TL/dk/birim
                 </div>
                 <div className="text-white/50 text-[11px] font-bold bg-black/20 px-1.5 py-0.5 rounded-md">
                   Max: {config.maxUnits}
                 </div>
+                {sectionState.count > 0 && (
+                  <div className="text-yellow-300 text-[11px] font-bold bg-black/20 px-1.5 py-0.5 rounded-md">
+                    {sectionState.count}/{config.maxUnits} adet
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -21,6 +21,7 @@ router.get("/leaderboard", async (req, res): Promise<void> => {
     username: user.username ?? null,
     coins: Number(user.coins),
     totalReferrals: user.totalReferrals,
+    streakCount: user.streakCount,
   }));
 
   res.json(entries);

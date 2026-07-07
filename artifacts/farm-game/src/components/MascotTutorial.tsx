@@ -90,7 +90,7 @@ export default function MascotTutorial({ onDone }: { onDone: () => void }) {
               exit={{ scale: 0 }}
               transition={{ type: 'spring', stiffness: 400, damping: 18 }}
             >
-              {current.emoji}
+              {current?.emoji}
             </motion.span>
           </div>
 

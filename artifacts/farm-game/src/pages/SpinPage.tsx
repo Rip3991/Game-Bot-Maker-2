@@ -54,7 +54,7 @@ function useConfetti(active: boolean) {
   const timeRef = useRef(0);
 
   useEffect(() => {
-    if (!active) { setParticles([]); return; }
+    if (!active) { setParticles([]); return () => undefined; }
     const burst: Particle[] = Array.from({ length: 60 }, (_, id) => ({
       id,
       x: 40 + Math.random() * 20,  // % from left
@@ -208,7 +208,10 @@ export default function SpinPage() {
         }
       }, 1000);
       return () => clearInterval(interval);
-    } else { setTimeLeft(null); }
+    } else {
+      setTimeLeft(null);
+      return () => undefined;
+    }
   }, [canSpin, user?.lastSpinAt, refresh]);
 
   const handleSpin = async () => {
