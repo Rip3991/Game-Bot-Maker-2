@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useGameEngine, SECTIONS, WELCOME_BONUS, SectionConfig } from '../hooks/use-game-engine';
 import { MarketPanel } from '../components/MarketPanel';
-import { AchievementsPanel } from '../components/AchievementsPanel';
+import { AchievementsPanel, useAchievementCount } from '../components/AchievementsPanel';
 import { useUser } from '../hooks/use-user';
 import { useSaveFarmState, useGetOnlineStats, getGetOnlineStatsQueryKey } from '@workspace/api-client-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flame, Plus, Lock, Volume2, VolumeX } from 'lucide-react';
+import { Flame, Plus, Lock, Volume2, VolumeX, Trophy } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { formatNum } from '../utils/format';
 import { playCoinSound, playAnimalSound, playUnlockSound, isSoundEnabled, setSoundEnabled } from '../lib/sound';
@@ -491,6 +491,8 @@ export default function GameView() {
     return true;
   });
   const { showTutorial, doneTutorial } = useMascotTutorial();
+  const [achievementsOpen, setAchievementsOpen] = useState(false);
+  const achievementCount = useAchievementCount();
 
   const toggleSound = () => {
     const next = !soundOn;
@@ -615,6 +617,21 @@ export default function GameView() {
             : <VolumeX size={13} className="text-white/50" />}
         </button>
 
+        {/* Achievements trigger — lives in top bar, not floating */}
+        <button
+          onClick={() => setAchievementsOpen(true)}
+          className="relative w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all active:scale-90"
+          style={{ background: 'rgba(124,58,237,0.35)', borderColor: 'rgba(167,139,250,0.5)' }}
+          title="Başarımlar"
+        >
+          <Trophy size={13} className={achievementCount > 0 ? 'text-yellow-400' : 'text-white/70'} />
+          {achievementCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center border border-white leading-none">
+              {achievementCount}
+            </span>
+          )}
+        </button>
+
         <div className="flex-1" />
 
         <OnlineCounterPill />
@@ -631,7 +648,7 @@ export default function GameView() {
         )}
       </div>
 
-      <AchievementsPanel />
+      <AchievementsPanel isOpen={achievementsOpen} onClose={() => setAchievementsOpen(false)} />
 
       {/* ══ MARKET PANEL ══ */}
       <div className="relative flex-shrink-0">
