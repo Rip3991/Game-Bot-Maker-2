@@ -88,7 +88,7 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
         {/* Auto-sell button — locked or toggle */}
         {!autoSellPurchased ? (
           <button
-            onClick={() => navigate('/shop')}
+            onClick={() => navigate('/stars')}
             className="flex items-center gap-1 rounded-full px-2 py-0.5 border transition-all active:scale-90"
             style={{
               background: 'rgba(255,255,255,0.06)',
