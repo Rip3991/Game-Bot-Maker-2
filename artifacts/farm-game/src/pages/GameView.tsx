@@ -1,11 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useGameEngine, FARM_TYPES } from '../hooks/use-game-engine';
 import { FarmSection } from '../components/FarmSection';
 import { ConveyorBelt } from '../components/ConveyorBelt';
+import { AchievementsPanel } from '../components/AchievementsPanel';
+import { useUser } from '../hooks/use-user';
+import { useSaveFarmState } from '@workspace/api-client-react';
 import { motion } from 'framer-motion';
 
 export default function GameView() {
   const { state, upgradeFarm } = useGameEngine();
+  const { user, telegramId } = useUser();
+  const saveFarmMut = useSaveFarmState();
+
+  // Reference for state to use in interval
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   // Handle Telegram WebApp init
   useEffect(() => {
@@ -19,6 +28,24 @@ export default function GameView() {
     }
   }, []);
 
+  // Periodic save
+  useEffect(() => {
+    const interval = setInterval(() => {
+      saveFarmMut.mutate({
+        telegramId,
+        data: {
+          balance: stateRef.current.balance,
+          farmState: {
+            wheat: stateRef.current.farms.wheat,
+            chicken: stateRef.current.farms.chicken,
+            cow: stateRef.current.farms.cow
+          }
+        }
+      });
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [telegramId, saveFarmMut.mutate]);
+
   const handleWithdraw = () => {
     try {
       if (window.Telegram?.WebApp) {
@@ -31,30 +58,40 @@ export default function GameView() {
     }
   };
 
-  // Format balance helper
   const formattedBalance = state.balance.toFixed(2);
 
   return (
-    <div className="fixed inset-0 bg-[#5ab327] flex flex-col max-w-md mx-auto shadow-2xl overflow-hidden font-sans select-none">
+    <div className="h-full flex flex-col relative z-0">
       
       {/* Top Bar */}
       <div className="h-20 bg-[#468f1c] shadow-md flex items-center justify-between px-4 z-40 relative border-b-4 border-[#3a7517]">
-        <div className="wood-panel py-2 px-4 shadow-xl border-[#452b18]">
-          <span className="text-xl font-black drop-shadow-md tracking-wide">
-            <span className="mr-2">💵</span>
-            <span className="font-mono tabular-nums">{formattedBalance}</span>
-            <span className="text-sm ml-1 text-green-300">USD</span>
-          </span>
+        <div className="flex gap-2">
+          {/* USD Balance */}
+          <div className="wood-panel py-1.5 px-3 shadow-xl border-[#452b18] flex items-center">
+            <span className="text-[13px] font-black drop-shadow-md tracking-wide flex items-center">
+              <span className="mr-1">💵</span>
+              <span className="font-mono tabular-nums">{formattedBalance}</span>
+            </span>
+          </div>
+          {/* Coin Balance */}
+          <div className="wood-panel py-1.5 px-3 shadow-xl border-[#452b18] flex items-center">
+            <span className="text-[13px] font-black drop-shadow-md tracking-wide text-[#f5c842] flex items-center">
+              <span className="mr-1">🪙</span>
+              <span className="font-mono tabular-nums">{user?.coins?.toLocaleString() ?? 0}</span>
+            </span>
+          </div>
         </div>
         
         <button 
           onClick={handleWithdraw}
-          className="wood-button bg-[#1d98ba] border-[#136b85] hover:bg-[#23a5ca] text-white px-5 py-2 font-bold uppercase tracking-wider text-sm shadow-[0_4px_0_#136b85]"
+          className="wood-button bg-[#1d98ba] border-[#136b85] hover:bg-[#23a5ca] text-white px-4 py-2 font-bold uppercase tracking-wider text-xs shadow-[0_4px_0_#136b85]"
           style={{ boxShadow: '0 4px 0 #136b85, 0 8px 10px rgba(0,0,0,0.3)' }}
         >
           Çek
         </button>
       </div>
+
+      <AchievementsPanel />
 
       {/* Main Game Area */}
       <div className="flex-1 flex overflow-hidden relative">
@@ -86,17 +123,6 @@ export default function GameView() {
         <ConveyorBelt state={state} />
         
       </div>
-
-      {/* Bottom Sticky Button */}
-      <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/50 to-transparent z-50 pointer-events-none">
-        <button 
-          onClick={handleWithdraw}
-          className="w-full bg-gradient-to-b from-[#2AABEE] to-[#229ED9] text-white font-black text-lg py-4 rounded-2xl shadow-[0_6px_0_#1b7ea8,0_15px_20px_rgba(0,0,0,0.4)] border-2 border-white/20 active:translate-y-[6px] active:shadow-[0_0px_0_#1b7ea8,0_5px_10px_rgba(0,0,0,0.4)] transition-all pointer-events-auto"
-        >
-          Telegram'dan Çek 📩
-        </button>
-      </div>
-
     </div>
   );
 }

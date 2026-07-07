@@ -49,6 +49,7 @@ interface TelegramWebApp {
     notificationOccurred(type: 'error' | 'success' | 'warning'): void;
     selectionChanged(): void;
   };
+  openInvoice(url: string, callback?: (status: 'paid' | 'cancelled' | 'failed' | 'pending') => void): void;
   sendData(data: string): void;
   switchInlineQuery(query: string, choose_chat_types?: string[]): void;
   openLink(url: string, options?: { try_instant_view?: boolean }): void;

@@ -1,0 +1,99 @@
+import React from 'react';
+import { useUser } from '../hooks/use-user';
+import { useGetReferralStats } from '@workspace/api-client-react';
+import { Copy, Share, Users } from 'lucide-react';
+import { toast } from 'sonner';
+
+export default function InvitePage() {
+  const { telegramId } = useUser();
+  const { data: stats, isLoading } = useGetReferralStats(telegramId);
+
+  const referralLink = stats?.referralLink || `https://t.me/FarmIdleBot?start=${telegramId}`;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(referralLink);
+    toast.success("Bağlantı kopyalandı!");
+  };
+
+  const handleShare = () => {
+    const text = encodeURIComponent("Benimle çiftlik kur ve 500 Coin kazan! 🌾🪙");
+    const url = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${text}`;
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.openTelegramLink(url);
+    } else {
+      window.open(url, '_blank');
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full pt-8 pb-4 px-4 overflow-y-auto custom-scrollbar">
+      
+      <div className="wood-panel p-6 flex flex-col items-center justify-center text-center mb-6 relative overflow-hidden">
+        <div className="absolute -top-10 -right-10 w-32 h-32 bg-yellow-400/20 rounded-full blur-3xl pointer-events-none" />
+        <h1 className="text-3xl font-black drop-shadow-md mb-2">Arkadaş Davet Et</h1>
+        <div className="text-5xl animate-bounce-idle my-4">👥</div>
+        <div className="bg-[#5c3a21] border-2 border-[#f5c842] rounded-xl px-4 py-2 shadow-lg inline-flex items-center gap-2">
+          <span className="text-xl font-black text-[#f5c842]">Her Davet = 🪙 500 Coin</span>
+        </div>
+      </div>
+
+      <div className="wood-panel p-4 mb-6">
+        <label className="text-sm font-bold text-orange-200 mb-2 block uppercase tracking-wide">Davet Bağlantın</label>
+        <div className="flex gap-2">
+          <div className="flex-1 bg-black/30 rounded-lg px-3 py-3 border-2 border-black/20 font-mono text-sm overflow-hidden text-ellipsis whitespace-nowrap opacity-80 select-all">
+            {referralLink}
+          </div>
+          <button onClick={handleCopy} className="wood-button px-4 py-2 flex items-center justify-center">
+            <Copy size={20} />
+          </button>
+        </div>
+        <button onClick={handleShare} className="w-full mt-4 wood-button bg-blue-500 border-blue-800 text-white font-bold py-3 flex items-center justify-center gap-2" style={{boxShadow: '0 4px 0 #1e3a8a'}}>
+          <Share size={20} /> PAYLAŞ
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="wood-panel p-4 flex flex-col items-center text-center">
+          <span className="text-sm font-bold opacity-80 uppercase tracking-wide">Toplam Davet</span>
+          <span className="text-3xl font-black mt-1">{stats?.totalReferrals ?? 0}</span>
+        </div>
+        <div className="wood-panel p-4 flex flex-col items-center text-center border-[#f5c842]">
+          <span className="text-sm font-bold text-[#f5c842] uppercase tracking-wide">Kazanılan</span>
+          <span className="text-3xl font-black mt-1 text-[#f5c842]">🪙 {stats?.coinsFromReferrals ?? 0}</span>
+        </div>
+      </div>
+
+      <div className="wood-panel p-4 flex-1 min-h-[200px] flex flex-col">
+        <h3 className="font-black text-lg mb-4 flex items-center gap-2"><Users size={20}/> Son Davet Edilenler</h3>
+        
+        {isLoading ? (
+          <div className="flex-1 flex items-center justify-center opacity-50">Yükleniyor...</div>
+        ) : stats?.recentReferrals?.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center text-center opacity-60 font-bold px-8">
+            Henüz kimseyi davet etmedin. Bağlantını paylaşarak başla!
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3 overflow-y-auto">
+            {stats?.recentReferrals.map((ref, i) => (
+              <div key={i} className="flex items-center justify-between bg-black/20 p-3 rounded-xl border border-black/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center font-black text-lg border-2 border-white/20 shadow-inner">
+                    {ref.firstName.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-sm">{ref.firstName}</span>
+                    <span className="text-[10px] opacity-60">{new Date(ref.joinedAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <div className="font-black text-[#f5c842] bg-[#5c3a21] px-2 py-1 rounded-md text-sm border border-[#a06235]">
+                  +🪙{ref.coinsEarned}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+    </div>
+  );
+}

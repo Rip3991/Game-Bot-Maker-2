@@ -5,6 +5,10 @@
 @theme inline {
   --color-background: #5ab327;
   --font-sans: 'Nunito', sans-serif;
+  --color-gold: #f5c842;
+  --color-wood-light: #d48c48;
+  --color-wood-base: #a06235;
+  --color-wood-dark: #5c3a21;
 }
 
 :root {
@@ -103,6 +107,10 @@ body {
 }
 .animate-bounce-idle {
   animation: bounceIdle 2s ease-in-out infinite;
+}
+
+.spin-wheel-shadow {
+  box-shadow: 0 0 40px rgba(245, 200, 66, 0.4), inset 0 0 20px rgba(0,0,0,0.5);
 }
 
 /* Custom Scrollbar for Farm column */

@@ -5,7 +5,9 @@
  * Farm Idle Game API
  * OpenAPI spec version: 0.2.0
  */
+import type { FarmState } from './farmState';
 
-export interface HealthStatus {
-  status: string;
+export interface FarmStateInput {
+  balance: number;
+  farmState: FarmState;
 }

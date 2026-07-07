@@ -67,18 +67,19 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       return;
     }
 
+    // Extract referral param: /start ref_<telegramId>
+    const startParam = text.replace("/start", "").trim();
+    const refParam = startParam.startsWith("ref_") ? startParam : "";
+    const appUrl = refParam ? `${gameUrl}?startapp=${refParam}` : gameUrl;
+
     await sendTelegramRequest("sendMessage", {
       chat_id: chatId,
-      text: `🌾 Merhaba ${firstName}! Çiftliğine hoş geldin!\n\n🐄 İneklerin sütünü bekliyor, 🐔 tavukların yumurtasını bekliyor, 🌾 tarlan mahsulünü bekliyor.\n\nOynamak için aşağıdaki butona tıkla:`,
+      text: `🌾 <b>Merhaba ${firstName}!</b> Çiftliğine hoş geldin!\n\n🐄 İneklerin sütünü bekliyor\n🐔 Tavukların yumurtasını bekliyor\n🌾 Tarlan mahsulünü bekliyor\n\n🪙 Arkadaşlarını davet et, <b>500 Coin</b> kazan!\n🎡 Her gün çarkı çevir, ödül kazan!\n⭐ Coinleri Telegram Stars'a çevir!\n\nOynamak için aşağıdaki butona tıkla:`,
       parse_mode: "HTML",
       reply_markup: {
         inline_keyboard: [
-          [
-            {
-              text: "🚜 Çiftliği Aç",
-              web_app: { url: gameUrl },
-            },
-          ],
+          [{ text: "🚜 Çiftliği Aç", web_app: { url: appUrl } }],
+          [{ text: "👥 Arkadaş Davet Et", switch_inline_query: `Çiftlik oyununu oyna! Her davet = 500 Coin ${gameUrl}` }],
         ],
       },
     });

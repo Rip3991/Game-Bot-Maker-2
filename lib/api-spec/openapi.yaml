@@ -1,22 +1,28 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: API specification
+  version: 0.2.0
+  description: Farm Idle Game API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: User management
+  - name: spin
+    description: Daily spin wheel
+  - name: leaderboard
+    description: Leaderboard
+  - name: stars
+    description: Telegram Stars shop
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +30,194 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /users/init:
+    post:
+      operationId: initUser
+      tags: [users]
+      summary: Initialize or get user from Telegram initData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInitInput"
+      responses:
+        "200":
+          description: User data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{telegramId}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user by Telegram ID
+      parameters:
+        - name: telegramId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: User not found
+
+  /users/{telegramId}/farm-state:
+    put:
+      operationId: saveFarmState
+      tags: [users]
+      summary: Save farm state and balance
+      parameters:
+        - name: telegramId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FarmStateInput"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{telegramId}/achievements:
+    get:
+      operationId: getAchievements
+      tags: [users]
+      summary: Get user achievements
+      parameters:
+        - name: telegramId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Achievement list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Achievement"
+
+  /spin:
+    post:
+      operationId: dailySpin
+      tags: [spin]
+      summary: Perform daily spin wheel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SpinInput"
+      responses:
+        "200":
+          description: Spin result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpinResult"
+        "429":
+          description: Already spun today
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpinCooldown"
+
+  /leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [leaderboard]
+      summary: Get top players by coins
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Leaderboard entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+
+  /stars/packages:
+    get:
+      operationId: getStarPackages
+      tags: [stars]
+      summary: Get available coin-to-stars packages
+      responses:
+        "200":
+          description: Available packages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StarPackage"
+
+  /stars/purchase:
+    post:
+      operationId: purchaseStars
+      tags: [stars]
+      summary: Convert coins to Telegram Stars (creates invoice)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StarPurchaseInput"
+      responses:
+        "200":
+          description: Invoice link
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StarPurchaseResult"
+        "400":
+          description: Insufficient coins or invalid package
+
+  /referrals/stats/{telegramId}:
+    get:
+      operationId: getReferralStats
+      tags: [users]
+      summary: Get referral stats for a user
+      parameters:
+        - name: telegramId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Referral stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReferralStats"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +225,197 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    User:
+      type: object
+      required: [telegramId, firstName, coins, balance, streakCount, totalReferrals, lastSpinAt, createdAt]
+      properties:
+        telegramId:
+          type: string
+        firstName:
+          type: string
+        username:
+          type: ["string", "null"]
+        coins:
+          type: number
+        balance:
+          type: number
+        farmState:
+          $ref: "#/components/schemas/FarmState"
+        streakCount:
+          type: integer
+        totalReferrals:
+          type: integer
+        lastSpinAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    FarmState:
+      type: object
+      properties:
+        wheat:
+          type: integer
+        chicken:
+          type: integer
+        cow:
+          type: integer
+      required: [wheat, chicken, cow]
+
+    UserInitInput:
+      type: object
+      required: [telegramId, firstName]
+      properties:
+        telegramId:
+          type: string
+        firstName:
+          type: string
+        username:
+          type: ["string", "null"]
+        referredBy:
+          type: ["string", "null"]
+
+    FarmStateInput:
+      type: object
+      required: [balance, farmState]
+      properties:
+        balance:
+          type: number
+        farmState:
+          $ref: "#/components/schemas/FarmState"
+
+    SpinInput:
+      type: object
+      required: [telegramId]
+      properties:
+        telegramId:
+          type: string
+
+    SpinResult:
+      type: object
+      required: [prize, prizeType, coinsEarned, newCoinsTotal, segmentIndex, canSpinAgainAt]
+      properties:
+        prize:
+          type: string
+        prizeType:
+          type: string
+          enum: [coins, boost, jackpot, miss]
+        coinsEarned:
+          type: integer
+        newCoinsTotal:
+          type: number
+        segmentIndex:
+          type: integer
+        canSpinAgainAt:
+          type: string
+        streakBonus:
+          type: ["integer", "null"]
+
+    SpinCooldown:
+      type: object
+      required: [canSpinAgainAt, hoursRemaining]
+      properties:
+        canSpinAgainAt:
+          type: string
+        hoursRemaining:
+          type: number
+
+    LeaderboardEntry:
+      type: object
+      required: [rank, telegramId, firstName, coins, totalReferrals]
+      properties:
+        rank:
+          type: integer
+        telegramId:
+          type: string
+        firstName:
+          type: string
+        username:
+          type: ["string", "null"]
+        coins:
+          type: number
+        totalReferrals:
+          type: integer
+
+    Achievement:
+      type: object
+      required: [key, title, description, icon, earnedAt]
+      properties:
+        key:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        earnedAt:
+          type: string
+
+    StarPackage:
+      type: object
+      required: [id, stars, coinsRequired, label, popular]
+      properties:
+        id:
+          type: string
+        stars:
+          type: integer
+        coinsRequired:
+          type: integer
+        label:
+          type: string
+        popular:
+          type: boolean
+
+    StarPurchaseInput:
+      type: object
+      required: [telegramId, packageId]
+      properties:
+        telegramId:
+          type: string
+        packageId:
+          type: string
+
+    StarPurchaseResult:
+      type: object
+      required: [success, invoiceLink, starsAwarded, coinsSpent, newCoinsTotal]
+      properties:
+        success:
+          type: boolean
+        invoiceLink:
+          type: string
+        starsAwarded:
+          type: integer
+        coinsSpent:
+          type: integer
+        newCoinsTotal:
+          type: number
+
+    ReferralStats:
+      type: object
+      required: [telegramId, totalReferrals, coinsFromReferrals, referralLink, recentReferrals]
+      properties:
+        telegramId:
+          type: string
+        totalReferrals:
+          type: integer
+        coinsFromReferrals:
+          type: integer
+        referralLink:
+          type: string
+        recentReferrals:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReferralEntry"
+
+    ReferralEntry:
+      type: object
+      required: [firstName, joinedAt, coinsEarned]
+      properties:
+        firstName:
+          type: string
+        joinedAt:
+          type: string
+        coinsEarned:
+          type: integer

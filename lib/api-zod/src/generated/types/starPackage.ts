@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface StarPackage {
+  id: string;
+  stars: number;
+  coinsRequired: number;
+  label: string;
+  popular: boolean;
 }

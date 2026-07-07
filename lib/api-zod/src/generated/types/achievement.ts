@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface Achievement {
+  key: string;
+  title: string;
+  description: string;
+  icon: string;
+  earnedAt: string;
 }
