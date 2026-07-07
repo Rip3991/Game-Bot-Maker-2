@@ -12,6 +12,7 @@ import WelcomePage from './pages/WelcomePage';
 import VaultPage from './pages/VaultPage';
 import NftPage from './pages/NftPage';
 import AdminPage from './pages/AdminPage';
+import TasksPage from './pages/TasksPage';
 import ProfilePage from './pages/ProfilePage';
 import { useUser } from './hooks/use-user';
 import { UserProvider } from './context/UserProvider';
@@ -33,6 +34,7 @@ const RIGHT_NAV = [
   { label: 'Çiftlik', icon: '🌾', path: '/' },
   { label: 'Çark',   icon: '🎡', path: '/spin' },
   { label: 'NFT',    icon: '✨', path: '/nfts' },
+  { label: 'Görev',  icon: '📋', path: '/tasks' },
   { label: 'Davet',  icon: '👥', path: '/invite' },
   { label: 'Liste',  icon: '🏆', path: '/leaderboard' },
   { label: 'Mağaza', icon: '🌟', path: '/stars' },
@@ -232,6 +234,7 @@ function Router() {
                 <Route path="/vault" component={VaultPage} />
                 <Route path="/nfts" component={NftPage} />
                 <Route path="/invite" component={InvitePage} />
+                <Route path="/tasks" component={TasksPage} />
                 <Route path="/stars" component={StarsShopPage} />
                 <Route path="/leaderboard" component={LeaderboardPage} />
                 <Route path="/admin" component={AdminPage} />

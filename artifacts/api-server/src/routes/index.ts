@@ -10,6 +10,7 @@ import statsRouter from "./stats";
 import vaultRouter from "./vault";
 import nftsRouter from "./nfts";
 import adminRouter from "./admin";
+import tasksRouter from "./tasks";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(statsRouter);
 router.use("/vault", vaultRouter);
 router.use("/nfts", nftsRouter);
 router.use("/admin", adminRouter);
+router.use("/tasks", tasksRouter);
 
 export default router;

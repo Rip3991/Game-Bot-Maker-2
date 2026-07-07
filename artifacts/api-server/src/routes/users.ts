@@ -12,9 +12,17 @@ import { notifyUser, getBotUsername, getGameUrl } from "../lib/telegram";
 
 const router = Router();
 
-// 50 coins per referral (changed from 500 — keeps costs reasonable for owner)
-const REFERRAL_COINS = 50;
-const REFERRAL_BONUS_FOR_REFERRED = 25;
+const REFERRAL_COINS = 50;          // coins to referrer
+const REFERRAL_TL = 10;             // TL to referrer (real money reward)
+const REFERRAL_BONUS_FOR_REFERRED = 25; // coins to invited user
+
+// Streak TL milestones — { day: TL, achievementKey }
+const STREAK_TL_MILESTONES = [
+  { day: 7,  tl: 3,  key: "streak_tl_7"  },
+  { day: 14, tl: 5,  key: "streak_tl_14" },
+  { day: 30, tl: 15, key: "streak_tl_30" },
+  { day: 60, tl: 30, key: "streak_tl_60" },
+];
 
 const ACHIEVEMENT_DEFINITIONS = [
   { key: "first_upgrade", title: "İlk Mahsul", description: "İlk çiftlik yükseltmeni yap", icon: "🌾" },
@@ -86,6 +94,7 @@ router.post("/users/init", async (req, res): Promise<void> => {
           .update(usersTable)
           .set({
             coins: sql`${usersTable.coins} + ${REFERRAL_COINS}`,
+            balance: sql`${usersTable.balance} + ${REFERRAL_TL}`,
             totalReferrals: sql`${usersTable.totalReferrals} + 1`,
           })
           .where(eq(usersTable.telegramId, referredBy));
@@ -100,7 +109,6 @@ router.post("/users/init", async (req, res): Promise<void> => {
           where: eq(usersTable.telegramId, referredBy),
         });
         if (updatedReferrer) {
-          // totalReferrals already incremented in DB — use the fetched value directly
           await checkAndGrantReferralAchievements(referredBy, updatedReferrer.totalReferrals);
         }
 
@@ -112,7 +120,7 @@ router.post("/users/init", async (req, res): Promise<void> => {
         // Notify referrer
         notifyUser(
           referredBy,
-          `🎉 <b>Davetinden biri katıldı!</b>\n\n👤 <b>${firstName}</b> davet linkinle katıldı.\n🪙 Bakiyene <b>${REFERRAL_COINS} Coin</b> eklendi!\n\nToplam davet: <b>${(updatedReferrer?.totalReferrals ?? 1)}</b> kişi`,
+          `🎉 <b>Davetinden biri katıldı!</b>\n\n👤 <b>${firstName}</b> davet linkinle katıldı.\n🪙 <b>${REFERRAL_COINS} Coin</b> + 💵 <b>${REFERRAL_TL} TL</b> bakiyene eklendi!\n\nToplam davet: <b>${(updatedReferrer?.totalReferrals ?? 1)}</b> kişi`,
           {
             reply_markup: {
               inline_keyboard: [
@@ -159,6 +167,29 @@ router.post("/users/init", async (req, res): Promise<void> => {
 
     if (newStreak >= 7) {
       await grantAchievement(telegramId, "weekly_streak");
+    }
+
+    // Streak TL milestones — grant each only once
+    for (const milestone of STREAK_TL_MILESTONES) {
+      if (newStreak >= milestone.day) {
+        const alreadyGranted = await db.query.achievementsTable.findFirst({
+          where: (t, { and, eq: eq2 }) =>
+            and(eq2(t.userTelegramId, telegramId), eq2(t.achievementKey, milestone.key)),
+        });
+        if (!alreadyGranted) {
+          await db.update(usersTable)
+            .set({ balance: sql`${usersTable.balance} + ${milestone.tl}` })
+            .where(eq(usersTable.telegramId, telegramId));
+          await db.insert(achievementsTable).values({
+            userTelegramId: telegramId,
+            achievementKey: milestone.key,
+          });
+          notifyUser(
+            telegramId,
+            `🔥 <b>${milestone.day} Günlük Seri Bonusu!</b>\n\n${milestone.day} gün üst üste giriş yaptın!\n💵 <b>${milestone.tl} TL</b> hesabına eklendi!`,
+          ).catch(() => {});
+        }
+      }
     }
   }
 
