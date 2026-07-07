@@ -25,8 +25,8 @@ function checkAdmin(req: any, res: any): boolean {
   return true;
 }
 
-// GET /admin/auth-check — verify admin access by telegram ID (no password needed for admin IDs)
-router.get("/admin/auth-check", (req, res): void => {
+// GET /auth-check — verify admin access by telegram ID (no password needed for admin IDs)
+router.get("/auth-check", (req, res): void => {
   const tgId = req.headers["x-telegram-id"] as string | undefined;
   if (isAdminTelegramId(tgId)) {
     res.json({ isAdmin: true });
@@ -35,8 +35,8 @@ router.get("/admin/auth-check", (req, res): void => {
   }
 });
 
-// GET /admin/users — list all users
-router.get("/admin/users", async (req, res): Promise<void> => {
+// GET /users — list all users
+router.get("/users", async (req, res): Promise<void> => {
   if (!checkAdmin(req, res)) return;
   const users = await db
     .select({
@@ -56,8 +56,8 @@ router.get("/admin/users", async (req, res): Promise<void> => {
   res.json(users);
 });
 
-// POST /admin/add-balance — add TL balance to a user
-router.post("/admin/add-balance", async (req, res): Promise<void> => {
+// POST /add-balance — add TL balance to a user
+router.post("/add-balance", async (req, res): Promise<void> => {
   if (!checkAdmin(req, res)) return;
   const { telegramId, amount, note } = req.body;
   if (!telegramId || typeof amount !== "number" || amount <= 0) {
@@ -85,8 +85,8 @@ router.post("/admin/add-balance", async (req, res): Promise<void> => {
   });
 });
 
-// POST /admin/add-coins — add coins to a user
-router.post("/admin/add-coins", async (req, res): Promise<void> => {
+// POST /add-coins — add coins to a user
+router.post("/add-coins", async (req, res): Promise<void> => {
   if (!checkAdmin(req, res)) return;
   const { telegramId, amount } = req.body;
   if (!telegramId || typeof amount !== "number" || amount <= 0) {
