@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useGameEngine, SECTIONS, WELCOME_BONUS, SectionConfig } from '../hooks/use-game-engine';
-import { ConveyorBelt } from '../components/ConveyorBelt';
 import { MarketPanel } from '../components/MarketPanel';
 import { AchievementsPanel } from '../components/AchievementsPanel';
 import { useUser } from '../hooks/use-user';
@@ -563,8 +562,6 @@ export default function GameView() {
           </div>
         </div>
 
-        {/* ── Right: Conveyor rail with truck ── */}
-        <ConveyorBelt state={state} />
       </div>
 
       {/* ══ PURCHASE SHEET ══ */}
