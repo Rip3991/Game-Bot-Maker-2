@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Farm Idle Game"
+version = "1.0.0"
+id = "artifacts/farm-game"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22312
+
+[services.development]
+run = "pnpm --filter @workspace/farm-game run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/farm-game", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/farm-game/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22312"
+BASE_PATH = "/"
