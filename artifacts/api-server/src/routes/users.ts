@@ -52,6 +52,8 @@ router.post("/users/init", async (req, res): Promise<void> => {
     where: eq(usersTable.telegramId, telegramId),
   });
 
+  const hadExistingUser = !!existing;
+
   if (!existing) {
     // New user — grant referral bonus if applicable
     let startCoins = 0;
@@ -160,7 +162,7 @@ router.post("/users/init", async (req, res): Promise<void> => {
     }
   }
 
-  res.json(formatUser(existing));
+  res.json({ ...formatUser(existing), isNewUser: !hadExistingUser });
 });
 
 // GET /users/:telegramId
@@ -337,6 +339,8 @@ function formatUser(user: typeof usersTable.$inferSelect) {
     totalReferrals: user.totalReferrals,
     lastSpinAt: user.lastSpinAt ? user.lastSpinAt.toISOString() : null,
     createdAt: user.createdAt.toISOString(),
+    // isNewUser is always false here; the init route overrides it to true for new accounts
+    isNewUser: false,
   };
 }
 

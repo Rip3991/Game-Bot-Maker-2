@@ -5,6 +5,7 @@ import { UserContext } from '../hooks/use-user';
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isNewUser, setIsNewUser] = useState(false);
   const initUserMut = useInitUser();
 
   const telegramId =
@@ -25,6 +26,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         data: { telegramId, firstName, username, referredBy: startParam },
       });
       setUser(data);
+      // isNewUser is true only when the backend created the account for the first time
+      setIsNewUser(data.isNewUser === true);
     } catch (e) {
       console.error("Failed to init user", e);
     } finally {
@@ -38,7 +41,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   return (
-    <UserContext.Provider value={{ user, isLoading, setUser, refresh, telegramId }}>
+    <UserContext.Provider value={{ user, isLoading, setUser, refresh, telegramId, isNewUser }}>
       {children}
     </UserContext.Provider>
   );

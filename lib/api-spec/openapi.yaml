@@ -472,7 +472,7 @@ components:
 
     User:
       type: object
-      required: [telegramId, firstName, coins, balance, streakCount, totalReferrals, lastSpinAt, createdAt]
+      required: [telegramId, firstName, coins, balance, streakCount, totalReferrals, lastSpinAt, createdAt, isNewUser]
       properties:
         telegramId:
           type: string
@@ -494,6 +494,9 @@ components:
           type: ["string", "null"]
         createdAt:
           type: string
+        isNewUser:
+          type: boolean
+          description: True only when this init call created the account for the first time
 
     FarmState:
       type: object

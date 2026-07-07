@@ -7,6 +7,8 @@ export interface UserContextType {
   refresh: () => Promise<void>;
   setUser: Dispatch<SetStateAction<User | null>>;
   telegramId: string;
+  /** True only on the very first app open (new account just created) */
+  isNewUser: boolean;
 }
 
 export const UserContext = createContext<UserContextType | null>(null);

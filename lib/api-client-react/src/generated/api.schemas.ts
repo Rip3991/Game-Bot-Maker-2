@@ -28,6 +28,8 @@ export interface User {
   /** @nullable */
   lastSpinAt: string | null;
   createdAt: string;
+  /** True only when this init call created the account for the first time */
+  isNewUser: boolean;
 }
 
 export interface UserInitInput {

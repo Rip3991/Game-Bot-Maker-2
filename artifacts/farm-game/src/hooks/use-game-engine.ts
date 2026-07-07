@@ -131,7 +131,7 @@ export const makeInitialState = (): GameState => ({
 const SAVE_KEY = 'farmGameState_v6';
 export const WELCOME_BONUS = 150;
 
-export function useGameEngine() {
+export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {}) {
   const [state, setState] = useState<GameState>(() => {
     try {
       const saved = localStorage.getItem(SAVE_KEY);
@@ -173,9 +173,13 @@ export function useGameEngine() {
   stateRef.current = state;
 
   const [showWelcomeBonus, setShowWelcomeBonus] = useState(false);
+  // Only grant the welcome bonus when the backend confirms this is a brand-new account.
+  // Checking `isNewUser` (from the server) prevents returning users from claiming the
+  // bonus again on a new device or after clearing localStorage.
   useEffect(() => {
+    if (!isNewUser) return;
     setState(prev => {
-      if (prev.welcomeBonusClaimed) return prev;
+      if (prev.welcomeBonusClaimed) return prev; // safety: don't double-grant same session
       return { ...prev, balance: prev.balance + WELCOME_BONUS, welcomeBonusClaimed: true };
     });
     const wasAlreadyClaimed = stateRef.current.welcomeBonusClaimed;
@@ -183,7 +187,7 @@ export function useGameEngine() {
       setShowWelcomeBonus(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isNewUser]);
 
   // Real-time product accumulation (20 ticks/sec)
   useEffect(() => {

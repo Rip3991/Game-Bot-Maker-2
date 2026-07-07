@@ -40,7 +40,8 @@ export const InitUserResponse = zod.object({
   "streakCount": zod.number(),
   "totalReferrals": zod.number(),
   "lastSpinAt": zod.string().nullable(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "isNewUser": zod.boolean().describe('True only when this init call created the account for the first time')
 })
 
 
@@ -65,7 +66,8 @@ export const GetUserResponse = zod.object({
   "streakCount": zod.number(),
   "totalReferrals": zod.number(),
   "lastSpinAt": zod.string().nullable(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "isNewUser": zod.boolean().describe('True only when this init call created the account for the first time')
 })
 
 
@@ -99,7 +101,8 @@ export const SaveFarmStateResponse = zod.object({
   "streakCount": zod.number(),
   "totalReferrals": zod.number(),
   "lastSpinAt": zod.string().nullable(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "isNewUser": zod.boolean().describe('True only when this init call created the account for the first time')
 })
 
 

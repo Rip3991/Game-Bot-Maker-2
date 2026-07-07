@@ -476,8 +476,8 @@ function FarmScene({ state }: { state: any }) {
 
 /* ── Main GameView ── */
 export default function GameView() {
-  const { state, unlockSection, buyUnit, sellProducts, incomePerMin, showWelcomeBonus, setShowWelcomeBonus } = useGameEngine();
-  const { user, telegramId } = useUser();
+  const { user, telegramId, isNewUser } = useUser();
+  const { state, unlockSection, buyUnit, sellProducts, incomePerMin, showWelcomeBonus, setShowWelcomeBonus } = useGameEngine({ isNewUser });
   const saveFarmMut = useSaveFarmState();
   const stateRef = useRef(state);
   stateRef.current = state;
