@@ -474,14 +474,22 @@ router.get("/market", async (_req, res): Promise<void> => {
 });
 
 // GET /nfts/showcase — NFTs from recently active users (for live community strip)
-router.get("/showcase", async (_req, res): Promise<void> => {
+// Pass ?exclude=telegramId to hide the current user's own NFTs
+router.get("/showcase", async (req, res): Promise<void> => {
+  // Accept only a plain string to avoid SQL type errors with arrays/objects
+  const excludeRaw = req.query.exclude;
+  const excludeId = typeof excludeRaw === "string" && excludeRaw.length > 0 ? excludeRaw : null;
   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
-  // Get recently active users (logged in within 2 hours)
+  // Get recently active users (logged in within 2 hours), excluding current user
   const activeUsers = await db
     .select({ telegramId: usersTable.telegramId, firstName: usersTable.firstName })
     .from(usersTable)
-    .where(gte(usersTable.lastLoginAt, twoHoursAgo))
+    .where(
+      excludeId
+        ? and(gte(usersTable.lastLoginAt, twoHoursAgo), sql`${usersTable.telegramId} != ${excludeId}`)
+        : gte(usersTable.lastLoginAt, twoHoursAgo)
+    )
     .limit(100);
 
   let nfts: (typeof nftsTable.$inferSelect)[] = [];
@@ -495,9 +503,10 @@ router.get("/showcase", async (_req, res): Promise<void> => {
     });
   }
 
-  // Pad with recent NFTs if we don't have enough
+  // Pad with recent NFTs if we don't have enough (still excluding current user)
   if (nfts.length < 10) {
     const recent = await db.query.nftsTable.findMany({
+      where: excludeId ? sql`${nftsTable.ownerTelegramId} != ${excludeId}` : undefined,
       orderBy: [desc(nftsTable.createdAt)],
       limit: 40,
     });

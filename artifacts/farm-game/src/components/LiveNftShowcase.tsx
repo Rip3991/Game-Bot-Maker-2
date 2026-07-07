@@ -11,6 +11,8 @@ interface ShowcaseNft {
   ownerName: string;
 }
 
+import { useUser } from '../hooks/use-user';
+
 const API = `${import.meta.env.BASE_URL}api`;
 
 const RARITY_COLORS: Record<string, { border: string; glow: string; text: string; badge: string }> = {
@@ -65,6 +67,7 @@ function NftMiniCard({ nft, index }: { nft: ShowcaseNft; index: number }) {
 }
 
 export function LiveNftShowcase() {
+  const { telegramId } = useUser();
   const [nfts, setNfts] = useState<ShowcaseNft[]>([]);
   const [loading, setLoading] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
@@ -74,7 +77,8 @@ export function LiveNftShowcase() {
 
   const fetchShowcase = async () => {
     try {
-      const res = await fetch(`${API}/nfts/showcase`);
+      const params = telegramId ? `?exclude=${encodeURIComponent(telegramId)}` : '';
+      const res = await fetch(`${API}/nfts/showcase${params}`);
       if (!res.ok) return;
       const data: ShowcaseNft[] = await res.json();
       setNfts(data);

@@ -121,11 +121,11 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       ? `${gameUrl}?startapp=${refParam}`
       : gameUrl;
 
-    // Referral invite link for sharing — ?startapp= opens the Mini App directly
-    // and sets initDataUnsafe.start_param so the referral is tracked
+    // Referral invite link for sharing — ?start= triggers /start webhook which
+    // responds with the game URL containing ?startapp= so start_param is set
     const botUsername = getBotUsername();
     const inviteUrl = userId
-      ? `https://t.me/${botUsername}?startapp=ref_${userId}`
+      ? `https://t.me/${botUsername}?start=ref_${userId}`
       : `https://t.me/${botUsername}`;
 
     await sendTelegramRequest("sendMessage", {
@@ -134,8 +134,8 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       parse_mode: "HTML",
       reply_markup: {
         inline_keyboard: [
-          [{ text: "🚜 Çiftliği Aç", web_app: { url: appUrl } }],
-          [{ text: "👥 Arkadaş Davet Et & 50 Coin Kazan", url: `https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent("Benimle Sarı'nın Çiftliği'ni oyna! Davet bonusu kazan 🌾🪙")}` }],
+          [{ text: "🌾 Çiftliği Aç", web_app: { url: appUrl } }],
+          [{ text: "👥 Arkadaş Davet Et, Kazan", url: `https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent("Benimle Sarı'nın Çiftliği'ni oyna! Davet bonusu kazan 🌾🪙")}` }],
         ],
       },
     });

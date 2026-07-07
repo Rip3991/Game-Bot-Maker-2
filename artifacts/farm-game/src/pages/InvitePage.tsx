@@ -12,9 +12,9 @@ export default function InvitePage() {
   const { data: stats, isLoading } = useGetReferralStats(telegramId);
 
   // Use the link from the server (has correct BOT_USERNAME) or build fallback
-  // ?startapp= opens the Mini App directly and sets initDataUnsafe.start_param
+  // ?start= triggers /start webhook which sends the game link with startapp param
   const referralLink =
-    stats?.referralLink ?? `https://t.me/${BOT_USERNAME}?startapp=ref_${telegramId}`;
+    stats?.referralLink ?? `https://t.me/${BOT_USERNAME}?start=ref_${telegramId}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(referralLink);

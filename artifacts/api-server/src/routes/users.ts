@@ -284,8 +284,8 @@ router.get("/referrals/stats/:telegramId", async (req, res): Promise<void> => {
 
   // Use BOT_USERNAME env var — set to MemberGobot in production
   const botUsername = process.env.BOT_USERNAME ?? "MemberGobot";
-  // ?startapp= opens the Mini App directly and sets initDataUnsafe.start_param
-  const referralLink = `https://t.me/${botUsername}?startapp=ref_${telegramId}`;
+  // ?start= triggers /start webhook which responds with game URL containing ?startapp=
+  const referralLink = `https://t.me/${botUsername}?start=ref_${telegramId}`;
   const totalCoins = referrals.reduce((s, r) => s + r.coinsEarned, 0);
 
   const recentReferrals = await Promise.all(
