@@ -6,29 +6,32 @@ import { getOnlineCount } from "./users";
 const router = Router();
 
 /**
- * Realistic-looking fake online count.
- * Drifts slowly with a sine wave (5-min period) + small per-request noise,
- * so it looks like real users joining/leaving naturally.
- * Range: 14–22, centred around 17–18.
+ * Fake online count based on total registered players.
+ * Shows ~40–70% of total users as "online", drifting naturally.
  */
-function getFakeOnlineCount(): number {
+function getFakeOnlineCount(totalPlayers: number): number {
+  if (totalPlayers <= 0) return 1;
   const now = Date.now();
-  // Slow sine wave — full cycle every ~5 minutes
-  const wave = Math.sin((now / 1000 / 300) * 2 * Math.PI);
-  // Second harmonic for irregularity
-  const wave2 = Math.sin((now / 1000 / 113) * 2 * Math.PI);
-  // Small random jitter (changes each request)
+  // Slow primary wave — cycle every ~7 minutes
+  const wave1 = Math.sin((now / 1000 / 420) * 2 * Math.PI);
+  // Irregular secondary wave — cycle every ~2.3 minutes
+  const wave2 = Math.sin((now / 1000 / 139) * 2 * Math.PI);
+  // Per-request jitter
   const jitter = Math.random() * 2 - 1;
 
-  const base = 17 + wave * 3 + wave2 * 1.5 + jitter;
-  return Math.round(Math.max(14, Math.min(22, base)));
+  // Target range: 40%–70% of total, centred at ~55%
+  const center = totalPlayers * 0.55;
+  const spread = totalPlayers * 0.15;
+  const raw = center + wave1 * spread * 0.7 + wave2 * spread * 0.3 + jitter;
+
+  const lo = Math.max(1, Math.round(totalPlayers * 0.40));
+  const hi = Math.round(totalPlayers * 0.70);
+  return Math.round(Math.max(lo, Math.min(hi, raw)));
 }
 
 // GET /stats/online — live online player count + totals
 router.get("/stats/online", async (_req, res): Promise<void> => {
   const real = getOnlineCount();
-  // Use whichever is higher so real users are never hidden
-  const onlineCount = Math.max(real, getFakeOnlineCount());
 
   const totals = await db
     .select({
@@ -37,9 +40,12 @@ router.get("/stats/online", async (_req, res): Promise<void> => {
     })
     .from(usersTable);
 
+  const totalPlayers = Number(totals[0]?.totalPlayers ?? 0);
+  const onlineCount = Math.max(real, getFakeOnlineCount(totalPlayers));
+
   res.json({
     onlineCount,
-    totalPlayers: Number(totals[0]?.totalPlayers ?? 0),
+    totalPlayers,
     totalCoinsInCirculation: Number(totals[0]?.totalCoins ?? 0),
   });
 });
