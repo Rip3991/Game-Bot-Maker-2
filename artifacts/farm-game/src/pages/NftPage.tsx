@@ -814,9 +814,9 @@ export default function NftPage() {
         {openingCase && (
           <CaseOpenOverlay key={openingCase.id} caseDef={openingCase} allNfts={allNftDefs}
             onBalanceSync={b => setBalance(b)}
-            onClose={() => setOpeningCase(null)}
+            onClose={() => { setOpeningCase(null); setTab('mine'); }}
             onOpenAnother={() => setOpeningCase({ ...openingCase })}
-            onNftMinted={() => refetchMine()} />
+            onNftMinted={() => { refetchMine(); }} />
         )}
       </AnimatePresence>
       <AnimatePresence>

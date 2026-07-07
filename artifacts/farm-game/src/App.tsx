@@ -28,7 +28,6 @@ const queryClient = new QueryClient();
 const RIGHT_NAV = [
   { label: 'Çiftlik', icon: '🌾', path: '/' },
   { label: 'Çark',   icon: '🎡', path: '/spin' },
-  { label: 'Kasa',   icon: '🏦', path: '/vault' },
   { label: 'NFT',    icon: '✨', path: '/nfts' },
   { label: 'Davet',  icon: '👥', path: '/invite' },
   { label: 'Liste',  icon: '🏆', path: '/leaderboard' },
