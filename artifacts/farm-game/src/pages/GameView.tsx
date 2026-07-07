@@ -476,29 +476,8 @@ export default function GameView() {
           </div>
         </div>
 
-        {/* ── Center: Conveyor rail ── */}
+        {/* ── Right: Conveyor rail ── */}
         <ConveyorBelt state={state} />
-
-        {/* ── Right: Nav strip ── */}
-        <div className="w-[54px] flex-shrink-0 flex flex-col items-center py-3 gap-2 overflow-y-auto custom-scrollbar" style={{ background: 'rgba(0,0,0,0.2)' }}>
-          {rightNav.map(item => (
-            <button
-              key={item.path}
-              onClick={() => navigate(item.path)}
-              className="right-nav-btn"
-              style={item.path === '/' ? {
-                background: 'linear-gradient(180deg, #4ea824 0%, #3d8b1c 100%)',
-                borderColor: '#2e6612',
-                color: 'white',
-              } : undefined}
-            >
-              <span className="text-xl leading-none">{item.icon}</span>
-              <span className="text-[8px] font-black leading-none text-center" style={{ color: item.path === '/' ? 'white' : '#333' }}>
-                {item.label}
-              </span>
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* ══ PURCHASE SHEET ══ */}
