@@ -199,11 +199,11 @@ router.post("/cases/open", async (req, res): Promise<void> => {
       // prevents race conditions under concurrent requests
       const updated = await tx
         .update(usersTable)
-        .set({ balance: sql`(CAST(${usersTable.balance} AS NUMERIC) - ${caseDef.price})::text` })
+        .set({ balance: sql`${usersTable.balance} - ${caseDef.price}` })
         .where(
           and(
             eq(usersTable.telegramId, telegramId),
-            sql`COALESCE(CAST(${usersTable.balance} AS NUMERIC), 0) >= ${caseDef.price}`,
+            sql`${usersTable.balance} >= ${caseDef.price}`,
           ),
         )
         .returning({ telegramId: usersTable.telegramId });
@@ -291,7 +291,7 @@ router.post("/sell", async (req, res): Promise<void> => {
       // Increment balance atomically
       await tx
         .update(usersTable)
-        .set({ balance: sql`(COALESCE(CAST(${usersTable.balance} AS NUMERIC), 0) + ${earnedTl})::text` })
+        .set({ balance: sql`${usersTable.balance} + ${earnedTl}` })
         .where(eq(usersTable.telegramId, telegramId));
     });
   } catch (e: any) {
