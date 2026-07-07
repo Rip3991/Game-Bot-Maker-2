@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and, or, lt, isNull } from "drizzle-orm";
 import { db, usersTable, achievementsTable } from "@workspace/db";
 import { DailySpinBody } from "@workspace/api-zod";
 
@@ -16,8 +16,7 @@ const SPIN_SEGMENTS = [
   { label: "75 Coin", prizeType: "coins" as const, coinsEarned: 75, segmentIndex: 7 },
 ];
 
-// Weighted random: jackpot 2%, boost 8%, miss 15%, rest proportional
-const WEIGHTS = [15, 20, 8, 15, 15, 15, 2, 10]; // must sum to 100
+const WEIGHTS = [15, 20, 8, 15, 15, 15, 2, 10];
 
 function weightedRandom(): number {
   const total = WEIGHTS.reduce((a, b) => a + b, 0);
@@ -38,9 +37,18 @@ router.post("/spin", async (req, res): Promise<void> => {
   }
 
   const { telegramId } = parsed.data;
+  const now = new Date();
+  const cooldownCutoff = new Date(now.getTime() - 24 * 3600 * 1000);
 
+  // Atomic cooldown check: only update if lastSpinAt IS NULL or older than 24h.
+  // This collapses the read + write into one statement, preventing race conditions.
+  const segmentIndex = weightedRandom();
+  const segment = SPIN_SEGMENTS[segmentIndex];
+
+  // We need streak info — read user first, but only to get streakCount (non-critical for race)
   const user = await db.query.usersTable.findFirst({
     where: eq(usersTable.telegramId, telegramId),
+    columns: { streakCount: true, lastSpinAt: true, coins: true },
   });
 
   if (!user) {
@@ -48,69 +56,45 @@ router.post("/spin", async (req, res): Promise<void> => {
     return;
   }
 
-  const now = new Date();
-
-  // Check cooldown (24h)
-  if (user.lastSpinAt) {
-    const hoursSince = (now.getTime() - user.lastSpinAt.getTime()) / 3600000;
-    if (hoursSince < 24) {
-      const canSpinAgainAt = new Date(user.lastSpinAt.getTime() + 24 * 3600 * 1000);
-      const hoursRemaining = 24 - hoursSince;
-      res.status(429).json({
-        canSpinAgainAt: canSpinAgainAt.toISOString(),
-        hoursRemaining: Math.round(hoursRemaining * 10) / 10,
-      });
-      return;
-    }
-  }
-
-  const segmentIndex = weightedRandom();
-  const segment = SPIN_SEGMENTS[segmentIndex];
-
-  // Streak bonus: +10% coins per streak day (max 50%)
-  const streakBonus = segment.prizeType === "coins"
-    ? Math.floor(segment.coinsEarned * Math.min(user.streakCount * 0.1, 0.5))
-    : 0;
-
+  const streakBonus =
+    segment.prizeType === "coins"
+      ? Math.floor(segment.coinsEarned * Math.min(user.streakCount * 0.1, 0.5))
+      : 0;
   const totalCoins = segment.coinsEarned + streakBonus;
 
+  // Conditional UPDATE: only proceeds when cooldown has expired (atomic, no separate read needed)
   const updated = await db
     .update(usersTable)
     .set({
       lastSpinAt: now,
       coins: totalCoins > 0 ? sql`${usersTable.coins} + ${totalCoins}` : usersTable.coins,
     })
-    .where(eq(usersTable.telegramId, telegramId))
-    .returning();
+    .where(
+      and(
+        eq(usersTable.telegramId, telegramId),
+        or(isNull(usersTable.lastSpinAt), lt(usersTable.lastSpinAt, cooldownCutoff)),
+      ),
+    )
+    .returning({ coins: usersTable.coins, lastSpinAt: usersTable.lastSpinAt });
 
-  // Grant jackpot achievement
-  if (segment.prizeType === "jackpot") {
-    const existing = await db.query.achievementsTable.findFirst({
-      where: (t, { and }) =>
-        and(eq(t.userTelegramId, telegramId), eq(t.achievementKey, "jackpot")),
+  // If no row was updated, cooldown is still active
+  if (!updated[0]) {
+    const canSpinAgainAt = new Date(user.lastSpinAt!.getTime() + 24 * 3600 * 1000);
+    const hoursRemaining = (canSpinAgainAt.getTime() - now.getTime()) / 3600000;
+    res.status(429).json({
+      canSpinAgainAt: canSpinAgainAt.toISOString(),
+      hoursRemaining: Math.round(hoursRemaining * 10) / 10,
     });
-    if (!existing) {
-      await db.insert(achievementsTable).values({
-        userTelegramId: telegramId,
-        achievementKey: "jackpot",
-      });
-    }
+    return;
   }
 
-  // Grant coin_collector achievement
-  const newTotal = Number(updated[0]?.coins ?? 0);
-  if (newTotal >= 1000) {
-    const existing = await db.query.achievementsTable.findFirst({
-      where: (t, { and }) =>
-        and(eq(t.userTelegramId, telegramId), eq(t.achievementKey, "coin_collector")),
-    });
-    if (!existing) {
-      await db.insert(achievementsTable).values({
-        userTelegramId: telegramId,
-        achievementKey: "coin_collector",
-      });
-    }
-  }
+  const newTotal = Number(updated[0].coins);
+
+  // Grant achievements (non-critical path, ignore errors)
+  try {
+    if (segment.prizeType === "jackpot") await grantAchievement(telegramId, "jackpot");
+    if (newTotal >= 1000) await grantAchievement(telegramId, "coin_collector");
+  } catch { /* best-effort */ }
 
   const canSpinAgainAt = new Date(now.getTime() + 24 * 3600 * 1000);
 
@@ -124,5 +108,18 @@ router.post("/spin", async (req, res): Promise<void> => {
     streakBonus: streakBonus > 0 ? streakBonus : null,
   });
 });
+
+async function grantAchievement(telegramId: string, key: string) {
+  const existing = await db.query.achievementsTable.findFirst({
+    where: (t, { and }) =>
+      and(eq(t.userTelegramId, telegramId), eq(t.achievementKey, key)),
+  });
+  if (!existing) {
+    await db
+      .insert(achievementsTable)
+      .values({ userTelegramId: telegramId, achievementKey: key })
+      .onConflictDoNothing();
+  }
+}
 
 export default router;

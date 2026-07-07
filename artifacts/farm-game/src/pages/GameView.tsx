@@ -6,6 +6,8 @@ import { AchievementsPanel } from '../components/AchievementsPanel';
 import { useUser } from '../hooks/use-user';
 import { useSaveFarmState } from '@workspace/api-client-react';
 import { motion } from 'framer-motion';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import mascotAvatar from '../assets/mascot-avatar.png';
 
 export default function GameView() {
   const { state, upgradeFarm } = useGameEngine();
@@ -73,12 +75,28 @@ export default function GameView() {
               <span className="font-mono tabular-nums">{formattedBalance}</span>
             </span>
           </div>
-          {/* Coin Balance */}
-          <div className="wood-panel py-1.5 px-3 shadow-xl border-[#452b18] flex items-center">
-            <span className="text-[13px] font-black drop-shadow-md tracking-wide text-[#f5c842] flex items-center">
-              <span className="mr-1">🪙</span>
-              <span className="font-mono tabular-nums">{user?.coins?.toLocaleString() ?? 0}</span>
-            </span>
+          
+          {/* Mascot and Coin Balance */}
+          <div className="flex items-center gap-1.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <img 
+                  src={mascotAvatar} 
+                  alt="Sarı" 
+                  className="w-8 h-8 rounded-full border-2 border-white shadow-md cursor-help bg-yellow-400 relative z-50 hover:scale-110 transition-transform" 
+                />
+              </TooltipTrigger>
+              <TooltipContent side="bottom" sideOffset={8} className="bg-[#a06235] border-2 border-[#5c3a21] text-white font-bold p-2 text-xs shadow-xl z-[100] max-w-[200px]">
+                <p>Ben Sarı! Çiftliğinin sahibi 🌾</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <div className="wood-panel py-1.5 px-3 shadow-xl border-[#452b18] flex items-center">
+              <span className="text-[13px] font-black drop-shadow-md tracking-wide text-[#f5c842] flex items-center">
+                <span className="mr-1">🪙</span>
+                <span className="font-mono tabular-nums">{user?.coins?.toLocaleString() ?? 0}</span>
+              </span>
+            </div>
           </div>
         </div>
         

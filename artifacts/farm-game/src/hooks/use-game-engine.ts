@@ -16,15 +16,17 @@ export interface GameState {
 }
 
 const INITIAL_STATE: GameState = {
-  balance: 54.11, // Seeded balance for initial upgrades
+  balance: 0,
   farms: { wheat: 1, chicken: 1, cow: 1 },
   lastSaved: Date.now()
 };
 
+const SAVE_KEY = 'farmGameState_v2'; // v2 = resets old saves
+
 export function useGameEngine() {
   const [state, setState] = useState<GameState>(() => {
     try {
-      const saved = localStorage.getItem('farmGameState');
+      const saved = localStorage.getItem(SAVE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as GameState;
         
@@ -82,7 +84,7 @@ export function useGameEngine() {
   // Auto-save loop (every 2 seconds)
   useEffect(() => {
     const saveInterval = setInterval(() => {
-      localStorage.setItem('farmGameState', JSON.stringify({
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
         ...stateRef.current,
         lastSaved: Date.now()
       }));

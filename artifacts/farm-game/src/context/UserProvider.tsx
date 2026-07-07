@@ -4,6 +4,7 @@ import { UserContext } from '../hooks/use-user';
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const initUserMut = useInitUser();
 
   const telegramId =
@@ -25,8 +26,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       setUser(data);
     } catch (e) {
       console.error("Failed to init user", e);
+    } finally {
+      setIsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [telegramId]);
 
   useEffect(() => {
@@ -34,7 +37,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   return (
-    <UserContext.Provider value={{ user, setUser, refresh, telegramId }}>
+    <UserContext.Provider value={{ user, isLoading, setUser, refresh, telegramId }}>
       {children}
     </UserContext.Provider>
   );

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useUser } from '../hooks/use-user';
 import { useDailySpin } from '@workspace/api-client-react';
 import { toast } from 'sonner';
+import mascotAvatar from '../assets/mascot-avatar.png';
 
 const WHEEL_SEGMENTS = [
   { prize: '50', icon: '🪙', color: '#a06235', label: '50 Coin', value: 50 },
@@ -22,6 +23,7 @@ export default function SpinPage() {
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [timeLeft, setTimeLeft] = useState<string | null>(null);
+  const [justWon, setJustWon] = useState(false);
 
   const canSpin = !user?.lastSpinAt || new Date(user.lastSpinAt).getTime() + 24*60*60*1000 < Date.now();
 
@@ -62,6 +64,8 @@ export default function SpinPage() {
 
       setTimeout(() => {
         setIsSpinning(false);
+        setJustWon(true);
+        setTimeout(() => setJustWon(false), 1000);
         refresh();
         if (result.prizeType === 'coins' || result.prizeType === 'jackpot') {
           toast.success(`🎉 ${result.coinsEarned} Coin Kazandın!`, {
@@ -93,10 +97,19 @@ export default function SpinPage() {
     <div className="flex flex-col h-full items-center pt-8 pb-4 px-4 overflow-y-auto">
       
       <div className="w-full flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-black drop-shadow-md tracking-tight">Günlük Çark</h1>
+        <div className="flex items-center gap-3">
+          <motion.img 
+            src={mascotAvatar} 
+            alt="Sarı"
+            animate={isSpinning ? { rotate: [-10, 10, -10, 10, 0] } : (justWon ? { scale: [1, 1.3, 1] } : {})}
+            transition={isSpinning ? { repeat: Infinity, duration: 0.4 } : { duration: 0.5 }}
+            className="w-16 h-16 drop-shadow-lg origin-bottom bg-yellow-400 rounded-full border-2 border-white shadow-md z-10 relative"
+          />
+          <h1 className="text-3xl font-black drop-shadow-md tracking-tight">Günlük Çark</h1>
+        </div>
         {user && user.streakCount > 0 && (
           <div className="bg-orange-500 border-2 border-orange-700 text-white font-black px-3 py-1 rounded-full shadow-md flex items-center gap-1">
-            <span className="text-lg">🔥</span> {user.streakCount} Gün
+            <span className="text-lg">🔥</span> {user.streakCount}
           </div>
         )}
       </div>

@@ -37,6 +37,7 @@ router.post("/stars/purchase", async (req, res): Promise<void> => {
 
   const user = await db.query.usersTable.findFirst({
     where: eq(usersTable.telegramId, telegramId),
+    columns: { coins: true },
   });
 
   if (!user) {
@@ -49,18 +50,10 @@ router.post("/stars/purchase", async (req, res): Promise<void> => {
     return;
   }
 
-  // Deduct coins
-  const updated = await db
-    .update(usersTable)
-    .set({ coins: sql`${usersTable.coins} - ${pkg.coinsRequired}` })
-    .where(eq(usersTable.telegramId, telegramId))
-    .returning();
-
-  const newCoinsTotal = Number(updated[0]?.coins ?? 0);
-
-  // Create Telegram Stars invoice link
+  // Step 1: Create the Telegram invoice FIRST — before touching coins
   let invoiceLink = "";
   if (BOT_TOKEN) {
+    let invoiceData: { ok: boolean; result?: string };
     try {
       const invoiceRes = await fetch(
         `https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`,
@@ -76,22 +69,33 @@ router.post("/stars/purchase", async (req, res): Promise<void> => {
           }),
         },
       );
-      const invoiceData = (await invoiceRes.json()) as { ok: boolean; result?: string };
-      if (invoiceData.ok && invoiceData.result) {
-        invoiceLink = invoiceData.result;
-      }
-    } catch {
-      // Invoice creation failed — refund coins
-      await db
-        .update(usersTable)
-        .set({ coins: sql`${usersTable.coins} + ${pkg.coinsRequired}` })
-        .where(eq(usersTable.telegramId, telegramId));
-      res.status(500).json({ error: "Fatura oluşturulamadı" });
+      invoiceData = (await invoiceRes.json()) as { ok: boolean; result?: string };
+    } catch (networkErr) {
+      res.status(502).json({ error: "Telegram bağlantı hatası" });
       return;
     }
+
+    // Strict validation — both ok AND result must be present
+    if (!invoiceData.ok || !invoiceData.result) {
+      res.status(502).json({ error: "Fatura oluşturulamadı" });
+      return;
+    }
+    invoiceLink = invoiceData.result;
   } else {
-    // Dev mode: return a dummy link
+    // Dev mode
     invoiceLink = `https://t.me/invoice/demo_${packageId}_${Date.now()}`;
+  }
+
+  // Step 2: Invoice confirmed — now atomically deduct coins
+  const updated = await db
+    .update(usersTable)
+    .set({ coins: sql`${usersTable.coins} - ${pkg.coinsRequired}` })
+    .where(eq(usersTable.telegramId, telegramId))
+    .returning({ coins: usersTable.coins });
+
+  if (!updated[0]) {
+    res.status(404).json({ error: "User not found during deduction" });
+    return;
   }
 
   res.json({
@@ -99,7 +103,7 @@ router.post("/stars/purchase", async (req, res): Promise<void> => {
     invoiceLink,
     starsAwarded: pkg.stars,
     coinsSpent: pkg.coinsRequired,
-    newCoinsTotal,
+    newCoinsTotal: Number(updated[0].coins),
   });
 });
 

@@ -8,14 +8,41 @@ import SpinPage from './pages/SpinPage';
 import InvitePage from './pages/InvitePage';
 import StarsShopPage from './pages/StarsShopPage';
 import LeaderboardPage from './pages/LeaderboardPage';
+import WelcomePage from './pages/WelcomePage';
+import { useUser } from './hooks/use-user';
 import { UserProvider } from './context/UserProvider';
 import { BottomNav } from './components/BottomNav';
 import { AnimatePresence, motion } from 'framer-motion';
+import React, { useState } from 'react';
+import mascotAvatar from './assets/mascot-avatar.png';
 
 const queryClient = new QueryClient();
 
 function Router() {
   const [location] = useLocation();
+  const [isWelcomed, setIsWelcomed] = useState(
+    () => localStorage.getItem('farm_welcomed_v1') === 'true'
+  );
+  const { isLoading } = useUser();
+
+  if (!isWelcomed) {
+    return <WelcomePage onComplete={() => setIsWelcomed(true)} />;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-[100dvh] w-full max-w-md mx-auto bg-[#5ab327] items-center justify-center shadow-2xl">
+        <motion.img 
+          src={mascotAvatar} 
+          alt="Sarı"
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+          className="w-24 h-24 drop-shadow-xl mb-6 bg-yellow-400 rounded-full border-4 border-white shadow-inner" 
+        />
+        <div className="font-black text-white text-xl drop-shadow-md animate-pulse">Yükleniyor...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[100dvh] w-full max-w-md mx-auto bg-[#5ab327] overflow-hidden relative shadow-2xl">

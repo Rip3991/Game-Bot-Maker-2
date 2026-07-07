@@ -3,6 +3,7 @@ import { User } from '@workspace/api-client-react';
 
 export interface UserContextType {
   user: User | null;
+  isLoading: boolean;
   refresh: () => Promise<void>;
   setUser: Dispatch<SetStateAction<User | null>>;
   telegramId: string;

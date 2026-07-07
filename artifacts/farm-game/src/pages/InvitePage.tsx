@@ -3,6 +3,7 @@ import { useUser } from '../hooks/use-user';
 import { useGetReferralStats } from '@workspace/api-client-react';
 import { Copy, Share, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import mascotAvatar from '../assets/mascot-avatar.png';
 
 export default function InvitePage() {
   const { telegramId } = useUser();
@@ -30,9 +31,18 @@ export default function InvitePage() {
       
       <div className="wood-panel p-6 flex flex-col items-center justify-center text-center mb-6 relative overflow-hidden">
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-yellow-400/20 rounded-full blur-3xl pointer-events-none" />
-        <h1 className="text-3xl font-black drop-shadow-md mb-2">Arkadaş Davet Et</h1>
-        <div className="text-5xl animate-bounce-idle my-4">👥</div>
-        <div className="bg-[#5c3a21] border-2 border-[#f5c842] rounded-xl px-4 py-2 shadow-lg inline-flex items-center gap-2">
+        
+        <div className="flex items-center gap-3 mb-2 z-10">
+          <img src={mascotAvatar} alt="Sarı" className="w-[60px] drop-shadow-md bg-yellow-400 rounded-full border-2 border-white shadow-md" />
+          <h1 className="text-3xl font-black drop-shadow-md">Arkadaş Davet Et</h1>
+        </div>
+        
+        <div className="relative bg-white text-[#a06235] font-black px-4 py-2 rounded-xl mb-4 text-sm shadow-md border-2 border-[#a06235] z-10 mt-2">
+          <div className="absolute -top-2 left-6 w-4 h-4 bg-white border-l-2 border-t-2 border-[#a06235] transform rotate-45"></div>
+          Her arkadaşın 500 Coin kazandırır!
+        </div>
+
+        <div className="bg-[#5c3a21] border-2 border-[#f5c842] rounded-xl px-4 py-2 shadow-lg inline-flex items-center gap-2 z-10">
           <span className="text-xl font-black text-[#f5c842]">Her Davet = 🪙 500 Coin</span>
         </div>
       </div>
