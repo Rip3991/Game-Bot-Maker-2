@@ -3,13 +3,30 @@ import { useGameEngine, SECTIONS, WELCOME_BONUS, SectionConfig } from '../hooks/
 import { MarketPanel } from '../components/MarketPanel';
 import { AchievementsPanel } from '../components/AchievementsPanel';
 import { useUser } from '../hooks/use-user';
-import { useSaveFarmState } from '@workspace/api-client-react';
+import { useSaveFarmState, useGetOnlineStats, getGetOnlineStatsQueryKey } from '@workspace/api-client-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flame, Plus, Lock } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { formatNum } from '../utils/format';
 
 export { formatNum } from '../utils/format';
+
+/* ── Online player count pill ── */
+function OnlineCounterPill() {
+  const { data } = useGetOnlineStats({
+    query: { queryKey: getGetOnlineStatsQueryKey(), refetchInterval: 30_000 },
+  });
+  const count = data?.onlineCount ?? null;
+  return (
+    <div className="flex items-center gap-1 bg-green-900/50 border border-green-600/40 rounded-full px-2 py-0.5">
+      <span className="relative flex h-1.5 w-1.5">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500" />
+      </span>
+      <span className="text-green-300 font-black text-[9px] tabular-nums">{count ?? '...'} aktif</span>
+    </div>
+  );
+}
 
 /* ── Animated Cloud ── */
 function Cloud({ top, size, delay, duration }: { top: string; size: number; delay: number; duration: number }) {
@@ -484,6 +501,8 @@ export default function GameView() {
         </button>
 
         <div className="flex-1" />
+
+        <OnlineCounterPill />
 
         <div className="top-balance-pill">
           <span className="text-green-400 text-xs font-black">📈 {formatNum(incomePerMin)}/dk</span>

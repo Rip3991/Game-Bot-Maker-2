@@ -11,6 +11,7 @@ import LeaderboardPage from './pages/LeaderboardPage';
 import WelcomePage from './pages/WelcomePage';
 import VaultPage from './pages/VaultPage';
 import NftPage from './pages/NftPage';
+import AdminPage from './pages/AdminPage';
 import { useUser } from './hooks/use-user';
 import { UserProvider } from './context/UserProvider';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -127,6 +128,7 @@ function Router() {
                 <Route path="/invite" component={InvitePage} />
                 <Route path="/stars" component={StarsShopPage} />
                 <Route path="/leaderboard" component={LeaderboardPage} />
+                <Route path="/admin" component={AdminPage} />
                 <Route component={NotFound} />
               </Switch>
             </motion.div>
