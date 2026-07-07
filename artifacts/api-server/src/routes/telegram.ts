@@ -13,6 +13,12 @@ function isAdmin(telegramId?: number | string): boolean {
   return adminIds.split(",").map(s => s.trim()).includes(String(telegramId));
 }
 
+function getBannerUrl(): string {
+  const domains = process.env.REPLIT_DOMAINS || process.env.REPLIT_DEV_DOMAIN || "";
+  const primary = domains.split(",")[0].trim();
+  return primary ? `https://${primary}/telegram-banner.jpg` : "";
+}
+
 router.post("/telegram/webhook", async (req, res): Promise<void> => {
   const token = getBotToken();
   if (!token) {
@@ -20,6 +26,9 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
     res.status(500).json({ error: "Bot not configured" });
     return;
   }
+
+  // Respond immediately so Telegram doesn't retry and user sees instant reply
+  res.json({ ok: true });
 
   const update = req.body as {
     message?: {
@@ -48,15 +57,11 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       pre_checkout_query_id: pcq.id,
       ok: true,
     });
-    res.json({ ok: true });
     return;
   }
 
   const message = update.message;
-  if (!message) {
-    res.json({ ok: true });
-    return;
-  }
+  if (!message) return;
 
   if (message.successful_payment) {
     const sp = message.successful_payment;
@@ -85,7 +90,6 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         }
       }
     }
-    res.json({ ok: true });
     return;
   }
 
@@ -101,7 +105,6 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       text: `🪪 <b>Telegram ID'niz:</b> <code>${userId}</code>\n\nBu numarayı admin paneli için kullanabilirsiniz.`,
       parse_mode: "HTML",
     });
-    res.json({ ok: true });
     return;
   }
 
@@ -112,7 +115,6 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         chat_id: chatId,
         text: "⛔ Bu komuta erişim yetkiniz yok.",
       });
-      res.json({ ok: true });
       return;
     }
 
@@ -127,7 +129,6 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         text: `❌ Kullanım:\n<code>${command} &lt;telegramId&gt; &lt;miktar&gt;</code>\n\nÖrnek: <code>${command} 123456789 100</code>`,
         parse_mode: "HTML",
       });
-      res.json({ ok: true });
       return;
     }
 
@@ -141,7 +142,6 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         text: `❌ Kullanıcı bulunamadı: <code>${targetId}</code>`,
         parse_mode: "HTML",
       });
-      res.json({ ok: true });
       return;
     }
 
@@ -181,7 +181,6 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       }).catch(() => {});
     }
 
-    res.json({ ok: true });
     return;
   }
 
@@ -196,11 +195,10 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         `📌 Kullanıcıların ID'sini öğrenmek için onlara /myid komutunu kullandırın.`,
       parse_mode: "HTML",
     });
-    res.json({ ok: true });
     return;
   }
 
-  // ── /start — welcome message with buttons ─────────────────────────────────
+  // ── /start — welcome photo + message with buttons ─────────────────────────
   if (text === "/start" || text.startsWith("/start ")) {
     const gameUrl = getGameUrl();
 
@@ -210,7 +208,6 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
         chat_id: chatId,
         text: "⚠️ Oyun URL'si henüz ayarlanmadı. Lütfen daha sonra tekrar dene.",
       });
-      res.json({ ok: true });
       return;
     }
 
@@ -227,32 +224,44 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       : `https://t.me/${botUsername}`;
 
     const announcementChannel = process.env.ANNOUNCEMENT_CHANNEL ?? "sarınçiftliği";
+    const bannerUrl = getBannerUrl();
 
-    await sendTelegramRequest("sendMessage", {
-      chat_id: chatId,
-      text: `🌾 <b>Merhaba ${firstName}!</b>\n\nSarı'nın Çiftliği'ne hoş geldin! 🐄🐔🌾\n\n` +
-        `✨ <b>Neler yapabilirsin?</b>\n` +
-        `🌾 Çiftliğini büyüt, mahsul yetiştir\n` +
-        `🐄 Hayvanlardan ürün topla ve sat\n` +
-        `🪙 Her arkadaş davetinde <b>50 Coin</b> kazan\n` +
-        `🎡 Her gün çarkı çevir, ödül kazan\n` +
-        `💸 Kazandığını gerçek paraya çevir\n\n` +
-        `👇 <b>Oyuna girmek için aşağıdaki butona bas!</b>`,
-      parse_mode: "HTML",
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "🌾 Oyuna Giriş Yap", web_app: { url: appUrl } }],
-          [{ text: "📢 Kanalımıza Katıl", url: `https://t.me/${announcementChannel}` }],
-          [{ text: "👥 Arkadaş Davet Et, Coin Kazan", url: `https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent("Benimle Sarı'nın Çiftliği'ni oyna! Davet bonusu kazan 🌾🪙")}` }],
-        ],
-      },
-    });
+    const caption = `🌾 <b>Merhaba ${firstName}!</b>\n\nSarı'nın Çiftliği'ne hoş geldin! 🐄🐔🌾\n\n` +
+      `✨ <b>Neler yapabilirsin?</b>\n` +
+      `🌾 Çiftliğini büyüt, mahsul yetiştir\n` +
+      `🐄 Hayvanlardan ürün topla ve sat\n` +
+      `🪙 Her arkadaş davetinde <b>50 Coin</b> kazan\n` +
+      `🎡 Her gün çarkı çevir, ödül kazan\n` +
+      `💸 Kazandığını gerçek paraya çevir\n\n` +
+      `👇 <b>Oyuna girmek için aşağıdaki butona bas!</b>`;
 
-    res.json({ ok: true });
+    const reply_markup = {
+      inline_keyboard: [
+        [{ text: "🌾 Oyuna Giriş Yap", web_app: { url: appUrl } }],
+        [{ text: "📢 Kanalımıza Katıl", url: `https://t.me/${announcementChannel}` }],
+        [{ text: "👥 Arkadaş Davet Et, Coin Kazan", url: `https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent("Benimle Sarı'nın Çiftliği'ni oyna! Davet bonusu kazan 🌾🪙")}` }],
+      ],
+    };
+
+    if (bannerUrl) {
+      await sendTelegramRequest("sendPhoto", {
+        chat_id: chatId,
+        photo: bannerUrl,
+        caption,
+        parse_mode: "HTML",
+        reply_markup,
+      });
+    } else {
+      await sendTelegramRequest("sendMessage", {
+        chat_id: chatId,
+        text: caption,
+        parse_mode: "HTML",
+        reply_markup,
+      });
+    }
+
     return;
   }
-
-  res.json({ ok: true });
 });
 
 // GET /telegram/set-webhook
