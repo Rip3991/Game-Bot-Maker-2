@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, desc, and, isNull, or, sql, isNotNull } from "drizzle-orm";
+import { eq, desc, and, isNull, or, sql, isNotNull, inArray, gte } from "drizzle-orm";
 import { db, usersTable, nftsTable, nftTradeOffersTable } from "@workspace/db";
 import crypto from "crypto";
 
@@ -237,6 +237,51 @@ function serializeNft(n: typeof nftsTable.$inferSelect) {
   };
 }
 
+// ── Public helper: mint a free NFT from a case (no TL cost) ─────────────────
+export async function mintFreeNftFromCase(
+  telegramId: string,
+  caseType: CaseType,
+): Promise<{
+  id: string; ownerTelegramId: string; nftType: string; rarity: string;
+  name: string; emoji: string; mintNumber: number; isListedForTrade: boolean;
+  listPrice: null; sellPrice: number; marketPrice: number; createdAt: string;
+}> {
+  const caseDef = CASE_DEFS[caseType];
+  const rarity   = rollRarity(caseDef.drops);
+  const nftType  = pickRandomNft(rarity);
+  const nftDef   = NFT_DEFS[nftType];
+  const mintNumber = Math.floor(Math.random() * nftDef.mintLimit) + 1;
+  const nftId    = crypto.randomUUID();
+  const now      = new Date();
+
+  await db.insert(nftsTable).values({
+    id: nftId,
+    ownerTelegramId: telegramId,
+    nftType,
+    rarity: nftDef.rarity,
+    name: nftDef.name,
+    emoji: nftDef.emoji,
+    mintNumber,
+    isListedForTrade: false,
+    listPrice: null,
+  });
+
+  return {
+    id: nftId,
+    ownerTelegramId: telegramId,
+    nftType,
+    rarity: nftDef.rarity,
+    name: nftDef.name,
+    emoji: nftDef.emoji,
+    mintNumber,
+    isListedForTrade: false,
+    listPrice: null,
+    sellPrice: nftDef.sellPrice,
+    marketPrice: getCurrentPrice(nftType),
+    createdAt: now.toISOString(),
+  };
+}
+
 // ── Routes ───────────────────────────────────────────────────────────────────
 
 // GET /nfts/cases
@@ -426,6 +471,69 @@ router.get("/market", async (_req, res): Promise<void> => {
     limit: 200,
   });
   res.json(listed.map(serializeNft));
+});
+
+// GET /nfts/showcase — NFTs from recently active users (for live community strip)
+router.get("/showcase", async (_req, res): Promise<void> => {
+  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+  // Get recently active users (logged in within 2 hours)
+  const activeUsers = await db
+    .select({ telegramId: usersTable.telegramId, firstName: usersTable.firstName })
+    .from(usersTable)
+    .where(gte(usersTable.lastLoginAt, twoHoursAgo))
+    .limit(100);
+
+  let nfts: (typeof nftsTable.$inferSelect)[] = [];
+
+  if (activeUsers.length > 0) {
+    const activeIds = activeUsers.map((u) => u.telegramId);
+    nfts = await db.query.nftsTable.findMany({
+      where: inArray(nftsTable.ownerTelegramId, activeIds),
+      orderBy: [desc(nftsTable.createdAt)],
+      limit: 40,
+    });
+  }
+
+  // Pad with recent NFTs if we don't have enough
+  if (nfts.length < 10) {
+    const recent = await db.query.nftsTable.findMany({
+      orderBy: [desc(nftsTable.createdAt)],
+      limit: 40,
+    });
+    const existing = new Set(nfts.map((n) => n.id));
+    for (const n of recent) {
+      if (!existing.has(n.id)) nfts.push(n);
+      if (nfts.length >= 30) break;
+    }
+  }
+
+  // Sort: legendary → rare → common
+  const rarityOrder: Record<string, number> = { legendary: 0, rare: 1, special: 2, common: 3 };
+  nfts.sort((a, b) => (rarityOrder[a.rarity] ?? 3) - (rarityOrder[b.rarity] ?? 3));
+  nfts = nfts.slice(0, 20);
+
+  // Enrich with owner names
+  const ownerIds = [...new Set(nfts.map((n) => n.ownerTelegramId))];
+  const ownerRows =
+    ownerIds.length > 0
+      ? await db
+          .select({ telegramId: usersTable.telegramId, firstName: usersTable.firstName })
+          .from(usersTable)
+          .where(inArray(usersTable.telegramId, ownerIds))
+      : [];
+  const ownerMap = new Map(ownerRows.map((o) => [o.telegramId, o.firstName]));
+
+  res.json(
+    nfts.map((n) => ({
+      id: n.id,
+      nftType: n.nftType,
+      rarity: n.rarity,
+      name: n.name,
+      emoji: n.emoji,
+      ownerName: ownerMap.get(n.ownerTelegramId) ?? "Çiftçi",
+    })),
+  );
 });
 
 // POST /nfts/trade/offer
