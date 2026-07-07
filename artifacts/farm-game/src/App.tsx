@@ -12,6 +12,7 @@ import WelcomePage from './pages/WelcomePage';
 import VaultPage from './pages/VaultPage';
 import NftPage from './pages/NftPage';
 import AdminPage from './pages/AdminPage';
+import ProfilePage from './pages/ProfilePage';
 import { useUser } from './hooks/use-user';
 import { UserProvider } from './context/UserProvider';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -145,6 +146,7 @@ function Router() {
                 <Route path="/stars" component={StarsShopPage} />
                 <Route path="/leaderboard" component={LeaderboardPage} />
                 <Route path="/admin" component={AdminPage} />
+                <Route path="/profile/:telegramId" component={({ params }: { params: { telegramId: string } }) => <ProfilePage telegramId={params.telegramId} />} />
                 <Route component={NotFound} />
               </Switch>
             </motion.div>

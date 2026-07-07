@@ -3,9 +3,11 @@ import { useUser } from '../hooks/use-user';
 import { useGetLeaderboard } from '@workspace/api-client-react';
 import { Trophy, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useLocation } from 'wouter';
 
 export default function LeaderboardPage() {
   const { telegramId } = useUser();
+  const [, navigate] = useLocation();
   const { data: leaderboard, isLoading } = useGetLeaderboard({ limit: 100 });
 
   const top3 = leaderboard?.slice(0, 3) || [];
@@ -89,7 +91,8 @@ export default function LeaderboardPage() {
             return (
               <div 
                 key={user.telegramId}
-                className={`flex items-center p-3 mb-2 rounded-xl border-2 transition-all ${
+                onClick={() => navigate(`/profile/${user.telegramId}`)}
+                className={`flex items-center p-3 mb-2 rounded-xl border-2 transition-all cursor-pointer active:scale-[0.98] ${
                   isMe 
                   ? 'bg-yellow-900/40 border-yellow-500/50 shadow-inner' 
                   : 'bg-black/10 border-transparent hover:bg-black/20'

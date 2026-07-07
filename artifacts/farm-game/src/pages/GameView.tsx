@@ -12,6 +12,7 @@ import { playCoinSound, playAnimalSound, playUnlockSound, isSoundEnabled, setSou
 import MascotTutorial, { useMascotTutorial } from '../components/MascotTutorial';
 import { LiveNftShowcase } from '../components/LiveNftShowcase';
 import { SellHintMascot } from '../components/SellHintMascot';
+import { FarmBackground } from '../components/FarmBackground';
 
 export { formatNum } from '../utils/format';
 
@@ -456,7 +457,8 @@ export default function GameView() {
   const selectedState = selectedId ? (state.sections[selectedId] ?? { unlocked: false, count: 0 }) : null;
 
   return (
-    <div className="h-full flex flex-col relative z-0" style={{ background: '#4ea824' }}>
+    <div className="h-full flex flex-col relative z-0" style={{ background: '#2e6012' }}>
+      <FarmBackground />
 
       {/* ══ WELCOME BONUS POPUP ══ */}
       <AnimatePresence>
