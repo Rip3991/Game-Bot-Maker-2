@@ -8,6 +8,7 @@ import {
   SaveFarmStateBody,
   GetAchievementsParams,
 } from "@workspace/api-zod";
+import { notifyUser, getBotUsername, getGameUrl } from "../lib/telegram";
 
 const router = Router();
 
@@ -100,6 +101,37 @@ router.post("/users/init", async (req, res): Promise<void> => {
           // totalReferrals already incremented in DB — use the fetched value directly
           await checkAndGrantReferralAchievements(referredBy, updatedReferrer.totalReferrals);
         }
+
+        // --- Telegram notifications (fire-and-forget) ---
+        const gameUrl = getGameUrl();
+        const botUsername = getBotUsername();
+        const appUrl = gameUrl || `https://t.me/${botUsername}`;
+
+        // Notify referrer
+        notifyUser(
+          referredBy,
+          `🎉 <b>Davetinden biri katıldı!</b>\n\n👤 <b>${firstName}</b> davet linkinle katıldı.\n🪙 Bakiyene <b>${REFERRAL_COINS} Coin</b> eklendi!\n\nToplam davet: <b>${(updatedReferrer?.totalReferrals ?? 1)}</b> kişi`,
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: "🚜 Çiftliğe Git", web_app: { url: appUrl } }],
+              ],
+            },
+          },
+        ).catch(() => { /* non-critical */ });
+
+        // Notify invited user
+        notifyUser(
+          telegramId,
+          `🌾 <b>Davet bonusu kazandın!</b>\n\nDavet linki aracılığıyla katıldığın için bakiyene <b>${REFERRAL_BONUS_FOR_REFERRED} Coin</b> eklendi!\n\nİyi oyunlar! 🪙`,
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: "🚜 Çiftliğe Git", web_app: { url: appUrl } }],
+              ],
+            },
+          },
+        ).catch(() => { /* non-critical */ });
       }
     }
   } else {

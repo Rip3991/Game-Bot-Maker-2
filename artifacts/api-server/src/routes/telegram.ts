@@ -1,35 +1,7 @@
 import { Router } from "express";
+import { getBotToken, getBotUsername, getGameUrl, sendTelegramRequest } from "../lib/telegram";
 
 const router = Router();
-
-function getBotToken(): string | undefined {
-  return process.env.TELEGRAM_BOT_TOKEN;
-}
-
-function getBotUsername(): string {
-  return process.env.BOT_USERNAME ?? "MemberGobot";
-}
-
-function getGameUrl(): string {
-  const domains = process.env.REPLIT_DOMAINS || process.env.REPLIT_DEV_DOMAIN || "";
-  const primary = domains.split(",")[0].trim();
-  return primary ? `https://${primary}` : "";
-}
-
-async function sendTelegramRequest(
-  method: string,
-  body: Record<string, unknown>,
-): Promise<unknown> {
-  const token = getBotToken();
-  if (!token) throw new Error("TELEGRAM_BOT_TOKEN not set");
-
-  const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  return res.json();
-}
 
 // POST /telegram/webhook  — receives updates from Telegram
 router.post("/telegram/webhook", async (req, res): Promise<void> => {
