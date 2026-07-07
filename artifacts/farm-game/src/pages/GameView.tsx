@@ -95,11 +95,10 @@ function FarmPlot({
             style={{ background: 'rgba(0,0,0,0.38)' }}
           >
             <div className="flex items-center gap-1.5 min-w-0">
-              {/* Emoji + count badge */}
-              <div className="flex items-center gap-1 rounded-lg px-1.5 py-0.5 shadow-inner flex-shrink-0"
+              {/* Emoji badge */}
+              <div className="flex items-center rounded-lg px-1.5 py-0.5 shadow-inner flex-shrink-0"
                 style={{ background: 'linear-gradient(135deg, #7a4e1a, #5c3a10)', border: '1px solid #3d2409' }}>
                 <span className="text-sm leading-none">{config.emoji}</span>
-                {unlocked && <span className="font-black text-white leading-none" style={{ fontSize: 11 }}>{count}</span>}
               </div>
               {/* Section name */}
               <div className="flex flex-col min-w-0">
@@ -617,21 +616,6 @@ export default function GameView() {
             : <VolumeX size={13} className="text-white/50" />}
         </button>
 
-        {/* Achievements trigger — lives in top bar, not floating */}
-        <button
-          onClick={() => setAchievementsOpen(true)}
-          className="relative w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all active:scale-90"
-          style={{ background: 'rgba(124,58,237,0.35)', borderColor: 'rgba(167,139,250,0.5)' }}
-          title="Başarımlar"
-        >
-          <Trophy size={13} className={achievementCount > 0 ? 'text-yellow-400' : 'text-white/70'} />
-          {achievementCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center border border-white leading-none">
-              {achievementCount}
-            </span>
-          )}
-        </button>
-
         <div className="flex-1" />
 
         <OnlineCounterPill />
@@ -647,6 +631,21 @@ export default function GameView() {
           </div>
         )}
       </div>
+
+      {/* Achievements floating button — right side, above bottom nav */}
+      <button
+        onClick={() => setAchievementsOpen(true)}
+        className="fixed right-3 bottom-[88px] z-40 w-11 h-11 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all"
+        style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', border: '2px solid rgba(167,139,250,0.6)', boxShadow: '0 4px 14px rgba(124,58,237,0.5)' }}
+        title="Başarımlar"
+      >
+        <Trophy size={18} className={achievementCount > 0 ? 'text-yellow-300' : 'text-white/80'} />
+        {achievementCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white leading-none">
+            {achievementCount}
+          </span>
+        )}
+      </button>
 
       <AchievementsPanel isOpen={achievementsOpen} onClose={() => setAchievementsOpen(false)} />
 
