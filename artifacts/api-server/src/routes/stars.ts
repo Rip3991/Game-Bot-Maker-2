@@ -32,23 +32,17 @@ export type CoinShopItemId = (typeof COIN_SHOP_ITEMS)[number]["id"];
 
 // ── Coin → TL conversion (the safe, margin-aware alternative to fixed TL items) ─
 //
-// ASSUMPTION (please verify against your real Fragment/Telegram payout and
-// adjust NET_TL_PER_STAR below if it differs): we don't know the operator's
-// exact net TL received per Telegram Star after Telegram's cut, so this uses a
-// conservative placeholder. All Coin Shop / conversion pricing derives from
-// this single constant, so correcting it here re-balances everything at once.
-const NET_TL_PER_STAR = 0.30; // TL the house nets per 1 Star sold — ADJUST ME with real numbers.
-
-// The most Coins a user can ever get per Star (best/cheapest package) — used as
-// the worst case for the house, since a user will always buy from the cheapest pack.
-const MAX_COINS_PER_STAR = Math.max(...COIN_PACKAGES.map(p => p.coins / p.stars));
-
-// House keeps 80% of the Star value represented by the Coins being converted;
-// the user gets 20% back as TL. Many converted Coins are earned for free
-// (spins/tasks/referrals, no Star revenue behind them at all), so this is a
-// conservative *ceiling* — real margin on the whole Coin pool is higher.
-const HOUSE_MARGIN = 0.8;
-export const COIN_TO_TL_RATE = (NET_TL_PER_STAR / MAX_COINS_PER_STAR) * (1 - HOUSE_MARGIN);
+// Rate set per operator request: 1.000 Coin ≈ 50 TL.
+//
+// ⚠️ ECONOMICS WARNING: at this rate, a user who buys the cheapest Coin package
+// (Efsane: 250 Stars → 3.750 Coins, 15 Coins/Star) and immediately converts gets
+// 3.750 × 0.05 = 187,5 TL for 250 Stars — i.e. you need to net at least ~0,75 TL
+// per Star just to break even on that path (and more than that to keep any
+// margin). If your real net TL-per-Star (after Telegram's cut) is lower than
+// that, the house loses money on every purchase→convert cycle, same as the old
+// tl_ultra item. Please confirm your real net-per-Star figure and adjust
+// COIN_TO_TL_RATE below if needed — it's the single number driving this feature.
+export const COIN_TO_TL_RATE = 0.05; // TL per Coin (1.000 Coin = 50 TL)
 export const MIN_COIN_CONVERT = 500; // smallest amount convertible in one go
 
 // ── GET /stars/coin-convert-rate ────────────────────────────────────────────
