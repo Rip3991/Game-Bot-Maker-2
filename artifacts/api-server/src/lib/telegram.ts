@@ -4,9 +4,7 @@
  */
 
 export function getBotToken(): string | undefined {
-  const t = process.env.TELEGRAM_BOT_TOKEN;
-  console.log("[telegram] getBotToken length=", t ? t.length : 0);
-  return t;
+  return process.env.TELEGRAM_BOT_TOKEN;
 }
 
 export function getBotUsername(): string {
