@@ -169,8 +169,8 @@ export default function TasksPage() {
                   <div className="mt-1.5">
                     <RewardBadge tl={task.reward.tl} coins={task.reward.coins} />
                   </div>
-                  {/* Progress bar for referral tasks */}
-                  {task.type === 'referral' && !task.completed && (
+                  {/* Progress bar for referral / weekly goal tasks */}
+                  {(task.type === 'referral' || task.type === 'weekly_goal') && !task.completed && (
                     <div className="mt-2">
                       <div className="flex justify-between text-[10px] text-white/30 mb-1">
                         <span>İlerleme</span>
@@ -212,7 +212,7 @@ export default function TasksPage() {
                     ) : (
                       <div key="locked" className="px-3 py-2 rounded-xl text-xs font-bold text-center"
                         style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.25)', minWidth: 64 }}>
-                        {task.type === 'referral' ? `${task.progress}/${task.total}` : 'Bekle'}
+                        {task.type === 'referral' || task.type === 'weekly_goal' ? `${task.progress}/${task.total}` : 'Bekle'}
                       </div>
                     )}
                   </AnimatePresence>

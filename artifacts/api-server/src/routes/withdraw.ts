@@ -6,22 +6,24 @@ import crypto from "crypto";
 
 const router = Router();
 
-const MIN_WITHDRAW_TL = 350;
-const MAX_WITHDRAW_TL = 350; // exactly 350 TL per request
+// Tiered withdrawal amounts — lets users cash out smaller wins sooner while
+// keeping a meaningful ceiling per request.
+export const ALLOWED_WITHDRAW_AMOUNTS = [150, 350, 750] as const;
+const MIN_ACCOUNT_AGE_DAYS_FOR_FIRST_WITHDRAW = 3;
 
 // POST /withdraw/request
 router.post("/withdraw/request", async (req, res): Promise<void> => {
   const parsed = RequestWithdrawalBody.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: `Geçersiz istek. Min: ${MIN_WITHDRAW_TL} TL, Max: ${MAX_WITHDRAW_TL} TL` });
+    res.status(400).json({ error: `Geçersiz istek. Seçenekler: ${ALLOWED_WITHDRAW_AMOUNTS.join(" / ")} TL` });
     return;
   }
 
   const { telegramId, amount, method } = parsed.data;
 
-  // Enforce limits explicitly (generated schema has no min/max)
-  if (amount < MIN_WITHDRAW_TL || amount > MAX_WITHDRAW_TL) {
-    res.status(400).json({ error: `Tutar ${MIN_WITHDRAW_TL}–${MAX_WITHDRAW_TL} TL arasında olmalı` });
+  // Enforce tiered amounts explicitly (generated schema has no enum)
+  if (!ALLOWED_WITHDRAW_AMOUNTS.includes(amount as typeof ALLOWED_WITHDRAW_AMOUNTS[number])) {
+    res.status(400).json({ error: `Tutar şu seçeneklerden biri olmalı: ${ALLOWED_WITHDRAW_AMOUNTS.join(" / ")} TL` });
     return;
   }
 
@@ -29,6 +31,30 @@ router.post("/withdraw/request", async (req, res): Promise<void> => {
   if (!validMethods.includes(method)) {
     res.status(400).json({ error: "Geçersiz ödeme yöntemi" });
     return;
+  }
+
+  // Anti-fraud: first-ever withdrawal requires the account to be active for a
+  // minimum number of days — deters throwaway/bot accounts from cashing out instantly.
+  const user = await db.query.usersTable.findFirst({
+    where: eq(usersTable.telegramId, telegramId),
+    columns: { createdAt: true },
+  });
+  if (!user) {
+    res.status(404).json({ error: "Kullanıcı bulunamadı" });
+    return;
+  }
+
+  const hasAnyPriorWithdrawal = await db.query.withdrawalsTable.findFirst({
+    where: eq(withdrawalsTable.userTelegramId, telegramId),
+  });
+  if (!hasAnyPriorWithdrawal) {
+    const accountAgeDays = (Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+    if (accountAgeDays < MIN_ACCOUNT_AGE_DAYS_FOR_FIRST_WITHDRAW) {
+      res.status(400).json({
+        error: `İlk çekim için hesabın en az ${MIN_ACCOUNT_AGE_DAYS_FOR_FIRST_WITHDRAW} gündür aktif olması gerekiyor. Biraz daha bekle 🙂`,
+      });
+      return;
+    }
   }
 
   // Run everything in a single transaction for atomicity
@@ -83,7 +109,7 @@ router.post("/withdraw/request", async (req, res): Promise<void> => {
     if (msg === "PENDING_EXISTS") {
       res.status(400).json({ error: "Bekleyen bir çekim talebiniz var. İşlenene kadar bekleyin." });
     } else if (msg === "INSUFFICIENT_BALANCE") {
-      res.status(400).json({ error: `Yetersiz bakiye. Min çekim: ${MIN_WITHDRAW_TL} TL` });
+      res.status(400).json({ error: `Yetersiz bakiye. Seçtiğin tutar: ${amount} TL` });
     } else {
       res.status(500).json({ error: "İşlem sırasında bir hata oluştu" });
     }

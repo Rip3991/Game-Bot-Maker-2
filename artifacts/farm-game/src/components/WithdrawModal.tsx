@@ -5,8 +5,9 @@ import { useUser } from '../hooks/use-user';
 import { useRequestWithdrawal, useGetWithdrawHistory } from '@workspace/api-client-react';
 import { toast } from 'sonner';
 
-// Exactly 350 TL per withdrawal — no amount selection needed
-const FIXED_TL = 350;
+// Tiered withdrawal amounts — user picks one
+const AMOUNTS = [150, 350, 750] as const;
+type Amount = typeof AMOUNTS[number];
 
 const METHODS = [
   { id: 'papara', label: 'Papara',       emoji: '💳' },
@@ -24,22 +25,23 @@ interface WithdrawModalProps {
 export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const { user, telegramId } = useUser();
   const [method, setMethod] = useState<Method>('papara');
+  const [amount, setAmount] = useState<Amount>(150);
   const [step, setStep] = useState<'form' | 'success'>('form');
-  const [lastResult, setLastResult] = useState<{ requestId: string } | null>(null);
+  const [lastResult, setLastResult] = useState<{ requestId: string; amount: number } | null>(null);
 
   const withdrawMut = useRequestWithdrawal();
   const { data: history, refetch: refetchHistory } = useGetWithdrawHistory(telegramId);
 
   const balance = user?.balance ?? 0;
-  const canWithdraw = balance >= FIXED_TL;
+  const canWithdraw = balance >= amount;
 
   const handleSubmit = async () => {
     if (!canWithdraw) return;
     try {
       const result = await withdrawMut.mutateAsync({
-        data: { telegramId, amount: FIXED_TL, method },
+        data: { telegramId, amount, method },
       });
-      setLastResult({ requestId: result.requestId });
+      setLastResult({ requestId: result.requestId, amount });
       setStep('success');
       refetchHistory();
     } catch (err: unknown) {
@@ -102,17 +104,33 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                     <span className="font-black text-lg text-[#f5c842]">💵 {balance.toFixed(2)} TL</span>
                   </div>
 
-                  {/* Fixed amount display */}
-                  <div className="flex flex-col items-center justify-center bg-gradient-to-br from-[#f5c842]/20 to-[#f5c842]/5 border-2 border-[#f5c842]/50 rounded-2xl py-6 mb-4">
-                    <span className="text-5xl font-black text-[#f5c842] drop-shadow-lg">350 TL</span>
-                    <span className="text-sm font-bold text-white/60 mt-1">Sabit Çekim Tutarı</span>
+                  {/* Amount tiers */}
+                  <label className="block text-sm font-bold text-orange-200 mb-2 uppercase tracking-wide">Çekim Tutarı</label>
+                  <div className="grid grid-cols-3 gap-2 mb-4">
+                    {AMOUNTS.map((amt) => {
+                      const affordable = balance >= amt;
+                      return (
+                        <button
+                          key={amt}
+                          onClick={() => setAmount(amt)}
+                          className={`flex flex-col items-center py-4 rounded-2xl border-2 transition font-black ${
+                            amount === amt
+                              ? 'border-[#f5c842] bg-gradient-to-br from-[#f5c842]/25 to-[#f5c842]/5 text-[#f5c842]'
+                              : 'border-white/15 bg-black/20 text-white/70'
+                          } ${!affordable ? 'opacity-40' : ''}`}
+                        >
+                          <span className="text-xl">{amt}</span>
+                          <span className="text-[10px] font-bold mt-0.5">TL</span>
+                        </button>
+                      );
+                    })}
                   </div>
 
                   {/* Info */}
                   <div className="flex items-start gap-2 mb-5 bg-blue-900/40 border border-blue-500/40 rounded-xl p-3 text-sm">
                     <AlertCircle size={16} className="text-blue-400 mt-0.5 shrink-0" />
                     <p className="text-blue-200 leading-snug">
-                      Her işlemde tam <b>350 TL</b> çekilir. 24 saat içinde işleme alınır. Bakiyeniz yeterli olmadığında çekim yapılamaz.
+                      Seçtiğin tutar kadar bakiyenden düşülür. 24 saat içinde işleme alınır. İlk çekim için hesabının en az 3 gündür aktif olması gerekir.
                     </p>
                   </div>
 
@@ -121,7 +139,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                     <div className="flex items-center gap-2 mb-4 bg-red-900/40 border border-red-500/40 rounded-xl p-3 text-sm">
                       <AlertCircle size={16} className="text-red-400 shrink-0" />
                       <p className="text-red-200">
-                        Çekim için <b>{FIXED_TL} TL</b> bakiye gerekli. Şu an: <b>{balance.toFixed(2)} TL</b>
+                        Çekim için <b>{amount} TL</b> bakiye gerekli. Şu an: <b>{balance.toFixed(2)} TL</b>
                       </p>
                     </div>
                   )}
@@ -152,7 +170,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                     className="w-full wood-button bg-green-600 border-green-900 text-white font-black text-lg py-4 disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ boxShadow: '0 4px 0 #14532d' }}
                   >
-                    {withdrawMut.isPending ? 'Gönderiliyor...' : '💸 350 TL Çek'}
+                    {withdrawMut.isPending ? 'Gönderiliyor...' : `💸 ${amount} TL Çek`}
                   </button>
 
                   {/* History */}
@@ -188,7 +206,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                     <CheckCircle2 size={40} className="text-white" />
                   </motion.div>
                   <h3 className="font-black text-2xl mb-2">Talep Alındı!</h3>
-                  <p className="text-green-300 font-bold text-2xl mb-1">350 TL 💸</p>
+                  <p className="text-green-300 font-bold text-2xl mb-1">{lastResult?.amount ?? amount} TL 💸</p>
                   <p className="opacity-60 text-sm mb-2">
                     Talep No: <span className="font-mono text-xs">{lastResult?.requestId?.slice(0, 12)}...</span>
                   </p>

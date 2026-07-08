@@ -1,4 +1,4 @@
-modules = ["nodejs-24"]
+modules = ["nodejs-24", "postgresql-16"]
 
 [deployment]
 router = "application"
@@ -25,3 +25,6 @@ timeoutMs = 20000
 BOT_USERNAME = "MemberGobot"
 ANNOUNCEMENT_CHANNEL = "sarinoyunçiftligi"
 ADMIN_TELEGRAM_IDS = "8652151076"
+
+[nix]
+channel = "stable-25_05"

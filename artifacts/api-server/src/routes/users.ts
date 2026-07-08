@@ -15,6 +15,7 @@ const router = Router();
 const REFERRAL_COINS = 50;          // coins to referrer
 const REFERRAL_TL = 10;             // TL to referrer (real money reward)
 const REFERRAL_BONUS_FOR_REFERRED = 25; // coins to invited user
+const SECOND_TIER_REFERRAL_TL = 2;  // TL to the referrer's referrer (chain bonus)
 
 // Streak TL milestones — { day: TL, achievementKey }
 const STREAK_TL_MILESTONES = [
@@ -110,6 +111,25 @@ router.post("/users/init", async (req, res): Promise<void> => {
         });
         if (updatedReferrer) {
           await checkAndGrantReferralAchievements(referredBy, updatedReferrer.totalReferrals);
+
+          // 2nd-tier chain bonus — reward whoever invited the referrer, encouraging
+          // active recruiters to keep growing their own network rather than just inviting once.
+          if (updatedReferrer.referredBy && updatedReferrer.referredBy !== referredBy && updatedReferrer.referredBy !== telegramId) {
+            const grandReferrer = await db.query.usersTable.findFirst({
+              where: eq(usersTable.telegramId, updatedReferrer.referredBy),
+            });
+            if (grandReferrer) {
+              await db
+                .update(usersTable)
+                .set({ balance: sql`${usersTable.balance} + ${SECOND_TIER_REFERRAL_TL}` })
+                .where(eq(usersTable.telegramId, grandReferrer.telegramId));
+
+              notifyUser(
+                grandReferrer.telegramId,
+                `🔗 <b>Zincir Bonusu!</b>\n\nDavet ettiğin biri de birini davet etti!\n💵 <b>${SECOND_TIER_REFERRAL_TL} TL</b> hesabına eklendi!`,
+              ).catch(() => { /* non-critical */ });
+            }
+          }
         }
 
         // --- Telegram notifications (fire-and-forget) ---

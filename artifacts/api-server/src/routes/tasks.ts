@@ -57,7 +57,29 @@ export const TASK_DEFS = [
     type: "referral",
     required: 25,
   },
+  {
+    id: "task_share",
+    title: "Oyunu Paylaş",
+    description: "Oyunu arkadaşlarınla paylaş (Davet sayfasındaki paylaş butonu)",
+    icon: "📤",
+    reward: { tl: 0, coins: 100 },
+    type: "share",
+  },
+  {
+    id: "task_weekly_goal",
+    title: "Haftalık Hedef",
+    description: "7 gün üst üste giriş yap ve en az 3 görev tamamla",
+    icon: "🏆",
+    reward: { tl: 20, coins: 0 },
+    type: "weekly_goal",
+    requiredStreak: 7,
+    requiredTasks: 3,
+  },
 ] as const;
+
+const OTHER_TASK_IDS = TASK_DEFS
+  .filter(t => t.type !== "weekly_goal")
+  .map(t => t.id);
 
 // GET /tasks/:telegramId — returns tasks with completion status
 router.get("/:telegramId", async (req, res): Promise<void> => {
@@ -73,19 +95,32 @@ router.get("/:telegramId", async (req, res): Promise<void> => {
     where: eq(achievementsTable.userTelegramId, telegramId),
   });
   const earnedKeys = new Set(earned.map(a => a.achievementKey));
+  const completedOtherTasksCount = OTHER_TASK_IDS.filter(id => earnedKeys.has(id)).length;
 
   const tasks = TASK_DEFS.map(t => {
     const completed = earnedKeys.has(t.id);
-    let progress = 0;
+
     if (t.type === "referral") {
-      progress = Math.min(user.totalReferrals, t.required);
+      const progress = Math.min(user.totalReferrals, t.required);
+      return {
+        ...t, completed, progress, total: t.required,
+        claimable: !completed && user.totalReferrals >= t.required,
+      };
     }
+    if (t.type === "weekly_goal") {
+      const streakProgress = Math.min(user.streakCount, t.requiredStreak);
+      const tasksProgress = Math.min(completedOtherTasksCount, t.requiredTasks);
+      return {
+        ...t, completed,
+        progress: streakProgress === t.requiredStreak ? tasksProgress : streakProgress,
+        total: streakProgress === t.requiredStreak ? t.requiredTasks : t.requiredStreak,
+        claimable: !completed && user.streakCount >= t.requiredStreak && completedOtherTasksCount >= t.requiredTasks,
+      };
+    }
+    // channel_join, share
     return {
-      ...t,
-      completed,
-      progress: t.type === "referral" ? progress : (completed ? 1 : 0),
-      total: t.type === "referral" ? t.required : 1,
-      claimable: !completed && (t.type === "channel_join" || (t.type === "referral" && user.totalReferrals >= t.required)),
+      ...t, completed, progress: completed ? 1 : 0, total: 1,
+      claimable: !completed,
     };
   });
 
@@ -118,6 +153,22 @@ router.post("/claim", async (req, res): Promise<void> => {
   if (task.type === "referral" && user.totalReferrals < task.required) {
     res.status(400).json({ error: `Henüz ${task.required} davet tamamlanmadı (${user.totalReferrals}/${task.required})` });
     return;
+  }
+
+  // Check weekly goal requirement (streak + other completed tasks)
+  if (task.type === "weekly_goal") {
+    const earned = await db.query.achievementsTable.findMany({
+      where: eq(achievementsTable.userTelegramId, telegramId),
+    });
+    const earnedKeys = new Set(earned.map(a => a.achievementKey));
+    const completedOtherTasksCount = OTHER_TASK_IDS.filter(id => earnedKeys.has(id)).length;
+
+    if (user.streakCount < task.requiredStreak || completedOtherTasksCount < task.requiredTasks) {
+      res.status(400).json({
+        error: `Henüz hedef tamamlanmadı (Seri: ${user.streakCount}/${task.requiredStreak}, Görev: ${completedOtherTasksCount}/${task.requiredTasks})`,
+      });
+      return;
+    }
   }
 
   // Channel join is verified server-side via Telegram's getChatMember — no honor system
