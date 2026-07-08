@@ -240,6 +240,7 @@ export const CASE_DEFS = {
     name: "Çiftlik Kasası",
     emoji: "📦",
     price: 75,
+    currency: "tl" as const,
     description: "Temel çiftlik NFT'leri",
     bgGradient: "linear-gradient(135deg, #2d5a1b, #4a8c2a)",
     drops: { common: 0.67, rare: 0.23, epic: 0.00, special: 0.07, legendary: 0.03 },
@@ -248,6 +249,7 @@ export const CASE_DEFS = {
     name: "Kristal Kasa",
     emoji: "💠",
     price: 350,
+    currency: "tl" as const,
     description: "Nadir ve değerli NFT'ler",
     bgGradient: "linear-gradient(135deg, #1a3a6b, #2d6bb5)",
     drops: { common: 0.22, rare: 0.44, epic: 0.03, special: 0.20, legendary: 0.07 },
@@ -256,6 +258,7 @@ export const CASE_DEFS = {
     name: "Özel Kasa",
     emoji: "🔮",
     price: 750,
+    currency: "coins" as const,
     description: "Nadir özel koleksiyon NFT'leri",
     bgGradient: "linear-gradient(135deg, #3b1f6e, #6d28d9)",
     drops: { common: 0.08, rare: 0.28, epic: 0.09, special: 0.42, legendary: 0.13 },
@@ -264,6 +267,7 @@ export const CASE_DEFS = {
     name: "Epik Kasa",
     emoji: "🔥",
     price: 1200,
+    currency: "coins" as const,
     description: "Güçlü epik NFT'ler",
     bgGradient: "linear-gradient(135deg, #4a0808, #991b1b)",
     drops: { common: 0.05, rare: 0.18, epic: 0.55, special: 0.12, legendary: 0.10 },
@@ -272,6 +276,7 @@ export const CASE_DEFS = {
     name: "Efsane Kasası",
     emoji: "🏆",
     price: 1500,
+    currency: "coins" as const,
     description: "En nadir efsanevi NFT'ler",
     bgGradient: "linear-gradient(135deg, #5c3000, #b8860b)",
     drops: { common: 0.05, rare: 0.18, epic: 0.17, special: 0.20, legendary: 0.40 },
@@ -424,13 +429,17 @@ export async function mintFreeNftFromCase(
 
 // GET /nfts/cases
 router.get("/cases", (_req, res): void => {
+  const entries = Object.entries(NFT_DEFS) as [NftType, typeof NFT_DEFS[NftType]][];
+  const byRarity = (rarity: string) => entries.filter(([, d]) => d.rarity === rarity).map(([key, d]) => ({ key, ...d }));
   const result = (Object.entries(CASE_DEFS) as [CaseType, typeof CASE_DEFS[CaseType]][]).map(([id, def]) => ({
     id,
     ...def,
     nftPool: {
-      common:    (Object.entries(NFT_DEFS) as [NftType, typeof NFT_DEFS[NftType]][]).filter(([, d]) => d.rarity === "common").map(([key, d]) => ({ key, ...d })),
-      rare:      (Object.entries(NFT_DEFS) as [NftType, typeof NFT_DEFS[NftType]][]).filter(([, d]) => d.rarity === "rare").map(([key, d]) => ({ key, ...d })),
-      legendary: (Object.entries(NFT_DEFS) as [NftType, typeof NFT_DEFS[NftType]][]).filter(([, d]) => d.rarity === "legendary").map(([key, d]) => ({ key, ...d })),
+      common: byRarity("common"),
+      rare: byRarity("rare"),
+      epic: byRarity("epic"),
+      special: byRarity("special"),
+      legendary: byRarity("legendary"),
     },
   }));
   res.json(result);
@@ -476,13 +485,20 @@ router.post("/cases/open", async (req, res): Promise<void> => {
   const nftId = crypto.randomUUID();
   const now = new Date();
   let nftResult: typeof nftsTable.$inferSelect | null = null;
+  const isCoins = caseDef.currency === "coins";
   try {
     await db.transaction(async (tx) => {
-      const updated = await tx
-        .update(usersTable)
-        .set({ balance: sql`${usersTable.balance} - ${caseDef.price}` })
-        .where(and(eq(usersTable.telegramId, telegramId), sql`${usersTable.balance} >= ${caseDef.price}`))
-        .returning({ telegramId: usersTable.telegramId });
+      const updated = isCoins
+        ? await tx
+            .update(usersTable)
+            .set({ coins: sql`${usersTable.coins} - ${caseDef.price}` })
+            .where(and(eq(usersTable.telegramId, telegramId), sql`${usersTable.coins} >= ${caseDef.price}`))
+            .returning({ telegramId: usersTable.telegramId })
+        : await tx
+            .update(usersTable)
+            .set({ balance: sql`${usersTable.balance} - ${caseDef.price}` })
+            .where(and(eq(usersTable.telegramId, telegramId), sql`${usersTable.balance} >= ${caseDef.price}`))
+            .returning({ telegramId: usersTable.telegramId });
       if (updated.length === 0) {
         const user = await tx.query.usersTable.findFirst({ where: eq(usersTable.telegramId, telegramId), columns: { telegramId: true } });
         throw new Error(user ? "INSUFFICIENT_BALANCE" : "USER_NOT_FOUND");
@@ -495,7 +511,7 @@ router.post("/cases/open", async (req, res): Promise<void> => {
     });
   } catch (e: any) {
     if (e.message === "USER_NOT_FOUND") res.status(404).json({ error: "Kullanıcı bulunamadı" });
-    else if (e.message === "INSUFFICIENT_BALANCE") res.status(402).json({ error: "Yetersiz TL bakiyesi. Çiftliğini geliştir!" });
+    else if (e.message === "INSUFFICIENT_BALANCE") res.status(402).json({ error: isCoins ? "Yetersiz coin! Görevlerden ve çevirmeceden coin kazan." : "Yetersiz TL bakiyesi. Çiftliğini geliştir!" });
     else res.status(500).json({ error: "Kasa açılamadı" });
     return;
   }

@@ -17,9 +17,10 @@ type TabType = 'cases' | 'mine' | 'market' | 'offers';
 type RarityFilter = 'all' | Rarity;
 
 interface CaseDef {
-  id: string; name: string; emoji: string; price: number;
+  id: string; name: string; emoji: string; price: number; currency: 'coins' | 'tl';
   description: string; bgGradient: string;
-  drops: { common: number; rare: number; legendary: number };
+  drops: { common: number; rare: number; epic?: number; special?: number; legendary: number };
+  nftPool?: { common: NftDef[]; rare: NftDef[]; epic: NftDef[]; special: NftDef[]; legendary: NftDef[] };
 }
 interface NftDef {
   key: string; emoji: string; name: string; rarity: Rarity;
@@ -461,10 +462,86 @@ function ExchangeNftCard({
   );
 }
 
+// ── Case Preview Modal (odds + NFT pool before opening) ─────────────────────────
+
+const RARITY_ORDER: { key: keyof CaseDef['drops']; label: string; chip: string; chipText: string }[] = [
+  { key: 'legendary', label: 'Efsanevi', chip: 'rgba(245,158,11,0.2)', chipText: '#fbbf24' },
+  { key: 'special', label: 'Özel', chip: 'rgba(168,85,247,0.2)', chipText: '#d8b4fe' },
+  { key: 'epic', label: 'Epik', chip: 'rgba(220,38,38,0.2)', chipText: '#fca5a5' },
+  { key: 'rare', label: 'Nadir', chip: 'rgba(59,130,246,0.2)', chipText: '#93c5fd' },
+  { key: 'common', label: 'Sıradan', chip: 'rgba(255,255,255,0.1)', chipText: '#d1d5db' },
+];
+
+function CasePreviewModal({ caseDef, funds, onOpen, onCancel }: {
+  caseDef: CaseDef; funds: number; onOpen: () => void; onCancel: () => void;
+}) {
+  const afford = funds >= caseDef.price;
+  const pool = caseDef.nftPool;
+
+  return (
+    <motion.div className="fixed inset-0 z-[200] flex items-end justify-center p-4"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onCancel} />
+      <motion.div className="relative w-full max-w-md rounded-3xl p-5 flex flex-col gap-4 max-h-[85vh]"
+        style={{ background: '#0d1117', border: '2px solid rgba(255,255,255,0.15)', boxShadow: '0 0 40px rgba(0,0,0,0.6)' }}
+        initial={{ y: 80 }} animate={{ y: 0 }} exit={{ y: 80 }}>
+        <div className="flex items-center gap-3">
+          <span className="text-5xl">{caseDef.emoji}</span>
+          <div>
+            <div className="font-black text-white text-lg">{caseDef.name}</div>
+            <div className="text-white/50 text-xs font-bold">{caseDef.description}</div>
+          </div>
+        </div>
+
+        <div className="overflow-y-auto flex flex-col gap-3 pr-1">
+          <div>
+            <div className="text-white/60 text-xs font-bold mb-2">Kazanma İhtimalleri</div>
+            <div className="flex flex-col gap-1.5">
+              {RARITY_ORDER.filter(r => (caseDef.drops[r.key] ?? 0) > 0).map(r => (
+                <div key={r.key} className="flex items-center justify-between rounded-xl px-3 py-1.5" style={{ background: r.chip }}>
+                  <span className="font-bold text-xs" style={{ color: r.chipText }}>{r.label}</span>
+                  <span className="font-black text-sm" style={{ color: r.chipText }}>{Math.round((caseDef.drops[r.key] ?? 0) * 100)}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {pool && RARITY_ORDER.filter(r => (caseDef.drops[r.key] ?? 0) > 0).map(r => {
+            const items = (pool as any)[r.key] as NftDef[] | undefined;
+            if (!items || items.length === 0) return null;
+            return (
+              <div key={r.key}>
+                <div className="text-xs font-bold mb-1.5" style={{ color: r.chipText }}>{r.label} NFT'ler ({items.length})</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {items.map(nft => (
+                    <div key={nft.key} className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <span className="text-sm">{nft.emoji}</span>
+                      <span className="text-[10px] font-bold text-white/70">{nft.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex gap-3">
+          <button onClick={onCancel} className="flex-1 py-3 rounded-2xl font-black text-white/60 border border-white/20 active:scale-95">Vazgeç</button>
+          <button onClick={onOpen} disabled={!afford}
+            className="flex-1 py-3 rounded-2xl font-black text-white active:scale-95 flex items-center justify-center gap-1.5"
+            style={{ background: afford ? caseDef.bgGradient : '#374151', border: '1px solid rgba(255,255,255,0.15)' }}>
+            {afford ? `🎰 ${fmtPrice(caseDef.price)} ${caseDef.currency === 'coins' ? '🪙' : '💵'} Aç` : 'Yetersiz Bakiye'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ── Case Opening Overlay ───────────────────────────────────────────────────────
 
-function CaseOpenOverlay({ caseDef, allNfts, onBalanceSync, onClose, onOpenAnother, onNftMinted }: {
-  caseDef: CaseDef; allNfts: NftDef[]; onBalanceSync: (b: number) => void;
+function CaseOpenOverlay({ caseDef, allNfts, onUserSync, onClose, onOpenAnother, onNftMinted }: {
+  caseDef: CaseDef; allNfts: NftDef[]; onUserSync: (u: { balance?: number; coins?: number }) => void;
   onClose: () => void; onOpenAnother: () => void; onNftMinted: () => void;
 }) {
   const { telegramId } = useUser();
@@ -483,7 +560,7 @@ function CaseOpenOverlay({ caseDef, allNfts, onBalanceSync, onClose, onOpenAnoth
       if (!r.ok) throw new Error(data.error ?? 'Kasa açılamadı');
       return data as NftItem;
     }).then((nft: NftItem) => {
-      fetch(`${API}/users/${telegramId}`).then(r => r.json()).then(u => { if (typeof u.balance === 'number') onBalanceSync(u.balance); }).catch(() => {});
+      fetch(`${API}/users/${telegramId}`).then(r => r.json()).then(u => onUserSync({ balance: u.balance, coins: u.coins })).catch(() => {});
       setWon(nft);
       const def = allNfts.find(d => d.key === nft.nftType) ?? { key: nft.nftType, emoji: nft.emoji, name: nft.name, rarity: nft.rarity, mintLimit: 1000, sellPrice: (nft as any).sellPrice ?? 10 };
       setWonDef(def);
@@ -553,13 +630,14 @@ function CaseOpenOverlay({ caseDef, allNfts, onBalanceSync, onClose, onOpenAnoth
 // ── Main NftPage ───────────────────────────────────────────────────────────────
 
 export default function NftPage() {
-  const { telegramId } = useUser();
+  const { telegramId, user, refresh: refreshUser } = useUser();
   const { state, setBalance } = useGameEngine();
   const qc = useQueryClient();
 
   const [tab, setTab] = useState<TabType>('cases');
   const [cases, setCases] = useState<CaseDef[]>([]);
   const [allNftDefs, setAllNftDefs] = useState<NftDef[]>([]);
+  const [previewCase, setPreviewCase] = useState<CaseDef | null>(null);
   const [openingCase, setOpeningCase] = useState<CaseDef | null>(null);
   const [sellTarget, setSellTarget] = useState<NftItem | null>(null);
   const [listTarget, setListTarget] = useState<NftItem | null>(null);
@@ -588,7 +666,7 @@ export default function NftPage() {
     fetch(`${API}/nfts/cases`).then(r => r.json()).then((data: any[]) => {
       setCases(data);
       const defs: NftDef[] = [];
-      data.forEach(c => { if (c.nftPool) defs.push(...c.nftPool.common, ...c.nftPool.rare, ...c.nftPool.legendary); });
+      data.forEach(c => { if (c.nftPool) defs.push(...c.nftPool.common, ...c.nftPool.rare, ...(c.nftPool.epic ?? []), ...(c.nftPool.special ?? []), ...c.nftPool.legendary); });
       const seen = new Set<string>();
       setAllNftDefs(defs.filter(d => { if (seen.has(d.key)) return false; seen.add(d.key); return true; }));
     }).catch(() => {});
@@ -716,6 +794,11 @@ export default function NftPage() {
           <span className="font-black text-white text-sm tabular-nums">{fmtPrice(state.balance)}</span>
           <span className="text-white/40 text-[10px]">TL</span>
         </div>
+        <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-full px-3 py-1">
+          <span>🪙</span>
+          <span className="font-black text-yellow-300 text-sm tabular-nums">{fmtPrice(user?.coins ?? 0)}</span>
+          <span className="text-white/40 text-[10px]">Coin</span>
+        </div>
         <div className="flex-1" />
         <div className="text-white/40 text-[10px] font-bold">NFT Pazarı</div>
       </div>
@@ -741,11 +824,11 @@ export default function NftPage() {
         {/* ══ KASALAR ══ */}
         {tab === 'cases' && (
           <div className="p-3 flex flex-col gap-3">
-            {cases.map(c => (
-              <motion.button key={c.id} onClick={() => {
-                if (state.balance < c.price) { toast.error(`Gerekli: ${c.price} TL`); return; }
-                setOpeningCase(c);
-              }}
+            {cases.map(c => {
+              const funds = c.currency === 'coins' ? (user?.coins ?? 0) : state.balance;
+              const afford = funds >= c.price;
+              return (
+              <motion.button key={c.id} onClick={() => setPreviewCase(c)}
                 className="w-full rounded-2xl p-4 flex items-center gap-3 active:scale-[0.98] transition-all"
                 style={{ background: c.bgGradient, border: '2px solid rgba(255,255,255,0.15)', boxShadow: '0 4px 16px rgba(0,0,0,0.4)' }}
                 whileTap={{ scale: 0.97 }}>
@@ -760,14 +843,14 @@ export default function NftPage() {
                     <span className="bg-blue-500/20 text-blue-300 text-[9px] font-black px-1.5 py-0.5 rounded-full">
                       🔵 {Math.round((c.drops.rare ?? 0) * 100)}%
                     </span>
-                    {(c.drops as any).epic > 0 && (
+                    {(c.drops.epic ?? 0) > 0 && (
                       <span className="bg-red-600/30 text-red-300 text-[9px] font-black px-1.5 py-0.5 rounded-full">
-                        🔴 {Math.round(((c.drops as any).epic ?? 0) * 100)}%
+                        🔴 {Math.round((c.drops.epic ?? 0) * 100)}%
                       </span>
                     )}
-                    {(c.drops as any).special > 0 && (
+                    {(c.drops.special ?? 0) > 0 && (
                       <span className="bg-purple-500/20 text-purple-300 text-[9px] font-black px-1.5 py-0.5 rounded-full">
-                        🟣 {Math.round(((c.drops as any).special ?? 0) * 100)}%
+                        🟣 {Math.round((c.drops.special ?? 0) * 100)}%
                       </span>
                     )}
                     <span className="bg-yellow-500/20 text-yellow-300 text-[9px] font-black px-1.5 py-0.5 rounded-full">
@@ -776,14 +859,15 @@ export default function NftPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-black text-white text-lg">{c.price}</div>
-                  <div className="text-white/60 text-[10px] font-bold">TL</div>
-                  <div className={`text-[9px] font-bold mt-1 ${state.balance >= c.price ? 'text-green-400' : 'text-red-400'}`}>
-                    {state.balance >= c.price ? '✓ Yeterli' : '✗ Yetersiz'}
+                  <div className="font-black text-white text-lg">{fmtPrice(c.price)}</div>
+                  <div className="text-white/60 text-[10px] font-bold">{c.currency === 'coins' ? '🪙 Coin' : '💵 TL'}</div>
+                  <div className={`text-[9px] font-bold mt-1 ${afford ? 'text-green-400' : 'text-red-400'}`}>
+                    {afford ? '✓ Yeterli' : '✗ Yetersiz'}
                   </div>
                 </div>
               </motion.button>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -917,10 +1001,20 @@ export default function NftPage() {
       <AnimatePresence>
         {openingCase && (
           <CaseOpenOverlay key={openingCase.id} caseDef={openingCase} allNfts={allNftDefs}
-            onBalanceSync={b => setBalance(b)}
+            onUserSync={u => { if (typeof u.balance === 'number') setBalance(u.balance); refreshUser(); }}
             onClose={() => { setOpeningCase(null); setTab('mine'); }}
             onOpenAnother={() => setOpeningCase({ ...openingCase })}
             onNftMinted={() => { refetchMine(); }} />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {previewCase && (
+          <CasePreviewModal
+            caseDef={previewCase}
+            funds={previewCase.currency === 'coins' ? (user?.coins ?? 0) : state.balance}
+            onOpen={() => { setOpeningCase(previewCase); setPreviewCase(null); }}
+            onCancel={() => setPreviewCase(null)}
+          />
         )}
       </AnimatePresence>
       <AnimatePresence>
