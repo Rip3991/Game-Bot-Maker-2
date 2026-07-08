@@ -5,7 +5,7 @@ import { sendTelegramRequest } from "../lib/telegram";
 
 const router = Router();
 
-function getAnnouncementChannel(): string {
+export function getAnnouncementChannel(): string {
   const raw = process.env.ANNOUNCEMENT_CHANNEL ?? "sarinoyunciftligi";
   return raw.replace(/^@/, "");
 }
@@ -80,6 +80,44 @@ export const TASK_DEFS = [
 const OTHER_TASK_IDS = TASK_DEFS
   .filter(t => t.type !== "weekly_goal")
   .map(t => t.id);
+
+// Grants the channel-join reward automatically (e.g. from a Telegram chat_member
+// webhook event) without requiring the user to open the app and press "claim".
+// Returns the granted reward, or null if the user doesn't exist or already claimed it.
+export async function autoGrantChannelJoinReward(
+  telegramId: string,
+): Promise<{ tl: number; coins: number } | null> {
+  const task = TASK_DEFS.find(t => t.id === "task_channel_join");
+  if (!task) return null;
+
+  const user = await db.query.usersTable.findFirst({
+    where: eq(usersTable.telegramId, telegramId),
+  });
+  if (!user) return null;
+
+  const alreadyClaimed = await db.query.achievementsTable.findFirst({
+    where: and(
+      eq(achievementsTable.userTelegramId, telegramId),
+      eq(achievementsTable.achievementKey, task.id),
+    ),
+  });
+  if (alreadyClaimed) return null;
+
+  const updates: Record<string, unknown> = {};
+  if (task.reward.tl > 0)    updates.balance = sql`${usersTable.balance} + ${task.reward.tl}`;
+  if (task.reward.coins > 0) updates.coins   = sql`${usersTable.coins} + ${task.reward.coins}`;
+
+  if (Object.keys(updates).length > 0) {
+    await db.update(usersTable).set(updates).where(eq(usersTable.telegramId, telegramId));
+  }
+
+  await db.insert(achievementsTable).values({
+    userTelegramId: telegramId,
+    achievementKey: task.id,
+  });
+
+  return task.reward;
+}
 
 // GET /tasks/:telegramId — returns tasks with completion status
 router.get("/:telegramId", async (req, res): Promise<void> => {

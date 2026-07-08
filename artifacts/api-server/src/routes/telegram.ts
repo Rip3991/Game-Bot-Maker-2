@@ -2,6 +2,7 @@ import { Router } from "express";
 import { getBotToken, getBotUsername, getGameUrl, sendTelegramRequest } from "../lib/telegram";
 import { db, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
+import { autoGrantChannelJoinReward, getAnnouncementChannel } from "./tasks";
 
 const processedPayments = new Set<string>();
 
@@ -52,7 +53,45 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       total_amount: number;
       invoice_payload: string;
     };
+    chat_member?: {
+      chat: { id: number; username?: string; type?: string };
+      from?: { id?: number };
+      old_chat_member?: { status?: string };
+      new_chat_member?: { status?: string; user?: { id: number } };
+    };
   };
+
+  // ── chat_member — user joined/left the announcement channel ──────────────
+  // Telegram sends this update when a user's membership status changes in a
+  // chat where the bot is an admin. Used to auto-grant the "join channel" task
+  // reward the instant someone joins, without requiring a manual claim tap.
+  if (update.chat_member) {
+    const cm = update.chat_member;
+    const channel = getAnnouncementChannel();
+    const chatUsername = cm.chat.username;
+    const newStatus = cm.new_chat_member?.status;
+    const oldStatus = cm.old_chat_member?.status;
+    const nowMember = newStatus && ["member", "administrator", "creator"].includes(newStatus);
+    const wasMember = oldStatus && ["member", "administrator", "creator"].includes(oldStatus);
+    const targetUserId = cm.new_chat_member?.user?.id;
+
+    if (chatUsername?.toLowerCase() === channel.toLowerCase() && nowMember && !wasMember && targetUserId) {
+      const telegramId = String(targetUserId);
+      const reward = await autoGrantChannelJoinReward(telegramId);
+      if (reward) {
+        req.log.info({ telegramId, reward }, "Auto-granted channel join reward");
+        const parts: string[] = [];
+        if (reward.tl > 0) parts.push(`<b>${reward.tl} TL</b>`);
+        if (reward.coins > 0) parts.push(`<b>${reward.coins} Coin</b>`);
+        await sendTelegramRequest("sendMessage", {
+          chat_id: targetUserId,
+          text: `🎉 Kanala katıldığın için ${parts.join(" ve ")} hesabına eklendi! Oyuna dön ve gör 🌾`,
+          parse_mode: "HTML",
+        }).catch(() => {});
+      }
+    }
+    return;
+  }
 
   if (update.pre_checkout_query) {
     const pcq = update.pre_checkout_query;
@@ -299,7 +338,7 @@ router.get("/telegram/set-webhook", async (req, res): Promise<void> => {
 
   const result = await sendTelegramRequest("setWebhook", {
     url: webhookUrl,
-    allowed_updates: ["message", "pre_checkout_query"],
+    allowed_updates: ["message", "pre_checkout_query", "chat_member"],
   });
 
   req.log.info({ webhookUrl, result }, "Webhook set");
