@@ -23,7 +23,7 @@ timeoutMs = 20000
 
 [userenv.shared]
 BOT_USERNAME = "MemberGobot"
-ANNOUNCEMENT_CHANNEL = "sarinoyunçiftligi"
+ANNOUNCEMENT_CHANNEL = "sarinoyunciftligi"
 ADMIN_TELEGRAM_IDS = "8652151076"
 
 [nix]

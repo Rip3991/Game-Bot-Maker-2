@@ -6,7 +6,7 @@ import { sendTelegramRequest } from "../lib/telegram";
 const router = Router();
 
 function getAnnouncementChannel(): string {
-  const raw = process.env.ANNOUNCEMENT_CHANNEL ?? "sarinoyunçiftligi";
+  const raw = process.env.ANNOUNCEMENT_CHANNEL ?? "sarinoyunciftligi";
   return raw.replace(/^@/, "");
 }
 
