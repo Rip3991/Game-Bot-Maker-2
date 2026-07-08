@@ -38,11 +38,46 @@ export default function StarsShopPage() {
   const [autoSellOwned, setAutoSellOwned] = useState<boolean>(() => {
     try { return localStorage.getItem(AUTO_SELL_PURCHASED_KEY) === 'true'; } catch { return false; }
   });
+  const [convertRate, setConvertRate] = useState<{ rate: number; minCoins: number } | null>(null);
+  const [convertAmount, setConvertAmount] = useState('');
+  const [converting, setConverting] = useState(false);
 
   useEffect(() => {
     fetch(`${API}/stars/coin-packages`).then(r => r.json()).then(setPackages).catch(() => {});
     fetch(`${API}/stars/coin-shop`).then(r => r.json()).then(setShopItems).catch(() => {});
+    fetch(`${API}/stars/coin-convert-rate`).then(r => r.json()).then(setConvertRate).catch(() => {});
   }, []);
+
+  // ── Convert Coins → TL ──────────────────────────────────────────────────
+  const handleConvert = async () => {
+    if (!telegramId || !convertRate) return;
+    const amount = parseInt(convertAmount, 10);
+    if (!Number.isFinite(amount) || amount < convertRate.minCoins) {
+      toast.error(`En az ${convertRate.minCoins} Coin girmelisin`);
+      return;
+    }
+    if (amount > coins) {
+      toast.error('Yetersiz Coin bakiyesi');
+      return;
+    }
+    setConverting(true);
+    try {
+      const res = await fetch(`${API}/stars/convert-coins-to-tl`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegramId, coins: amount }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Hata oluştu');
+      toast.success(`💵 ${data.tlReceived} TL bakiyene eklendi!`);
+      setConvertAmount('');
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message || 'Çevirme başarısız');
+    } finally {
+      setConverting(false);
+    }
+  };
 
   // ── Buy Coins with Stars ──────────────────────────────────────────────────
   const handleBuyCoins = async (pkg: CoinPackage) => {
@@ -118,8 +153,6 @@ export default function StarsShopPage() {
 
       if (data.spinReset) {
         toast.success('🎡 Çark hakkın sıfırlandı! Hemen çevir!');
-      } else if (data.tlAdded) {
-        toast.success(`💰 +${data.tlAdded.toLocaleString()} TL bakiyene eklendi!`);
       } else if (data.nftWon) {
         setLastWon({ emoji: data.nftWon.emoji, name: data.nftWon.name });
         toast.success(`💎 NFT kazandın: ${data.nftWon.emoji} ${data.nftWon.name}!`);
@@ -210,7 +243,7 @@ export default function StarsShopPage() {
               <div className="bg-blue-900/30 border border-blue-500/30 rounded-2xl p-3 flex items-start gap-2.5">
                 <span className="text-xl flex-shrink-0">ℹ️</span>
                 <div className="text-blue-200 text-[11px] font-bold leading-relaxed">
-                  Telegram Stars ile Coin satın al. Coin'lerini oyun içi ödüller, TL bonusu ve ücretsiz NFT kasaları için harca!
+                  Telegram Stars ile Coin satın al. Coin'lerini oyun içi ödüller, TL'ye çevirme veya ücretsiz NFT kasaları için harca!
                 </div>
               </div>
 
@@ -380,6 +413,46 @@ export default function StarsShopPage() {
                   </motion.div>
                 );
               })}
+
+              {/* Coin → TL Converter */}
+              <div className="rounded-2xl overflow-hidden p-4"
+                style={{ background: 'linear-gradient(135deg, #1a2e1a, #162816)', border: '1px solid rgba(74,200,74,0.3)' }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl">💵</span>
+                  <div className="font-black text-white text-sm">Coin'i TL'ye Çevir</div>
+                </div>
+                <div className="text-white/50 text-[10px] font-bold mb-3 leading-relaxed">
+                  Coin'lerini anında çekilebilir TL bakiyesine çevir.
+                  {convertRate ? ` (${convertRate.minCoins}+ Coin, oran: 1.000 Coin ≈ ${(convertRate.rate * 1000).toFixed(2)} TL)` : ''}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={convertAmount}
+                    onChange={(e) => setConvertAmount(e.target.value)}
+                    placeholder={convertRate ? `Min. ${convertRate.minCoins}` : '...'}
+                    className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white font-black text-sm outline-none"
+                  />
+                  <button
+                    onClick={handleConvert}
+                    disabled={converting || !convertRate}
+                    className="px-4 py-2.5 rounded-xl font-black text-sm text-white flex-shrink-0"
+                    style={{ background: 'linear-gradient(135deg, #22c55e, #15803d)' }}
+                  >
+                    {converting ? (
+                      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.8 }}>
+                        <RefreshCw size={16} />
+                      </motion.div>
+                    ) : 'Çevir'}
+                  </button>
+                </div>
+                {convertRate && convertAmount && !isNaN(parseInt(convertAmount, 10)) && (
+                  <div className="text-green-400 text-[10px] font-bold mt-2">
+                    ≈ {(Math.floor(parseInt(convertAmount, 10) * convertRate.rate * 100) / 100).toFixed(2)} TL alacaksın
+                  </div>
+                )}
+              </div>
 
               {/* Won NFT mini-alert */}
               <AnimatePresence>

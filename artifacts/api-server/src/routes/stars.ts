@@ -17,16 +17,101 @@ export const COIN_PACKAGES = [
 export type CoinPackageId = (typeof COIN_PACKAGES)[number]["id"];
 
 // ── Coin Shop items (spend Coins on in-game rewards) ──────────────────────────
+// NOTE: the old tl_mini/tl_big/tl_ultra "instant TL bonus" items were removed —
+// they paid out 500-6,000 TL for as little as 30-200 Coins (a few Telegram
+// Stars' worth), which meant the house lost real money on every use. Coins can
+// still be turned into TL through the dedicated, margin-safe converter below
+// (see COIN_TO_TL_RATE / POST /stars/convert-coins-to-tl).
 export const COIN_SHOP_ITEMS = [
   { id: "extra_spin", coins: 20,  emoji: "🎡", label: "Ekstra Çark Hakkı",   desc: "Çark bekleme süresini sıfırla",                   action: "reset_spin"     },
-  { id: "tl_mini",    coins: 30,  emoji: "💰", label: "Mini TL Bonusu",      desc: "+500 TL anında bakiyene eklenir",                  action: "add_tl", value: 500   },
   { id: "auto_sell",  coins: 75,  emoji: "🤖", label: "Otomatik Satış",      desc: "Ürünler 30 sn'de bir otomatik satılır — kalıcı!", action: "unlock_auto_sell" },
-  { id: "tl_big",     coins: 80,  emoji: "🏆", label: "Büyük TL Bonusu",     desc: "+2.000 TL anında bakiyene eklenir",                action: "add_tl", value: 2000  },
-  { id: "nft_case",   coins: 120, emoji: "💎", label: "Ücretsiz NFT Kasası", desc: "Rastgele bir Çiftlik Kasası açılır",               action: "open_case"      },
-  { id: "tl_ultra",   coins: 200, emoji: "🚀", label: "Ultra TL Paketi",     desc: "+6.000 TL anında bakiyene eklenir",                action: "add_tl", value: 6000  },
+  { id: "nft_case",   coins: 500, emoji: "💎", label: "Ücretsiz NFT Kasası", desc: "Rastgele bir Çiftlik Kasası açılır (Yaygın eşya)", action: "open_case"      },
 ] as const;
 
 export type CoinShopItemId = (typeof COIN_SHOP_ITEMS)[number]["id"];
+
+// ── Coin → TL conversion (the safe, margin-aware alternative to fixed TL items) ─
+//
+// ASSUMPTION (please verify against your real Fragment/Telegram payout and
+// adjust NET_TL_PER_STAR below if it differs): we don't know the operator's
+// exact net TL received per Telegram Star after Telegram's cut, so this uses a
+// conservative placeholder. All Coin Shop / conversion pricing derives from
+// this single constant, so correcting it here re-balances everything at once.
+const NET_TL_PER_STAR = 0.30; // TL the house nets per 1 Star sold — ADJUST ME with real numbers.
+
+// The most Coins a user can ever get per Star (best/cheapest package) — used as
+// the worst case for the house, since a user will always buy from the cheapest pack.
+const MAX_COINS_PER_STAR = Math.max(...COIN_PACKAGES.map(p => p.coins / p.stars));
+
+// House keeps 80% of the Star value represented by the Coins being converted;
+// the user gets 20% back as TL. Many converted Coins are earned for free
+// (spins/tasks/referrals, no Star revenue behind them at all), so this is a
+// conservative *ceiling* — real margin on the whole Coin pool is higher.
+const HOUSE_MARGIN = 0.8;
+export const COIN_TO_TL_RATE = (NET_TL_PER_STAR / MAX_COINS_PER_STAR) * (1 - HOUSE_MARGIN);
+export const MIN_COIN_CONVERT = 500; // smallest amount convertible in one go
+
+// ── GET /stars/coin-convert-rate ────────────────────────────────────────────
+router.get("/stars/coin-convert-rate", (_req, res) => {
+  res.json({ rate: COIN_TO_TL_RATE, minCoins: MIN_COIN_CONVERT });
+});
+
+// ── POST /stars/convert-coins-to-tl — turn Coins into withdrawable TL balance ─
+router.post("/stars/convert-coins-to-tl", async (req, res): Promise<void> => {
+  const { telegramId, coins } = req.body as { telegramId?: string; coins?: number };
+
+  if (
+    !telegramId ||
+    typeof coins !== "number" ||
+    !Number.isFinite(coins) ||
+    coins <= 0 ||
+    coins > Number.MAX_SAFE_INTEGER
+  ) {
+    res.status(400).json({ error: "telegramId ve geçerli bir coins değeri gerekli" });
+    return;
+  }
+
+  const coinsToConvert = Math.floor(coins);
+  if (coinsToConvert < MIN_COIN_CONVERT) {
+    res.status(400).json({ error: `En az ${MIN_COIN_CONVERT} Coin çevirebilirsin` });
+    return;
+  }
+
+  const tlToCredit = Math.floor(coinsToConvert * COIN_TO_TL_RATE * 100) / 100;
+
+  const deducted = await db
+    .update(usersTable)
+    .set({
+      coins: sql`${usersTable.coins} - ${coinsToConvert}`,
+      balance: sql`${usersTable.balance} + ${tlToCredit}`,
+    })
+    .where(
+      and(
+        eq(usersTable.telegramId, telegramId),
+        sql`${usersTable.coins} >= ${coinsToConvert}`,
+      ),
+    )
+    .returning({ coins: usersTable.coins, balance: usersTable.balance });
+
+  if (deducted.length === 0) {
+    const exists = await db.query.usersTable.findFirst({
+      where: eq(usersTable.telegramId, telegramId),
+      columns: { telegramId: true },
+    });
+    res.status(exists ? 400 : 404).json({
+      error: exists ? "Yetersiz Coin bakiyesi" : "Kullanıcı bulunamadı",
+    });
+    return;
+  }
+
+  res.json({
+    success: true,
+    coinsConverted: coinsToConvert,
+    tlReceived: tlToCredit,
+    newCoins: Number(deducted[0].coins),
+    newBalance: Number(deducted[0].balance),
+  });
+});
 
 // ── GET /stars/coin-packages ───────────────────────────────────────────────────
 router.get("/stars/coin-packages", (_req, res) => {
@@ -147,15 +232,6 @@ router.post("/stars/coin-shop/buy", async (req, res): Promise<void> => {
         .set({ lastSpinAt: null })
         .where(eq(usersTable.telegramId, telegramId));
       extra = { spinReset: true };
-    }
-
-    if (item.action === "add_tl" && "value" in item) {
-      const tlAmount = (item as typeof item & { value: number }).value;
-      await db
-        .update(usersTable)
-        .set({ balance: sql`${usersTable.balance} + ${tlAmount}` })
-        .where(eq(usersTable.telegramId, telegramId));
-      extra = { tlAdded: tlAmount };
     }
 
     if (item.action === "open_case") {

@@ -387,10 +387,11 @@ function serializeNft(n: typeof nftsTable.$inferSelect) {
 
 // Restricted drop table used when an NFT case is granted "for free" (e.g. bought
 // with a small amount of Coins in the Coin Shop) instead of paid with real TL/Stars
-// value. Excludes legendary/epic tiers so a cheap Coin purchase can never win a
-// multi-hundred-thousand-TL jackpot NFT — that risk is reserved for cases users
-// actually pay meaningful TL for via /nfts/cases/open.
-const FREE_CASE_DROPS = { common: 0.8, rare: 0.2, epic: 0, special: 0, legendary: 0 };
+// value. Common-only: a "rare" NFT here can sell for 1,500-7,000+ TL, which used
+// to make this a cheap way to mint a real-money windfall for a handful of Coins
+// (roughly the cost of a few Telegram Stars). Any rare-or-better odds are reserved
+// for cases users actually pay meaningful TL/Coins for via /nfts/cases/open.
+const FREE_CASE_DROPS = { common: 1, rare: 0, epic: 0, special: 0, legendary: 0 };
 
 // ── Public helper: mint a free NFT from a case (no TL cost) ─────────────────
 export async function mintFreeNftFromCase(
