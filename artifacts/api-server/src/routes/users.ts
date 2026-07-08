@@ -295,34 +295,6 @@ router.get("/users/:telegramId/achievements", async (req, res): Promise<void> =>
   res.json(result);
 });
 
-// POST /admin/add-balance — admin only, requires X-Admin-Secret header
-router.post("/admin/add-balance", async (req, res): Promise<void> => {
-  const adminSecret = process.env.ADMIN_SECRET;
-  const provided = req.headers["x-admin-secret"];
-  if (!adminSecret || provided !== adminSecret) {
-    res.status(403).json({ error: "Forbidden" });
-    return;
-  }
-  const { telegramId, amount, type } = req.body as { telegramId?: string; amount?: number; type?: "balance" | "coins" };
-  if (!telegramId || typeof amount !== "number" || amount <= 0) {
-    res.status(400).json({ error: "telegramId and positive amount required" });
-    return;
-  }
-  const field = type === "coins" ? "coins" : "balance";
-  const updated = await db
-    .update(usersTable)
-    .set(field === "coins"
-      ? { coins: sql`${usersTable.coins} + ${amount}` }
-      : { balance: sql`${usersTable.balance} + ${amount}` })
-    .where(eq(usersTable.telegramId, telegramId))
-    .returning();
-  if (!updated[0]) {
-    res.status(404).json({ error: "User not found" });
-    return;
-  }
-  res.json({ success: true, user: formatUser(updated[0]), added: { field, amount } });
-});
-
 // GET /referrals/stats/:telegramId
 router.get("/referrals/stats/:telegramId", async (req, res): Promise<void> => {
   const telegramId = Array.isArray(req.params.telegramId)

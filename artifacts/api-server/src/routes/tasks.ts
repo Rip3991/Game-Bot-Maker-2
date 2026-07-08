@@ -54,7 +54,7 @@ export const TASK_DEFS = [
 ] as const;
 
 // GET /tasks/:telegramId — returns tasks with completion status
-router.get("/tasks/:telegramId", async (req, res): Promise<void> => {
+router.get("/:telegramId", async (req, res): Promise<void> => {
   const { telegramId } = req.params;
   if (!telegramId) { res.status(400).json({ error: "telegramId required" }); return; }
 
@@ -87,7 +87,7 @@ router.get("/tasks/:telegramId", async (req, res): Promise<void> => {
 });
 
 // POST /tasks/claim — claim a task reward
-router.post("/tasks/claim", async (req, res): Promise<void> => {
+router.post("/claim", async (req, res): Promise<void> => {
   const { telegramId, taskId } = req.body as { telegramId?: string; taskId?: string };
   if (!telegramId || !taskId) { res.status(400).json({ error: "telegramId ve taskId gerekli" }); return; }
 

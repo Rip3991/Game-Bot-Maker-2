@@ -260,16 +260,78 @@ function SellModal({ nft, onConfirm, onCancel }: { nft: NftItem; onConfirm: () =
   );
 }
 
+// ── Trade Offer Modal (make an offer on someone else's listed NFT) ─────────────
+
+function TradeOfferModal({ targetNft, myNfts, sending, onSend, onCancel }: {
+  targetNft: NftItem; myNfts: NftItem[]; sending: boolean;
+  onSend: (myNft: NftItem) => void; onCancel: () => void;
+}) {
+  const r = RARITY[targetNft.rarity] ?? RARITY.common;
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = myNfts.find(n => n.id === selectedId) ?? null;
+
+  return (
+    <motion.div className="fixed inset-0 z-[200] flex items-end justify-center p-4"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onCancel} />
+      <motion.div className="relative w-full max-w-md rounded-3xl p-5 flex flex-col gap-4 max-h-[80vh]"
+        style={{ background: '#0d1117', border: `2px solid ${r.border}`, boxShadow: `0 0 40px ${r.glow}` }}
+        initial={{ y: 80 }} animate={{ y: 0 }} exit={{ y: 80 }}>
+        <div className="flex items-center gap-3">
+          <span className="text-4xl">{targetNft.emoji}</span>
+          <div>
+            <div className="font-black text-white text-base">{targetNft.name}</div>
+            <div className="text-xs font-bold" style={{ color: r.text }}>{r.label} #{targetNft.mintNumber} için takas teklifi</div>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-white/60 text-xs font-bold mb-2 block">Karşılığında hangi NFT'ini teklif ediyorsun?</label>
+          <div className="flex flex-col gap-1.5 overflow-y-auto max-h-56">
+            {myNfts.map(nft => {
+              const nr = RARITY[nft.rarity] ?? RARITY.common;
+              return (
+                <button key={nft.id} onClick={() => setSelectedId(nft.id)}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-all"
+                  style={selectedId === nft.id
+                    ? { background: 'rgba(59,130,246,0.2)', border: '1.5px solid #3b82f6' }
+                    : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <span className="text-2xl">{nft.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-black text-white text-xs truncate">{nft.name}</div>
+                    <div className="text-[10px] font-bold" style={{ color: nr.text }}>{nr.label} #{nft.mintNumber}</div>
+                  </div>
+                  {selectedId === nft.id && <span className="text-blue-400 text-lg">✓</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button onClick={onCancel} className="flex-1 py-3 rounded-2xl font-black text-white/60 border border-white/20 active:scale-95">Vazgeç</button>
+          <button onClick={() => selected && onSend(selected)} disabled={!selected || sending}
+            className="flex-1 py-3 rounded-2xl font-black text-white active:scale-95"
+            style={{ background: selected && !sending ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' : '#374151', border: '1px solid #1e3a8a' }}>
+            {sending ? '...' : '🔄 Teklif Gönder'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ── Exchange market card ───────────────────────────────────────────────────────
 
 function ExchangeNftCard({
-  price, myNfts, telegramId, onBuy, onRefresh,
+  price, myNfts, telegramId, onBuy, onRefresh, onOffer,
 }: {
   price: MarketPrice;
   myNfts: NftItem[];
   telegramId: string;
   onBuy: (nftId: string, priceTl: number, name: string) => Promise<void>;
   onRefresh: () => void;
+  onOffer: (nft: NftItem) => void;
 }) {
   const r = RARITY[price.rarity] ?? RARITY.common;
   const positive = price.change >= 0;
@@ -367,8 +429,17 @@ function ExchangeNftCard({
                             : 'Piyasa fiyatı'}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <span className="font-black text-yellow-300 text-[12px]">{fmtPrice(nft.listPrice ?? 0)} TL</span>
+                        {myNfts.length > 0 && (
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => onOffer(nft)}
+                            className="px-2 py-1 rounded-lg text-[10px] font-black text-white active:scale-95"
+                            style={{ background: 'rgba(59,130,246,0.25)', border: '1px solid rgba(59,130,246,0.5)' }}>
+                            🔄 Teklif
+                          </motion.button>
+                        )}
                         <motion.button
                           whileTap={{ scale: 0.9 }}
                           onClick={() => handleBuy(nft)}
@@ -492,6 +563,7 @@ export default function NftPage() {
   const [openingCase, setOpeningCase] = useState<CaseDef | null>(null);
   const [sellTarget, setSellTarget] = useState<NftItem | null>(null);
   const [listTarget, setListTarget] = useState<NftItem | null>(null);
+  const [offerTarget, setOfferTarget] = useState<NftItem | null>(null);
   const [rarityFilter, setRarityFilter] = useState<RarityFilter>('all');
 
   const [marketPrices, setMarketPrices] = useState<MarketPrice[]>([]);
@@ -605,6 +677,23 @@ export default function NftPage() {
       await acceptMut.mutateAsync({ data: { telegramId, offerId, acceptorNftId } });
       toast.success('✅ Takas tamamlandı!'); refetchMine(); refetchOffers();
     } catch { toast.error('Takas başarısız'); }
+  };
+
+  // Send a trade offer for someone else's listed NFT
+  const handleSendOffer = async (myNft: NftItem) => {
+    if (!offerTarget) return;
+    try {
+      await offerMut.mutateAsync({
+        data: {
+          offererTelegramId: telegramId,
+          offeredNftId: myNft.id,
+          targetTelegramId: offerTarget.ownerTelegramId,
+          wantedNftType: offerTarget.nftType,
+        },
+      });
+      toast.success(`🔄 ${offerTarget.name} için teklif gönderildi!`);
+      setOfferTarget(null);
+    } catch { toast.error('Teklif gönderilemedi'); }
   };
 
   const filteredPrices = rarityFilter === 'all' ? marketPrices : marketPrices.filter(p => p.rarity === rarityFilter);
@@ -776,6 +865,7 @@ export default function NftPage() {
                   telegramId={telegramId}
                   onBuy={handleBuy}
                   onRefresh={() => { refetchMarket(); fetchPrices(); }}
+                  onOffer={(nft) => setOfferTarget(nft)}
                 />
               ))}
             </div>
@@ -845,6 +935,17 @@ export default function NftPage() {
             marketPrice={marketPrices.find(p => p.nftType === listTarget.nftType)?.currentPrice ?? listTarget.sellPrice ?? 10}
             onConfirm={handleListForSale}
             onCancel={() => setListTarget(null)} />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {offerTarget && (
+          <TradeOfferModal
+            targetNft={offerTarget}
+            myNfts={myNfts as NftItem[]}
+            sending={offerMut.isPending}
+            onSend={handleSendOffer}
+            onCancel={() => setOfferTarget(null)}
+          />
         )}
       </AnimatePresence>
     </div>
