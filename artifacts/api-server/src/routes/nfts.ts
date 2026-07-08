@@ -350,6 +350,11 @@ function pickRandomNft(rarity: "common" | "rare" | "epic" | "special" | "legenda
   const pool = (Object.entries(NFT_DEFS) as [NftType, typeof NFT_DEFS[NftType]][])
     .filter(([, def]) => def.rarity === rarity)
     .map(([key]) => key);
+  // Safety fallback: "special" rarity has no defined NFTs — fall back to "rare"
+  // to avoid an undefined nftType (which would previously crash case-opening).
+  if (pool.length === 0) {
+    return pickRandomNft("rare");
+  }
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
@@ -380,6 +385,13 @@ function serializeNft(n: typeof nftsTable.$inferSelect) {
   };
 }
 
+// Restricted drop table used when an NFT case is granted "for free" (e.g. bought
+// with a small amount of Coins in the Coin Shop) instead of paid with real TL/Stars
+// value. Excludes legendary/epic tiers so a cheap Coin purchase can never win a
+// multi-hundred-thousand-TL jackpot NFT — that risk is reserved for cases users
+// actually pay meaningful TL for via /nfts/cases/open.
+const FREE_CASE_DROPS = { common: 0.8, rare: 0.2, epic: 0, special: 0, legendary: 0 };
+
 // ── Public helper: mint a free NFT from a case (no TL cost) ─────────────────
 export async function mintFreeNftFromCase(
   telegramId: string,
@@ -390,7 +402,7 @@ export async function mintFreeNftFromCase(
   listPrice: null; sellPrice: number; marketPrice: number; createdAt: string;
 }> {
   const caseDef = CASE_DEFS[caseType];
-  const rarity   = rollRarity(caseDef.drops);
+  const rarity   = rollRarity(FREE_CASE_DROPS);
   const nftType  = pickRandomNft(rarity);
   const nftDef   = NFT_DEFS[nftType];
   const mintNumber = Math.floor(Math.random() * nftDef.mintLimit) + 1;
