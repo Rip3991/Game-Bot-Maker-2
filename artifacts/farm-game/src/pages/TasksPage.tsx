@@ -67,7 +67,13 @@ export default function TasksPage() {
 
     // For channel tasks, send straight to the channel — the bot verifies membership when claimed
     if (task.type === 'channel_join' && task.link) {
-      window.open(task.link, '_blank');
+      if (window.Telegram?.WebApp?.openTelegramLink) {
+        window.Telegram.WebApp.openTelegramLink(task.link);
+      } else if (window.Telegram?.WebApp?.openLink) {
+        window.Telegram.WebApp.openLink(task.link);
+      } else {
+        window.open(task.link, '_blank');
+      }
     }
 
     setClaiming(task.id);
