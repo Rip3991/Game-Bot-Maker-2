@@ -226,7 +226,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       ? `https://t.me/${botUsername}?start=ref_${userId}`
       : `https://t.me/${botUsername}`;
 
-    const rawChannel = process.env.ANNOUNCEMENT_CHANNEL ?? "sarınoyunciftligi";
+    const rawChannel = process.env.ANNOUNCEMENT_CHANNEL ?? "sarinoyunçiftligi";
     // Strip leading @ so the URL is always well-formed
     const announcementChannel = rawChannel.replace(/^@/, "");
     const bannerUrl = getBannerUrl();

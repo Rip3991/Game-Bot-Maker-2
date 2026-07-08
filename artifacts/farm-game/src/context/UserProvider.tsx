@@ -11,7 +11,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const telegramId =
     window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString() ?? "demo_user";
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (): Promise<User | null> => {
     try {
       const firstName =
         window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name ?? "Demo Çiftçi";
@@ -28,8 +28,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       setUser(data);
       // isNewUser is true only when the backend created the account for the first time
       setIsNewUser(data.isNewUser === true);
+      return data;
     } catch (e) {
       console.error("Failed to init user", e);
+      return null;
     } finally {
       setIsLoading(false);
     }

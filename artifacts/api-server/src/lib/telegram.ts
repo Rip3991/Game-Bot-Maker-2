@@ -4,7 +4,9 @@
  */
 
 export function getBotToken(): string | undefined {
-  return process.env.TELEGRAM_BOT_TOKEN;
+  const t = process.env.TELEGRAM_BOT_TOKEN;
+  console.log("[telegram] getBotToken length=", t ? t.length : 0);
+  return t;
 }
 
 export function getBotUsername(): string {
@@ -35,7 +37,8 @@ export async function sendTelegramRequest(
       body: JSON.stringify(body),
     });
     return res.json();
-  } catch {
+  } catch (e) {
+    console.error("[telegram] sendTelegramRequest failed", method, e);
     return null;
   }
 }

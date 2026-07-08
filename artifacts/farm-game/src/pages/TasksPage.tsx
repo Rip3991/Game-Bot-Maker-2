@@ -65,11 +65,9 @@ export default function TasksPage() {
   const handleClaim = async (task: TaskDef) => {
     if (!task.claimable || claiming) return;
 
-    // For channel tasks, open link first
-    if (task.type === 'claim' && task.link) {
+    // For channel tasks, send straight to the channel — the bot verifies membership when claimed
+    if (task.type === 'channel_join' && task.link) {
       window.open(task.link, '_blank');
-      // Give a moment before claiming
-      await new Promise(r => setTimeout(r, 1200));
     }
 
     setClaiming(task.id);
@@ -80,7 +78,14 @@ export default function TasksPage() {
         body: JSON.stringify({ telegramId, taskId: task.id }),
       });
       const data = await res.json();
-      if (!res.ok) { toast.error(data.error ?? 'Hata oluştu'); return; }
+      if (!res.ok) {
+        if (data.needsJoin) {
+          toast.error(data.error ?? 'Önce kanala katıl');
+        } else {
+          toast.error(data.error ?? 'Hata oluştu');
+        }
+        return;
+      }
       toast.success(data.message ?? '✅ Ödül alındı!');
       await fetchTasks();
     } catch {

@@ -4,7 +4,7 @@ import { User } from '@workspace/api-client-react';
 export interface UserContextType {
   user: User | null;
   isLoading: boolean;
-  refresh: () => Promise<void>;
+  refresh: () => Promise<User | null>;
   setUser: Dispatch<SetStateAction<User | null>>;
   telegramId: string;
   /** True only on the very first app open (new account just created) */

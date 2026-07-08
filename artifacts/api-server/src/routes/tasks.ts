@@ -1,19 +1,25 @@
 import { Router } from "express";
 import { and, eq, sql } from "drizzle-orm";
 import { db, usersTable, achievementsTable } from "@workspace/db";
+import { sendTelegramRequest } from "../lib/telegram";
 
 const router = Router();
+
+function getAnnouncementChannel(): string {
+  const raw = process.env.ANNOUNCEMENT_CHANNEL ?? "sarinoyunçiftligi";
+  return raw.replace(/^@/, "");
+}
 
 // Task definitions — claimable once per user
 export const TASK_DEFS = [
   {
     id: "task_channel_join",
     title: "Kanala Katıl",
-    description: "@sarınoyunçiftliği kanalına katıl",
+    description: `@${getAnnouncementChannel()} kanalına katıl`,
     icon: "📢",
     reward: { tl: 10, coins: 0 },
-    type: "claim",     // user just presses claim (honor system)
-    link: "https://t.me/sarınoyunçiftliği",
+    type: "channel_join",     // verified server-side via getChatMember
+    link: `https://t.me/${getAnnouncementChannel()}`,
   },
   {
     id: "task_ref_1",
@@ -79,7 +85,7 @@ router.get("/:telegramId", async (req, res): Promise<void> => {
       completed,
       progress: t.type === "referral" ? progress : (completed ? 1 : 0),
       total: t.type === "referral" ? t.required : 1,
-      claimable: !completed && (t.type === "claim" || (t.type === "referral" && user.totalReferrals >= t.required)),
+      claimable: !completed && (t.type === "channel_join" || (t.type === "referral" && user.totalReferrals >= t.required)),
     };
   });
 
@@ -112,6 +118,27 @@ router.post("/claim", async (req, res): Promise<void> => {
   if (task.type === "referral" && user.totalReferrals < task.required) {
     res.status(400).json({ error: `Henüz ${task.required} davet tamamlanmadı (${user.totalReferrals}/${task.required})` });
     return;
+  }
+
+  // Channel join is verified server-side via Telegram's getChatMember — no honor system
+  if (task.type === "channel_join") {
+    const channel = getAnnouncementChannel();
+    const memberRes = await sendTelegramRequest("getChatMember", {
+      chat_id: `@${channel}`,
+      user_id: Number(telegramId),
+    }) as { ok?: boolean; result?: { status?: string } } | null;
+
+    const status = memberRes?.result?.status;
+    const isMember = memberRes?.ok && status && !["left", "kicked"].includes(status);
+
+    if (!isMember) {
+      res.status(400).json({
+        error: "Henüz kanala katılmadın. Katıl ve tekrar dene 📢",
+        needsJoin: true,
+        channelLink: `https://t.me/${channel}`,
+      });
+      return;
+    }
   }
 
   // Grant reward

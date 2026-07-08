@@ -68,7 +68,18 @@ export default function StarsShopPage() {
           window.Telegram.WebApp.openInvoice(data.invoiceLink, (status: string) => {
             if (status === 'paid') {
               toast.success(`🎉 ${pkg.coins} Coin hesabına eklendi!`);
-              setTimeout(refresh, 1500);
+              // Webhook grants coins async — poll balance instead of a single fixed wait,
+              // so the UI updates the moment the backend has processed the payment.
+              const startCoins = user?.coins ?? 0;
+              let attempts = 0;
+              const poll = async () => {
+                attempts += 1;
+                const updated = await refresh();
+                const newCoins = (updated as any)?.coins ?? undefined;
+                if (newCoins !== undefined && newCoins > startCoins) return;
+                if (attempts < 10) setTimeout(poll, 800);
+              };
+              setTimeout(poll, 400);
             } else if (status === 'cancelled') {
               toast.info('Ödeme iptal edildi.');
             } else {
