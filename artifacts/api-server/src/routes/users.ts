@@ -170,12 +170,18 @@ router.post("/users/init", async (req, res): Promise<void> => {
     let newStreak = existing.streakCount;
 
     if (lastLogin) {
-      const hoursSince = (now.getTime() - lastLogin.getTime()) / 3600000;
-      if (hoursSince >= 24 && hoursSince < 48) {
-        newStreak = existing.streakCount + 1;
-      } else if (hoursSince >= 48) {
-        newStreak = 1; // streak broken
+      // Compare calendar days (UTC), not rolling hour windows. A rolling
+      // "hours since last open" comparison breaks when a user opens the app
+      // more than once in a day — each open resets the anchor time, so a
+      // legitimate next-day login can be <24h after the last (later) open
+      // and silently fail to increment the streak.
+      const diffDays = Math.round((utcDayStart(now) - utcDayStart(lastLogin)) / 86400000);
+      if (diffDays === 1) {
+        newStreak = existing.streakCount + 1; // consecutive calendar day
+      } else if (diffDays >= 2) {
+        newStreak = 1; // missed a day — streak broken
       }
+      // diffDays === 0 (or negative, e.g. clock skew) — same day, no change
     }
 
     await db
@@ -377,6 +383,12 @@ export function getOnlineCount(): number {
 }
 
 // --- Helpers ---
+
+// Midnight (UTC) timestamp for the calendar day a given Date falls on —
+// used to compare "days" instead of rolling 24h windows.
+function utcDayStart(d: Date): number {
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+}
 
 function formatUser(user: typeof usersTable.$inferSelect) {
   return {
