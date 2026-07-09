@@ -121,135 +121,145 @@ export async function autoGrantChannelJoinReward(
 
 // GET /tasks/:telegramId — returns tasks with completion status
 router.get("/:telegramId", async (req, res): Promise<void> => {
-  const { telegramId } = req.params;
-  if (!telegramId) { res.status(400).json({ error: "telegramId required" }); return; }
+  try {
+    const { telegramId } = req.params;
+    if (!telegramId) { res.status(400).json({ error: "telegramId required" }); return; }
 
-  const user = await db.query.usersTable.findFirst({
-    where: eq(usersTable.telegramId, telegramId),
-  });
-  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+    const user = await db.query.usersTable.findFirst({
+      where: eq(usersTable.telegramId, telegramId),
+    });
+    if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
-  const earned = await db.query.achievementsTable.findMany({
-    where: eq(achievementsTable.userTelegramId, telegramId),
-  });
-  const earnedKeys = new Set(earned.map(a => a.achievementKey));
-  const completedOtherTasksCount = OTHER_TASK_IDS.filter(id => earnedKeys.has(id)).length;
-
-  const tasks = TASK_DEFS.map(t => {
-    const completed = earnedKeys.has(t.id);
-
-    if (t.type === "referral") {
-      const progress = Math.min(user.totalReferrals, t.required);
-      return {
-        ...t, completed, progress, total: t.required,
-        claimable: !completed && user.totalReferrals >= t.required,
-      };
-    }
-    if (t.type === "weekly_goal") {
-      const streakProgress = Math.min(user.streakCount, t.requiredStreak);
-      const tasksProgress = Math.min(completedOtherTasksCount, t.requiredTasks);
-      return {
-        ...t, completed,
-        progress: streakProgress === t.requiredStreak ? tasksProgress : streakProgress,
-        total: streakProgress === t.requiredStreak ? t.requiredTasks : t.requiredStreak,
-        claimable: !completed && user.streakCount >= t.requiredStreak && completedOtherTasksCount >= t.requiredTasks,
-      };
-    }
-    // channel_join, share
-    return {
-      ...t, completed, progress: completed ? 1 : 0, total: 1,
-      claimable: !completed,
-    };
-  });
-
-  res.json({ tasks, totalReferrals: user.totalReferrals });
-});
-
-// POST /tasks/claim — claim a task reward
-router.post("/claim", async (req, res): Promise<void> => {
-  const { telegramId, taskId } = req.body as { telegramId?: string; taskId?: string };
-  if (!telegramId || !taskId) { res.status(400).json({ error: "telegramId ve taskId gerekli" }); return; }
-
-  const task = TASK_DEFS.find(t => t.id === taskId);
-  if (!task) { res.status(404).json({ error: "Görev bulunamadı" }); return; }
-
-  const user = await db.query.usersTable.findFirst({
-    where: eq(usersTable.telegramId, telegramId),
-  });
-  if (!user) { res.status(404).json({ error: "Kullanıcı bulunamadı" }); return; }
-
-  // Already claimed?
-  const alreadyClaimed = await db.query.achievementsTable.findFirst({
-    where: and(
-      eq(achievementsTable.userTelegramId, telegramId),
-      eq(achievementsTable.achievementKey, taskId),
-    ),
-  });
-  if (alreadyClaimed) { res.status(409).json({ error: "Bu görev zaten tamamlandı" }); return; }
-
-  // Check referral requirement
-  if (task.type === "referral" && user.totalReferrals < task.required) {
-    res.status(400).json({ error: `Henüz ${task.required} davet tamamlanmadı (${user.totalReferrals}/${task.required})` });
-    return;
-  }
-
-  // Check weekly goal requirement (streak + other completed tasks)
-  if (task.type === "weekly_goal") {
     const earned = await db.query.achievementsTable.findMany({
       where: eq(achievementsTable.userTelegramId, telegramId),
     });
     const earnedKeys = new Set(earned.map(a => a.achievementKey));
     const completedOtherTasksCount = OTHER_TASK_IDS.filter(id => earnedKeys.has(id)).length;
 
-    if (user.streakCount < task.requiredStreak || completedOtherTasksCount < task.requiredTasks) {
-      res.status(400).json({
-        error: `Henüz hedef tamamlanmadı (Seri: ${user.streakCount}/${task.requiredStreak}, Görev: ${completedOtherTasksCount}/${task.requiredTasks})`,
-      });
+    const tasks = TASK_DEFS.map(t => {
+      const completed = earnedKeys.has(t.id);
+
+      if (t.type === "referral") {
+        const progress = Math.min(user.totalReferrals, t.required);
+        return {
+          ...t, completed, progress, total: t.required,
+          claimable: !completed && user.totalReferrals >= t.required,
+        };
+      }
+      if (t.type === "weekly_goal") {
+        const streakProgress = Math.min(user.streakCount, t.requiredStreak);
+        const tasksProgress = Math.min(completedOtherTasksCount, t.requiredTasks);
+        return {
+          ...t, completed,
+          progress: streakProgress === t.requiredStreak ? tasksProgress : streakProgress,
+          total: streakProgress === t.requiredStreak ? t.requiredTasks : t.requiredStreak,
+          claimable: !completed && user.streakCount >= t.requiredStreak && completedOtherTasksCount >= t.requiredTasks,
+        };
+      }
+      // channel_join, share
+      return {
+        ...t, completed, progress: completed ? 1 : 0, total: 1,
+        claimable: !completed,
+      };
+    });
+
+    res.json({ tasks, totalReferrals: user.totalReferrals });
+  } catch (err) {
+    req.log.error({ err }, "tasks fetch failed");
+    res.status(500).json({ error: "Görevler yüklenemedi" });
+  }
+});
+
+// POST /tasks/claim — claim a task reward
+router.post("/claim", async (req, res): Promise<void> => {
+  try {
+    const { telegramId, taskId } = req.body as { telegramId?: string; taskId?: string };
+    if (!telegramId || !taskId) { res.status(400).json({ error: "telegramId ve taskId gerekli" }); return; }
+
+    const task = TASK_DEFS.find(t => t.id === taskId);
+    if (!task) { res.status(404).json({ error: "Görev bulunamadı" }); return; }
+
+    const user = await db.query.usersTable.findFirst({
+      where: eq(usersTable.telegramId, telegramId),
+    });
+    if (!user) { res.status(404).json({ error: "Kullanıcı bulunamadı" }); return; }
+
+    // Already claimed?
+    const alreadyClaimed = await db.query.achievementsTable.findFirst({
+      where: and(
+        eq(achievementsTable.userTelegramId, telegramId),
+        eq(achievementsTable.achievementKey, taskId),
+      ),
+    });
+    if (alreadyClaimed) { res.status(409).json({ error: "Bu görev zaten tamamlandı" }); return; }
+
+    // Check referral requirement
+    if (task.type === "referral" && user.totalReferrals < task.required) {
+      res.status(400).json({ error: `Henüz ${task.required} davet tamamlanmadı (${user.totalReferrals}/${task.required})` });
       return;
     }
-  }
 
-  // Channel join is verified server-side via Telegram's getChatMember — no honor system
-  if (task.type === "channel_join") {
-    const channel = getAnnouncementChannel();
-    const memberRes = await sendTelegramRequest("getChatMember", {
-      chat_id: `@${channel}`,
-      user_id: Number(telegramId),
-    }) as { ok?: boolean; result?: { status?: string } } | null;
-
-    const status = memberRes?.result?.status;
-    const isMember = memberRes?.ok && status && !["left", "kicked"].includes(status);
-
-    if (!isMember) {
-      res.status(400).json({
-        error: "Henüz kanala katılmadın. Katıl ve tekrar dene 📢",
-        needsJoin: true,
-        channelLink: `https://t.me/${channel}`,
+    // Check weekly goal requirement (streak + other completed tasks)
+    if (task.type === "weekly_goal") {
+      const earned = await db.query.achievementsTable.findMany({
+        where: eq(achievementsTable.userTelegramId, telegramId),
       });
-      return;
+      const earnedKeys = new Set(earned.map(a => a.achievementKey));
+      const completedOtherTasksCount = OTHER_TASK_IDS.filter(id => earnedKeys.has(id)).length;
+
+      if (user.streakCount < task.requiredStreak || completedOtherTasksCount < task.requiredTasks) {
+        res.status(400).json({
+          error: `Henüz hedef tamamlanmadı (Seri: ${user.streakCount}/${task.requiredStreak}, Görev: ${completedOtherTasksCount}/${task.requiredTasks})`,
+        });
+        return;
+      }
     }
+
+    // Channel join is verified server-side via Telegram's getChatMember — no honor system
+    if (task.type === "channel_join") {
+      const channel = getAnnouncementChannel();
+      const memberRes = await sendTelegramRequest("getChatMember", {
+        chat_id: `@${channel}`,
+        user_id: Number(telegramId),
+      }) as { ok?: boolean; result?: { status?: string } } | null;
+
+      const status = memberRes?.result?.status;
+      const isMember = memberRes?.ok && status && !["left", "kicked"].includes(status);
+
+      if (!isMember) {
+        res.status(400).json({
+          error: "Henüz kanala katılmadın. Katıl ve tekrar dene 📢",
+          needsJoin: true,
+          channelLink: `https://t.me/${channel}`,
+        });
+        return;
+      }
+    }
+
+    // Grant reward
+    const updates: Record<string, unknown> = {};
+    if (task.reward.tl > 0)    updates.balance = sql`${usersTable.balance} + ${task.reward.tl}`;
+    if (task.reward.coins > 0) updates.coins   = sql`${usersTable.coins} + ${task.reward.coins}`;
+
+    if (Object.keys(updates).length > 0) {
+      await db.update(usersTable).set(updates).where(eq(usersTable.telegramId, telegramId));
+    }
+
+    await db.insert(achievementsTable).values({
+      userTelegramId: telegramId,
+      achievementKey: taskId,
+    });
+
+    res.json({
+      success: true,
+      taskId,
+      reward: task.reward,
+      message: `✅ ${task.title} tamamlandı!`,
+    });
+  } catch (err) {
+    req.log.error({ err }, "task claim failed");
+    res.status(500).json({ error: "Sunucu hatası, tekrar dene" });
   }
-
-  // Grant reward
-  const updates: Record<string, unknown> = {};
-  if (task.reward.tl > 0)    updates.balance = sql`${usersTable.balance} + ${task.reward.tl}`;
-  if (task.reward.coins > 0) updates.coins   = sql`${usersTable.coins} + ${task.reward.coins}`;
-
-  if (Object.keys(updates).length > 0) {
-    await db.update(usersTable).set(updates).where(eq(usersTable.telegramId, telegramId));
-  }
-
-  await db.insert(achievementsTable).values({
-    userTelegramId: telegramId,
-    achievementKey: taskId,
-  });
-
-  res.json({
-    success: true,
-    taskId,
-    reward: task.reward,
-    message: `✅ ${task.title} tamamlandı!`,
-  });
 });
 
 export default router;
