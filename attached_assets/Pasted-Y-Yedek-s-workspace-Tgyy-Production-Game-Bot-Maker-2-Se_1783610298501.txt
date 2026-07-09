@@ -1,0 +1,123 @@
+Y
+Yedek's workspace
+Tgyy
+
+Production
+
+Game-Bot-Maker-2
+
+
+Search
+Ctrl+
+K
+
+New
+
+Upgrade
+
+
+r
+Environment
+Game-Bot-Maker-2
+Events
+Settings
+Monitor
+Logs
+Metrics
+Manage
+Environment
+Shell
+Scaling
+Previews
+Disk
+One-Off Jobs
+New plans, zero seat fees
+We're updating workspace pricing to help teams grow faster. No seat fees, more self-serve features, granular bandwidth billing, and more.
+Opt-in early
+
+
+Changelog
+Invite a friend
+
+Contact support
+Render Status
+Web Service
+Game-Bot-Maker-2
+Node
+Free
+Upgrade your instance
+
+Connect
+
+Manual Deploy
+Service ID:
+srv-d97o7vutrd3s739e19jg
+
+Rip3991 / Game-Bot-Maker-2
+main
+https://game-bot-maker-2.onrender.com
+
+Your free instance will spin down with inactivity, which can delay requests by 50 seconds or more.
+Upgrade now
+July 9, 2026 at 6:15 PM
+live
+75e9873
+fix: ESM __dirname in drizzle config + move DB push to startCommand
+
+All logs
+Search
+Search logs
+
+Live tail
+
+
+
+dist/public/assets/mascot-full-nZE7Hwpr.png    1,227.70 kB
+dist/public/assets/mascot-avatar-D44Nnu_f.png  1,289.25 kB
+dist/public/assets/index-CUaWgzo5.css            119.57 kB │ gzip:  19.53 kB
+dist/public/assets/index-HZFmY6de.js             715.41 kB │ gzip: 217.42 kB
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.50s
+> @workspace/api-server@0.0.0 build /opt/render/project/src/artifacts/api-server
+> node ./build.mjs
+  dist/index.mjs                       2.4mb ⚠️
+  dist/pino-worker.mjs               153.4kb
+  dist/pino-file.mjs                 142.1kb
+  dist/pino-pretty.mjs               114.6kb
+  dist/thread-stream-worker.mjs        7.3kb
+  dist/index.mjs.map                   4.0mb
+  dist/pino-worker.mjs.map           256.9kb
+  dist/pino-file.mjs.map             229.0kb
+  dist/pino-pretty.mjs.map           204.0kb
+  dist/thread-stream-worker.mjs.map   12.0kb
+⚡ Done in 447ms
+==> Uploading build...
+==> Uploaded in 3.7s. Compression took 3.6s
+==> Build successful 🎉
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+==> No open ports detected, continuing to scan...
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+==> Running 'pnpm --filter @workspace/api-server run start'
+> @workspace/api-server@0.0.0 start /opt/render/project/src/artifacts/api-server
+> node --enable-source-maps ./dist/index.mjs
+{"level":30,"time":1783610278335,"pid":85,"hostname":"srv-d97o7vutrd3s739e19jg-hibernate-675c658bbc-62fdw","port":10000,"msg":"Server listening"}
+{"level":30,"time":1783610278929,"pid":85,"hostname":"srv-d97o7vutrd3s739e19jg-hibernate-675c658bbc-62fdw","req":{"id":1,"method":"HEAD","url":"/"},"res":{"statusCode":200},"responseTime":193,"msg":"request completed"}
+{"level":30,"time":1783610279259,"pid":85,"hostname":"srv-d97o7vutrd3s739e19jg-hibernate-675c658bbc-62fdw","webhookUrl":"https://game-bot-maker-2.onrender.com/api/telegram/webhook","msg":"Telegram webhook auto-registered"}
+==> Your service is live 🎉
+{"level":30,"time":1783610285445,"pid":85,"hostname":"srv-d97o7vutrd3s739e19jg-hibernate-675c658bbc-62fdw","req":{"id":2,"method":"GET","url":"/"},"res":{"statusCode":200},"responseTime":2,"msg":"request completed"}
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://game-bot-maker-2.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
+Need better ways to work with logs? Try theRender CLI, Render MCP Server, or set up a log stream integration 
+
+0 services selected:
+
+Move
+
