@@ -34,3 +34,5 @@ services:
         sync: false
       - key: ADMIN_KEY
         sync: false
+      - key: DATABASE_SSL_NO_VERIFY
+        value: "true"
