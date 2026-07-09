@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getBotToken, getBotUsername, getGameUrl, sendTelegramRequest } from "../lib/telegram";
+import { getBotToken, getBotUsername, getAppDomain, getGameUrl, sendTelegramRequest } from "../lib/telegram";
 import { db, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { autoGrantChannelJoinReward, getAnnouncementChannel } from "./tasks";
@@ -18,9 +18,8 @@ function isAdmin(telegramId?: number | string): boolean {
 }
 
 function getBannerUrl(): string {
-  const domains = process.env.REPLIT_DOMAINS || process.env.REPLIT_DEV_DOMAIN || "";
-  const primary = domains.split(",")[0].trim();
-  return primary ? `https://${primary}/telegram-banner.jpg` : "";
+  const base = getAppDomain();
+  return base ? `${base}/telegram-banner.jpg` : "";
 }
 
 router.post("/telegram/webhook", async (req, res): Promise<void> => {

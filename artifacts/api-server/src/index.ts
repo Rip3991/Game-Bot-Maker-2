@@ -1,6 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
-import { getBotToken, sendTelegramRequest } from "./lib/telegram";
+import { getBotToken, getAppDomain, sendTelegramRequest } from "./lib/telegram";
 
 const rawPort = process.env["PORT"];
 
@@ -27,14 +27,13 @@ async function autoRegisterWebhook(): Promise<void> {
   }
 
   // REPLIT_DOMAINS is set in production (deployed); REPLIT_DEV_DOMAIN in dev.
-  const domains = process.env.REPLIT_DOMAINS || process.env.REPLIT_DEV_DOMAIN || "";
-  const host = domains.split(",")[0].trim();
-  if (!host) {
+  const base = getAppDomain();
+  if (!base) {
     logger.warn("No domain env var found — skipping webhook registration");
     return;
   }
 
-  const webhookUrl = `https://${host}/api/telegram/webhook`;
+  const webhookUrl = `${base}/api/telegram/webhook`;
 
   try {
     const result = await sendTelegramRequest("setWebhook", {

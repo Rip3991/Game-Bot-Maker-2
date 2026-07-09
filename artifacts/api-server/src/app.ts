@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import path from "path";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -30,5 +31,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
+
+// In production (Render / deployed), serve the pre-built frontend static files.
+// The build step copies artifacts/farm-game/dist/public → artifacts/api-server/dist/public
+// so __dirname/public is the correct path when running from the bundled dist/index.mjs.
+if (process.env.NODE_ENV === "production") {
+  const staticDir = path.join(__dirname, "public");
+  app.use(express.static(staticDir));
+  // SPA fallback — any non-/api path returns index.html
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(staticDir, "index.html"));
+  });
+}
 
 export default app;

@@ -1,0 +1,35 @@
+databases:
+  - name: farm-game-db
+    databaseName: farmgame
+    plan: free
+
+services:
+  - type: web
+    name: farm-game-api
+    env: node
+    plan: free
+    healthCheckPath: /api/healthz
+    buildCommand: >
+      pnpm install &&
+      PORT=3000 BASE_PATH=/ pnpm --filter @workspace/farm-game run build &&
+      pnpm --filter @workspace/api-server run build &&
+      mkdir -p artifacts/api-server/dist/public &&
+      cp -r artifacts/farm-game/dist/public/. artifacts/api-server/dist/public/
+    startCommand: pnpm --filter @workspace/api-server run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: farm-game-db
+          property: connectionString
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: BOT_USERNAME
+        sync: false
+      - key: ADMIN_TELEGRAM_IDS
+        sync: false
+      - key: ANNOUNCEMENT_CHANNEL
+        sync: false
+      - key: ADMIN_KEY
+        sync: false

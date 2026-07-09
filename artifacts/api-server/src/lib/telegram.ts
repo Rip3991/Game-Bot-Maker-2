@@ -11,10 +11,17 @@ export function getBotUsername(): string {
   return process.env.BOT_USERNAME ?? "MemberGobot";
 }
 
-export function getGameUrl(): string {
+export function getAppDomain(): string {
+  // Render.com provides this automatically after deploy
+  if (process.env.RENDER_EXTERNAL_URL) return process.env.RENDER_EXTERNAL_URL.replace(/\/+$/, "");
+  // Replit provides REPLIT_DOMAINS (production) or REPLIT_DEV_DOMAIN (dev)
   const domains = process.env.REPLIT_DOMAINS || process.env.REPLIT_DEV_DOMAIN || "";
   const primary = domains.split(",")[0].trim();
   return primary ? `https://${primary}` : "";
+}
+
+export function getGameUrl(): string {
+  return getAppDomain();
 }
 
 /**
