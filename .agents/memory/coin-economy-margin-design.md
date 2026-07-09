@@ -49,6 +49,23 @@ relative weighting, not an actual paid amount.
 will silently reintroduce the old inflated real-money payout. Always scale at
 the read site before crediting balance/coins or returning a price to the client.
 
+## Follow-up: drop-rate ordering must match rarity value order (2026-07-09)
+After the payout-scaling fix above, the user separately flagged that
+`CASE_DEFS.drops` odds weren't consistently ordered by rarity value — e.g.
+`epic_case` had `epic` odds (0.52) higher than `special` (0.10), and
+`legend_case` had `epic` (0.35) higher than `special` (0.30), even though
+`special` NFTs are worth less than `epic` (real value order, confirmed by
+avg raw `sellPrice`: common ~123 < rare ~4691 < special ~14580 < epic ~71158 <
+legendary ~471525). A higher-value rarity appearing more often than a
+lower-value one undermines the whole payout fix.
+
+**Rule:** within every case's `drops`, probabilities must strictly decrease in
+value order `common > rare > special > epic > legendary` — never let a
+later (more valuable) tier have equal or higher odds than an earlier one. Re-run
+the EV/price check (weighted by `scaledSellPrice`, converting coin-priced cases
+to TL via `COIN_TO_TL_RATE`) after any change to confirm both the ordering and
+the ratio still hold.
+
 ## Also noted: no request-level auth
 All `artifacts/api-server/src/routes/*.ts` money-moving endpoints (including
 withdraw.ts) trust a client-supplied `telegramId` in the request body/params

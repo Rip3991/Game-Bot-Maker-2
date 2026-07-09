@@ -252,8 +252,8 @@ export const CASE_DEFS = {
     currency: "tl" as const,
     description: "Temel çiftlik NFT'leri",
     bgGradient: "linear-gradient(135deg, #2d5a1b, #4a8c2a)",
-    // Beklenen değer ~1.1-1.2x fiyat — bkz. RARITY_SELL_PRICE_DIVISOR notu.
-    drops: { common: 0.92, rare: 0.065, epic: 0.00, special: 0.012, legendary: 0.003 },
+    // Beklenen değer ~1.1x fiyat — bkz. RARITY_SELL_PRICE_DIVISOR notu.
+    drops: { common: 0.965, rare: 0.025, special: 0.007, epic: 0.002, legendary: 0.001 },
   },
   crystal_case: {
     name: "Kristal Kasa",
@@ -262,7 +262,7 @@ export const CASE_DEFS = {
     currency: "tl" as const,
     description: "Nadir ve değerli NFT'ler",
     bgGradient: "linear-gradient(135deg, #1a3a6b, #2d6bb5)",
-    drops: { common: 0.50, rare: 0.38, epic: 0.03, special: 0.08, legendary: 0.01 },
+    drops: { common: 0.34, rare: 0.33, special: 0.23, epic: 0.08, legendary: 0.02 },
   },
   special_case: {
     name: "Özel Kasa",
@@ -271,7 +271,7 @@ export const CASE_DEFS = {
     currency: "coins" as const,
     description: "Nadir özel koleksiyon NFT'leri",
     bgGradient: "linear-gradient(135deg, #3b1f6e, #6d28d9)",
-    drops: { common: 0.30, rare: 0.40, epic: 0.08, special: 0.19, legendary: 0.03 },
+    drops: { common: 0.85, rare: 0.10, special: 0.035, epic: 0.012, legendary: 0.003 },
   },
   epic_case: {
     name: "Epik Kasa",
@@ -280,7 +280,7 @@ export const CASE_DEFS = {
     currency: "coins" as const,
     description: "Güçlü epik NFT'ler",
     bgGradient: "linear-gradient(135deg, #4a0808, #991b1b)",
-    drops: { common: 0.10, rare: 0.25, epic: 0.52, special: 0.10, legendary: 0.03 },
+    drops: { common: 0.80, rare: 0.14, special: 0.045, epic: 0.013, legendary: 0.002 },
   },
   legend_case: {
     name: "Efsane Kasası",
@@ -289,9 +289,14 @@ export const CASE_DEFS = {
     currency: "coins" as const,
     description: "En nadir efsanevi NFT'ler",
     bgGradient: "linear-gradient(135deg, #5c3000, #b8860b)",
-    drops: { common: 0.05, rare: 0.15, epic: 0.35, special: 0.30, legendary: 0.15 },
+    drops: { common: 0.70, rare: 0.20, special: 0.075, epic: 0.022, legendary: 0.003 },
   },
 } as const;
+// Not: Her kasada olasılıklar nadirlik SIRASINA göre kesin olarak azalmalıdır
+// (common > rare > special > epic > legendary), çünkü NFT'lerin gerçek satış
+// değeri de bu sırayla artar (bkz. RARITY_SELL_PRICE_DIVISOR). Bir kasayı
+// ayarlarken bu sıralamayı bozma — aksi halde daha değerli bir nadirlik, daha
+// düşük değerli bir nadirlikten daha sık çıkabilir.
 
 // ── Rarity payout scale ────────────────────────────────────────────────────
 // NFT_DEFS.sellPrice values below are "vitrin" / kolleksiyon değerleridir —
