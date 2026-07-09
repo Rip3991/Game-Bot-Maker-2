@@ -821,16 +821,7 @@ function FarmScene({ state }: { state: any }) {
           {/* Building */}
           <div className="flex items-center justify-center gap-1 rounded-b border border-white/20 shadow-md" style={{ width: 62, height: 38, background: 'linear-gradient(180deg, #f0fdf4 0%, #d1fae5 100%)' }}>
             <span style={{ fontSize: 18 }}>🏪</span>
-            <div className="text-center">
-              <div className="text-[8px] font-black text-green-800 leading-none">SATIŞ</div>
-              <div className="text-[7px] font-bold text-green-600 leading-none">NOKTASI</div>
-            </div>
           </div>
-        </div>
-        {/* Stats badge */}
-        <div className="mt-0.5 flex items-center gap-1 rounded-full px-2 py-0.5 shadow" style={{ background: 'rgba(22,101,52,0.92)', border: '1px solid rgba(74,222,128,0.3)' }}>
-          <span style={{ fontSize: 8 }}>📊</span>
-          <span className="text-white font-black" style={{ fontSize: 8 }}>{totalUnlocked} aktif</span>
         </div>
       </div>
 
@@ -1188,10 +1179,7 @@ export default function GameView() {
                     animate={isActive ? { rotate: [0, -8, 8, 0], scale: [1, 1.12, 1] } : {}}
                     transition={{ repeat: Infinity, duration: 2.4 }}
                   >{emoji}</motion.span>
-                  <div className="flex flex-col items-start">
-                    <span className={`font-black leading-none tracking-wide ${isActive ? 'text-yellow-950' : 'text-white/60'}`} style={{ fontSize: 10 }}>{label}</span>
-                    <span className={`font-bold leading-none ${isActive ? 'text-yellow-900/70' : 'text-white/30'}`} style={{ fontSize: 8 }}>{count} aktif</span>
-                  </div>
+                  <span className={`font-black leading-none tracking-wide ${isActive ? 'text-yellow-950' : 'text-white/60'}`} style={{ fontSize: 10 }}>{label}</span>
                 </button>
               );
             })}
