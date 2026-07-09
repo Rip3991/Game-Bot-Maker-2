@@ -10,15 +10,16 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Render (and many hosted Postgres providers) require SSL.
-// rejectUnauthorized:false handles self-signed certs on free-tier hosts.
-const needsSsl =
-  process.env.NODE_ENV === "production" ||
-  process.env.DATABASE_URL.includes("sslmode=require");
+// Some managed Postgres providers (e.g. Render) use self-signed TLS certs that
+// node-postgres rejects by default. Set DATABASE_SSL_NO_VERIFY=true in the
+// hosting environment to accept them. Never enable this without a clear reason.
+const sslConfig = process.env.DATABASE_SSL_NO_VERIFY === "true"
+  ? { ssl: { rejectUnauthorized: false } }
+  : {};
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ...(needsSsl ? { ssl: { rejectUnauthorized: false } } : {}),
+  ...sslConfig,
 });
 export const db = drizzle(pool, { schema });
 
