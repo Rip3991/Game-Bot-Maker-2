@@ -80,6 +80,7 @@ export const SaveFarmStateParams = zod.object({
 
 export const SaveFarmStateBody = zod.object({
   "balance": zod.number(),
+  "prevBalance": zod.number().optional().describe('Last confirmed server balance (from previous save response or polling). Used for delta-based updates: new_db = db + (balance - prevBalance). Omit only on first-ever save (server falls back to absolute write).\n'),
   "farmState": zod.object({
   "wheat": zod.number(),
   "chicken": zod.number(),

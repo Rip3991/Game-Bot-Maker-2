@@ -695,11 +695,15 @@ export default function NftPage() {
   // may have a stale (lower) balance and the case open will fail.
   const syncBalance = useCallback(async () => {
     if (!telegramId) return;
+    // Send prevBalance anchor so the delta-based server route doesn't wipe
+    // any admin-credited funds that arrived between the last GameView save.
+    const prevBalance = parseFloat(localStorage.getItem('farm_balance_sync_v1') ?? '0');
     await fetch(`${API}/users/${telegramId}/farm-state`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         balance: state.balance,
+        prevBalance,
         farmState: {
           wheat: state.sections['wheat']?.count ?? 0,
           chicken: state.sections['chicken']?.count ?? 0,

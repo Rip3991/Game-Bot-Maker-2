@@ -9,5 +9,7 @@ import type { FarmState } from './farmState';
 
 export interface FarmStateInput {
   balance: number;
+  /** Last confirmed server balance (from previous save response or polling). Used for delta-based updates: new_db = db + (balance - prevBalance). Omit only on first-ever save (server falls back to absolute write). */
+  prevBalance?: number;
   farmState: FarmState;
 }

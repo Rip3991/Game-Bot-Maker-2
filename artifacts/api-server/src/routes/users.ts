@@ -263,7 +263,7 @@ router.put("/users/:telegramId/farm-state", async (req, res): Promise<void> => {
     return;
   }
 
-  const { balance, farmState } = parsed.data;
+  const { balance, prevBalance, farmState } = parsed.data;
 
   // Check for first upgrade achievement
   const maxLevel = Math.max(farmState.wheat, farmState.chicken, farmState.cow);
@@ -290,9 +290,26 @@ router.put("/users/:telegramId/farm-state", async (req, res): Promise<void> => {
     }
   } catch { /* non-critical */ }
 
+  // Delta-based balance update — preserves admin-credited funds without blocking
+  // legitimate spending.
+  //
+  // When `prevBalance` is provided (normal case after first session):
+  //   new_db = GREATEST(0, db_current + (balance - prevBalance))
+  //   • balance=150, prevBalance=100 → delta=+50 (earned TL)           ✓
+  //   • balance=50,  prevBalance=100 → delta=−50 (spent TL)            ✓
+  //   • admin added while local was idle: delta=0, DB keeps admin money ✓
+  //   • admin added AND user earned 50: delta=+50, DB = admin+50        ✓
+  //
+  // When `prevBalance` is absent (first save or legacy client):
+  //   fall back to absolute write to avoid blocking legitimate first saves.
+  const balanceUpdate =
+    prevBalance !== undefined && prevBalance !== null
+      ? sql`GREATEST(0, ${usersTable.balance} + (${balance.toString()}::numeric - ${prevBalance.toString()}::numeric))`
+      : sql`${balance.toString()}::numeric`;
+
   const updated = await db
     .update(usersTable)
-    .set({ balance: balance.toString(), farmState })
+    .set({ balance: balanceUpdate, farmState })
     .where(eq(usersTable.telegramId, telegramId))
     .returning();
 

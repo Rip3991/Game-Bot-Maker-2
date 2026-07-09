@@ -523,21 +523,37 @@ export default function GameView() {
     } catch (_) {}
   }, []);
 
-  // Backend save (every 30s)
+  // Persistent key that tracks the last balance value confirmed by the server.
+  // Used as `prevBalance` in delta saves so admin credits are never overwritten.
+  const BALANCE_SYNC_KEY = 'farm_balance_sync_v1';
+
+  // Backend save (every 30s) — delta-based balance update.
+  // Sends prevBalance (last server-confirmed value) so the server can apply
+  // the correct delta instead of blindly overwriting the balance column.
   useEffect(() => {
     const interval = setInterval(() => {
       const s = stateRef.current;
-      saveFarmMut.mutate({
-        telegramId,
-        data: {
-          balance: s.balance,
-          farmState: {
-            wheat: s.sections['wheat']?.count ?? 0,
-            chicken: s.sections['chicken']?.count ?? 0,
-            cow: s.sections['cow']?.count ?? 0,
+      const prevBalance = parseFloat(localStorage.getItem(BALANCE_SYNC_KEY) ?? '0');
+      saveFarmMut.mutate(
+        {
+          telegramId,
+          data: {
+            balance: s.balance,
+            prevBalance,
+            farmState: {
+              wheat: s.sections['wheat']?.count ?? 0,
+              chicken: s.sections['chicken']?.count ?? 0,
+              cow: s.sections['cow']?.count ?? 0,
+            },
           },
         },
-      });
+        {
+          onSuccess: (data) => {
+            // Anchor to the confirmed DB value so the next delta starts correctly
+            try { localStorage.setItem(BALANCE_SYNC_KEY, String(data.balance)); } catch { /* */ }
+          },
+        },
+      );
     }, 30000);
     return () => clearInterval(interval);
   }, [telegramId]);
@@ -545,13 +561,13 @@ export default function GameView() {
   // Sync admin-added balance into local game state.
   // When the server balance (polled every 10s) is higher than the local
   // game-engine balance, it means an admin credited the user externally.
-  // We pull it in immediately so (a) the player sees it in the UI and
-  // (b) the next 30s farm-save writes the correct (higher) value to DB
-  // instead of overwriting the admin addition with the stale local value.
+  // We pull it in immediately AND update the sync anchor so the next
+  // 30s delta-save starts from the correct baseline.
   const serverBalance = user?.balance ?? 0;
   useEffect(() => {
     if (serverBalance > stateRef.current.balance) {
       setBalance(serverBalance);
+      try { localStorage.setItem(BALANCE_SYNC_KEY, String(serverBalance)); } catch { /* */ }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serverBalance]);
