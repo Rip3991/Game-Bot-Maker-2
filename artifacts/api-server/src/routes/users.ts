@@ -64,11 +64,16 @@ router.post("/users/init", async (req, res): Promise<void> => {
   const hadExistingUser = !!existing;
 
   if (!existing) {
-    // New user — grant referral bonus if applicable
-    let startCoins = 0;
+    // New user — look up referrer first so we can gate invited-user bonus
+    // on referrer existence (avoids granting coins for phantom referral codes)
+    let referrer = null;
     if (referredBy && referredBy !== telegramId) {
-      startCoins = REFERRAL_BONUS_FOR_REFERRED;
+      referrer = await db.query.usersTable.findFirst({
+        where: eq(usersTable.telegramId, referredBy),
+      });
     }
+
+    const startCoins = referrer ? REFERRAL_BONUS_FOR_REFERRED : 0;
 
     const inserted = await db
       .insert(usersTable)
@@ -77,7 +82,7 @@ router.post("/users/init", async (req, res): Promise<void> => {
         firstName,
         username: username ?? null,
         coins: startCoins.toString(),
-        referredBy: referredBy ?? null,
+        referredBy: referrer ? referredBy : null,
         lastLoginAt: now,
         streakCount: 1,
       })
@@ -87,9 +92,6 @@ router.post("/users/init", async (req, res): Promise<void> => {
 
     // Credit referrer
     if (referredBy && referredBy !== telegramId) {
-      const referrer = await db.query.usersTable.findFirst({
-        where: eq(usersTable.telegramId, referredBy),
-      });
       if (referrer) {
         await db
           .update(usersTable)

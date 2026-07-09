@@ -156,7 +156,8 @@ export const GetLeaderboardResponseItem = zod.object({
   "firstName": zod.string(),
   "username": zod.string().nullish(),
   "coins": zod.number(),
-  "totalReferrals": zod.number()
+  "totalReferrals": zod.number(),
+  "streakCount": zod.number()
 })
 export const GetLeaderboardResponse = zod.array(GetLeaderboardResponseItem)
 

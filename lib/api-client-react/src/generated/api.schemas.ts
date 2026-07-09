@@ -84,6 +84,7 @@ export interface LeaderboardEntry {
   username?: string | null;
   coins: number;
   totalReferrals: number;
+  streakCount: number;
 }
 
 export interface Achievement {

@@ -569,7 +569,7 @@ components:
 
     LeaderboardEntry:
       type: object
-      required: [rank, telegramId, firstName, coins, totalReferrals]
+      required: [rank, telegramId, firstName, coins, totalReferrals, streakCount]
       properties:
         rank:
           type: integer
@@ -582,6 +582,8 @@ components:
         coins:
           type: number
         totalReferrals:
+          type: integer
+        streakCount:
           type: integer
 
     Achievement:
