@@ -10,7 +10,6 @@ import { formatNum } from '../utils/format';
 import { playCoinSound, playAnimalSound, playUnlockSound, isSoundEnabled, setSoundEnabled, isMusicEnabled, setMusicEnabled, getMusicVolume, setMusicVolume } from '../lib/sound';
 import MascotTutorial, { useMascotTutorial } from '../components/MascotTutorial';
 import mascotAvatar from '../assets/mascot-avatar.png';
-import { LiveNftShowcase } from '../components/LiveNftShowcase';
 import { SellHintMascot } from '../components/SellHintMascot';
 import { FarmBackground } from '../components/FarmBackground';
 
@@ -687,9 +686,6 @@ export default function GameView() {
 
           {/* Rich farm scene header */}
           <FarmScene state={state} />
-
-          {/* Live NFT showcase strip */}
-          <LiveNftShowcase />
 
           {/* Farm / Animal tab bar */}
           <div className="flex flex-shrink-0 px-2 py-1.5 gap-2" style={{ background: 'rgba(0,0,0,0.35)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
