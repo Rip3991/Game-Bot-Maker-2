@@ -4,7 +4,7 @@ import { MarketPanel } from '../components/MarketPanel';
 import { useUser } from '../hooks/use-user';
 import { useSaveFarmState, useGetOnlineStats, getGetOnlineStatsQueryKey } from '@workspace/api-client-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flame, Plus, Lock, Volume2, VolumeX, Settings } from 'lucide-react';
+import { Plus, Lock, Volume2, VolumeX, Settings } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { formatNum } from '../utils/format';
 import { playCoinSound, playAnimalSound, playUnlockSound, isSoundEnabled, setSoundEnabled, isMusicEnabled, setMusicEnabled, getMusicVolume, setMusicVolume } from '../lib/sound';
@@ -376,9 +376,11 @@ function FarmPlot({
                       transition={{ repeat: Infinity, duration: 1.5 }}
                       onClick={(e) => { e.stopPropagation(); if (canAffordReplant) onReplant(); }}
                     >
-                      <span style={{ fontSize: 20 }}>🌱</span>
+                      <span style={{ fontSize: 20 }}>{isFarm ? '🌱' : '🐣'}</span>
                       <span style={{ fontSize: 11 }}>
-                        {canAffordReplant ? `Ek! (${formatNum(rcost)} TL)` : `Yetersiz: ${formatNum(rcost)} TL`}
+                        {canAffordReplant
+                          ? (isFarm ? `Ek! (${formatNum(rcost)} TL)` : `Büyüt! (${formatNum(rcost)} TL)`)
+                          : `Yetersiz: ${formatNum(rcost)} TL`}
                       </span>
                     </motion.button>
                   </motion.div>
@@ -895,7 +897,6 @@ export default function GameView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serverCoins]);
 
-  const streak = user?.streakCount ?? 0;
   const shownSections = SECTIONS.filter(s => s.category === activeTab);
   const xpInfo = xpToNextLevel(state.xp);
   const xpPct = xpInfo.needed > 0 ? Math.min(xpInfo.current / xpInfo.needed, 1) : 1;
@@ -990,13 +991,6 @@ export default function GameView() {
           <span style={{ fontSize: 11 }}>⭐</span>
           <span className="font-black text-white text-xs">Sv.{state.level}</span>
         </div>
-
-        {streak > 0 && (
-          <div className="top-balance-pill">
-            <Flame size={12} className="text-orange-400" />
-            <span className="text-white font-black text-xs">{streak}</span>
-          </div>
-        )}
         </div>
 
         {/* XP bar */}
