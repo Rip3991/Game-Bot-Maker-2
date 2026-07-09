@@ -68,7 +68,7 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
                 <span className="font-black text-yellow-300 text-xs flex items-center gap-1">
                   {autoSell ? <><Zap size={10} /> Otomatik Satış!</> : <>🎉 Satış Tamamlandı!</>}
                 </span>
-                <span className="font-black text-yellow-300 text-sm">+{formatNum(totalEarned)} TL</span>
+                <span className="font-black text-yellow-300 text-sm">+{formatNum(totalEarned)} 🪙</span>
               </div>
               <div className="px-2 py-1.5 flex flex-wrap gap-1.5">
                 {lastSale.map(r => (
@@ -76,7 +76,7 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
                     <span className="text-sm">{r.emoji}</span>
                     <div className="text-[10px]">
                       <div className="font-black text-white">{r.qty}×</div>
-                      <div className="text-green-300 font-bold">{formatNum(r.total)} TL</div>
+                      <div className="text-green-300 font-bold">{formatNum(r.total)} 🪙</div>
                     </div>
                   </div>
                 ))}
@@ -123,7 +123,7 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
               <span className="text-[10px]">{cfg.emoji}</span>
               <span className="text-[8px] font-black"
                 style={{ color: cfg.category === 'farm' ? '#4ade80' : '#fbbf24' }}>
-                {formatNum(cfg.sellPrice)}₺
+                {formatNum(cfg.sellPrice)}🪙
               </span>
             </div>
           ))}
@@ -220,7 +220,7 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
                         >
                           <span className="text-xs leading-none">{cfg.emoji}</span>
                           <span className="text-white font-black text-[10px]">{qty}</span>
-                          <span className="text-green-400 font-bold text-[8px]">×{formatNum(cfg.sellPrice)}₺</span>
+                          <span className="text-green-400 font-bold text-[8px]">×{formatNum(cfg.sellPrice)}🪙</span>
                         </motion.div>
                       );
                     })}
@@ -245,7 +245,7 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
                         >
                           <span className="text-xs leading-none">{cfg.emoji}</span>
                           <span className="text-white font-black text-[10px]">{qty}</span>
-                          <span className="text-yellow-400 font-bold text-[8px]">×{formatNum(cfg.sellPrice)}₺</span>
+                          <span className="text-yellow-400 font-bold text-[8px]">×{formatNum(cfg.sellPrice)}🪙</span>
                         </motion.div>
                       );
                     })}
@@ -266,7 +266,7 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
             className="font-black text-xs text-center leading-none tabular-nums"
             style={{ color: hasAnything ? '#fde047' : 'rgba(253,224,71,0.3)' }}
           >
-            {formatNum(grandTotal)} TL
+            {formatNum(grandTotal)} 🪙
           </motion.div>
 
           <div className="relative w-full">

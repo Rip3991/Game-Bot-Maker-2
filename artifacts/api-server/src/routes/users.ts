@@ -263,7 +263,7 @@ router.put("/users/:telegramId/farm-state", async (req, res): Promise<void> => {
     return;
   }
 
-  const { balance, prevBalance, farmState } = parsed.data;
+  const { balance, prevBalance, coins: coinsDelta, prevCoins, farmState } = parsed.data;
 
   // Check for first upgrade achievement
   const maxLevel = Math.max(farmState.wheat, farmState.chicken, farmState.cow);
@@ -307,9 +307,26 @@ router.put("/users/:telegramId/farm-state", async (req, res): Promise<void> => {
       ? sql`GREATEST(0, ${usersTable.balance} + (${balance.toString()}::numeric - ${prevBalance.toString()}::numeric))`
       : sql`${balance.toString()}::numeric`;
 
+  // Same delta pattern as balance, applied to Coins earned by selling harvested
+  // goods in the farm loop. Coins are otherwise credited server-side (Stars
+  // purchases, referrals, coin shop) — the delta avoids clobbering those.
+  //
+  // Coins can be converted to real TL (/stars/convert-coins-to-tl), so this is
+  // the highest-value client-trusted field in this route. As defense-in-depth
+  // against a tampered client submitting an inflated delta, clamp the applied
+  // delta to what's plausible in one 30s save interval — generously above the
+  // max legitimate yield (highest-tier section, maxed out, max level) so real
+  // play is never blocked. This does not replace real auth (see note below);
+  // it only bounds the damage a single forged request can do.
+  const MAX_COIN_DELTA_PER_SAVE = 2_000_000;
+  const coinsUpdate =
+    coinsDelta !== undefined && coinsDelta !== null && prevCoins !== undefined && prevCoins !== null
+      ? sql`GREATEST(0, ${usersTable.coins} + LEAST(${MAX_COIN_DELTA_PER_SAVE}, ${coinsDelta.toString()}::numeric - ${prevCoins.toString()}::numeric))`
+      : undefined;
+
   const updated = await db
     .update(usersTable)
-    .set({ balance: balanceUpdate, farmState })
+    .set({ balance: balanceUpdate, farmState, ...(coinsUpdate ? { coins: coinsUpdate } : {}) })
     .where(eq(usersTable.telegramId, telegramId))
     .returning();
 

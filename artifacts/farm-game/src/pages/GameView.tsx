@@ -12,7 +12,6 @@ import MascotTutorial, { useMascotTutorial } from '../components/MascotTutorial'
 import mascotAvatar from '../assets/mascot-avatar.png';
 import { SellHintMascot } from '../components/SellHintMascot';
 import { FarmBackground } from '../components/FarmBackground';
-import { PlatformStatsBanner } from '../components/PlatformStatsBanner';
 import { FarmIllustration, FarmIllustrationBadge } from '../components/FarmIllustration';
 
 export { formatNum } from '../utils/format';
@@ -31,6 +30,79 @@ function OnlineCounterPill() {
       </span>
       <span className="text-green-300 font-black text-[9px] tabular-nums">{count ?? '...'} aktif</span>
     </div>
+  );
+}
+
+/* ── Coin → TL converter teaser: sits where the old platform stats banner
+   was, keeping the "earn Coins, convert to TL" goal front-and-center. ── */
+function CoinConverterTeaser({ coins, onOpen }: { coins: number; onOpen: () => void }) {
+  const [rate, setRate] = useState<{ rate: number; minCoins: number } | null>(null);
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}api/stars/coin-convert-rate`).then(r => r.json()).then(setRate).catch(() => {});
+  }, []);
+  const tlEquivalent = rate ? Math.floor(coins) * rate.rate : 0;
+  const canConvert = rate ? coins >= rate.minCoins : false;
+
+  return (
+    <motion.button
+      onClick={onOpen}
+      className="relative mx-3 mt-2 mb-3 w-[calc(100%-1.5rem)] rounded-2xl overflow-hidden text-left"
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileTap={{ scale: 0.98 }}
+      style={{
+        background: 'linear-gradient(120deg, #1a2e1a 0%, #163d1e 45%, #1a3320 100%)',
+        border: '1.5px solid rgba(74,222,128,0.35)',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.35), 0 0 22px rgba(74,222,128,0.12)',
+      }}
+    >
+      {/* Drifting coin particles */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-60">
+        {[...Array(6)].map((_, i) => (
+          <motion.span
+            key={i}
+            className="absolute text-xs"
+            style={{ left: `${(i * 17 + 6) % 100}%`, top: '110%' }}
+            animate={{ top: ['110%', '-15%'], opacity: [0, 0.9, 0], rotate: [0, 45] }}
+            transition={{ repeat: Infinity, duration: 4 + (i % 3), delay: i * 0.6, ease: 'linear' }}
+          >🪙</motion.span>
+        ))}
+      </div>
+
+      <div className="relative z-10 flex items-center gap-3 px-3.5 py-3">
+        {/* Icon badge with pulsing glow */}
+        <motion.div
+          className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg, #22c55e, #15803d)', border: '1.5px solid #4ade80' }}
+          animate={{ boxShadow: ['0 0 6px rgba(74,222,128,0.3)', '0 0 18px rgba(74,222,128,0.6)', '0 0 6px rgba(74,222,128,0.3)'] }}
+          transition={{ repeat: Infinity, duration: 2.2 }}
+        >
+          <span style={{ fontSize: 20 }}>💵</span>
+        </motion.div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="font-black text-white text-[12px]">Coin'i TL'ye Çevir</span>
+            <motion.span animate={{ x: [0, 3, 0] }} transition={{ repeat: Infinity, duration: 1.2 }} className="text-green-400 text-[11px]">→</motion.span>
+          </div>
+          <div className="text-white/50 text-[10px] font-bold mt-0.5">
+            🪙 {formatNum(Math.floor(coins))} Coin biriktin
+            {rate && (
+              <span className="text-green-400"> · ≈ {tlEquivalent.toFixed(2)} TL değerinde</span>
+            )}
+          </div>
+        </div>
+
+        <div
+          className="flex-shrink-0 px-3 py-1.5 rounded-xl font-black text-[11px]"
+          style={canConvert
+            ? { background: 'linear-gradient(135deg, #4ade80, #16a34a)', color: '#052e0f' }
+            : { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }}
+        >
+          {canConvert ? 'Çevir' : rate ? `Min. ${rate.minCoins}` : '...'}
+        </div>
+      </div>
+    </motion.button>
   );
 }
 
@@ -402,14 +474,14 @@ function FarmPlot({
 
 /* ── Mascot tip messages per section ── */
 const MASCOT_TIPS: Record<string, string> = {
-  wheat:     'Buğday tarlası al! Ne kadar çok tarlana sahip olursan, o kadar çok TL kazanırsın! 🌾',
-  corn:      'Mısır tarlası çok daha fazla TL üretir! Birkaç tane al, farkı gör! 🌽',
-  tomato:    'Domates bahçesi güçlü bir gelir kaynağı! Satın al ve büyü! 🍅',
-  sunflower: 'Ayçiçeği tarlası en verimli tarlalardan biri! Bir an bile bekleme! 🌻',
-  chicken:   'Tavuk kümesi sürekli üretir! Ne kadar çok olursa o kadar iyi! 🐔',
-  cow:       'İnek ahırı büyük kazançlar sağlar! Süt ve et = para demek! 🐄',
-  sheep:     'Koyun yün + süt üretir, çift kazanç! Hemen al! 🐑',
-  pig:       'Domuz çiftliği en yüksek geliri verir! Büyük yatırım, büyük kazanç! 🐷',
+  wheat:     'Buğday tarlası al! Ne kadar çok tarlana sahip olursan, o kadar çok Coin kazanırsın! 🌾🪙',
+  corn:      'Mısır tarlası çok daha fazla Coin üretir! Birkaç tane al, farkı gör! 🌽🪙',
+  tomato:    'Domates bahçesi güçlü bir Coin kaynağı! Satın al ve büyü! 🍅🪙',
+  sunflower: 'Ayçiçeği tarlası en verimli tarlalardan biri! Bir an bile bekleme! 🌻🪙',
+  chicken:   'Tavuk kümesi sürekli Coin üretir! Ne kadar çok olursa o kadar iyi! 🐔🪙',
+  cow:       'İnek ahırı büyük Coin kazançları sağlar! Süt ve et = coin demek! 🐄🪙',
+  sheep:     'Koyun yün + süt üretir, çift Coin kazancı! Hemen al! 🐑🪙',
+  pig:       'Domuz çiftliği en yüksek Coin geliri verir! Büyük yatırım, büyük kazanç! 🐷🪙',
 };
 
 /* ── Purchase / Unlock bottom sheet ── */
@@ -518,7 +590,7 @@ function PurchaseSheet({
             {!isLocked && !isMaxed && (
               <div className="flex gap-2 flex-wrap">
                 <div className="text-green-300 text-[11px] font-bold bg-black/20 px-1.5 py-0.5 rounded-md">
-                  +{formatNum(income)} TL/dk/birim
+                  +{formatNum(income)} 🪙/dk/birim
                 </div>
                 <div className="text-white/50 text-[11px] font-bold bg-black/20 px-1.5 py-0.5 rounded-md">
                   Max: {config.maxUnits}
@@ -697,7 +769,7 @@ function FarmScene({ state }: { state: any }) {
 /* ── Main GameView ── */
 export default function GameView() {
   const { user, telegramId, isNewUser } = useUser();
-  const { state, unlockSection, buyUnit, harvestPlot, replantPlot, sellProducts, incomePerMin, showWelcomeBonus, setShowWelcomeBonus, autoSell, toggleAutoSell, autoSellPurchased, setBalance } = useGameEngine({ isNewUser });
+  const { state, unlockSection, buyUnit, harvestPlot, replantPlot, sellProducts, incomePerMin, showWelcomeBonus, setShowWelcomeBonus, autoSell, toggleAutoSell, autoSellPurchased, setBalance, setCoins } = useGameEngine({ isNewUser });
   const saveFarmMut = useSaveFarmState();
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -745,23 +817,28 @@ export default function GameView() {
     } catch (_) {}
   }, []);
 
-  // Persistent key that tracks the last balance value confirmed by the server.
-  // Used as `prevBalance` in delta saves so admin credits are never overwritten.
+  // Persistent keys that track the last balance/coins value confirmed by the server.
+  // Used as `prevBalance`/`prevCoins` in delta saves so admin credits (or other
+  // server-side coin grants like Stars purchases/referrals) are never overwritten.
   const BALANCE_SYNC_KEY = 'farm_balance_sync_v1';
+  const COINS_SYNC_KEY = 'farm_coins_sync_v1';
 
-  // Backend save (every 30s) — delta-based balance update.
-  // Sends prevBalance (last server-confirmed value) so the server can apply
-  // the correct delta instead of blindly overwriting the balance column.
+  // Backend save (every 30s) — delta-based balance + coins update.
+  // Sends prevBalance/prevCoins (last server-confirmed values) so the server can
+  // apply the correct delta instead of blindly overwriting the columns.
   useEffect(() => {
     const interval = setInterval(() => {
       const s = stateRef.current;
       const prevBalance = parseFloat(localStorage.getItem(BALANCE_SYNC_KEY) ?? '0');
+      const prevCoins = parseFloat(localStorage.getItem(COINS_SYNC_KEY) ?? '0');
       saveFarmMut.mutate(
         {
           telegramId,
           data: {
             balance: s.balance,
             prevBalance,
+            coins: s.coins,
+            prevCoins,
             farmState: {
               wheat: s.sections['wheat']?.count ?? 0,
               chicken: s.sections['chicken']?.count ?? 0,
@@ -771,8 +848,11 @@ export default function GameView() {
         },
         {
           onSuccess: (data) => {
-            // Anchor to the confirmed DB value so the next delta starts correctly
-            try { localStorage.setItem(BALANCE_SYNC_KEY, String(data.balance)); } catch { /* */ }
+            // Anchor to the confirmed DB values so the next delta starts correctly
+            try {
+              localStorage.setItem(BALANCE_SYNC_KEY, String(data.balance));
+              localStorage.setItem(COINS_SYNC_KEY, String(data.coins));
+            } catch { /* */ }
           },
         },
       );
@@ -780,19 +860,40 @@ export default function GameView() {
     return () => clearInterval(interval);
   }, [telegramId]);
 
-  // Sync admin-added balance into local game state.
-  // When the server balance (polled every 10s) is higher than the local
-  // game-engine balance, it means an admin credited the user externally.
-  // We pull it in immediately AND update the sync anchor so the next
-  // 30s delta-save starts from the correct baseline.
+  // Sync admin-added balance / server-credited coins (Stars purchases, referrals,
+  // coin shop, conversions made from the Stars page) into local game state.
+  // When the server value (polled every 10s) is higher than the local
+  // game-engine value, we pull it in immediately AND update the sync anchor so
+  // the next 30s delta-save starts from the correct baseline.
+  // Reconciliation also has to handle DOWNWARD changes made elsewhere (e.g. the
+  // player converts Coins → TL on the Stars page, which raises server balance
+  // and lowers server coins). We can't just take max(local, server): that would
+  // ignore legitimate spends. Instead we diff against the last server-confirmed
+  // anchor — any local amount earned since that anchor hasn't been persisted
+  // yet, so we preserve it on top of the fresh server value.
   const serverBalance = user?.balance ?? 0;
+  const serverCoins = user?.coins ?? 0;
   useEffect(() => {
-    if (serverBalance > stateRef.current.balance) {
-      setBalance(serverBalance);
-      try { localStorage.setItem(BALANCE_SYNC_KEY, String(serverBalance)); } catch { /* */ }
+    const anchor = parseFloat(localStorage.getItem(BALANCE_SYNC_KEY) ?? '0');
+    const unsynced = Math.max(0, stateRef.current.balance - anchor);
+    const reconciled = serverBalance + unsynced;
+    if (Math.abs(reconciled - stateRef.current.balance) > 0.001) {
+      setBalance(reconciled);
     }
+    try { localStorage.setItem(BALANCE_SYNC_KEY, String(serverBalance)); } catch { /* */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serverBalance]);
+
+  useEffect(() => {
+    const anchor = parseFloat(localStorage.getItem(COINS_SYNC_KEY) ?? '0');
+    const unsynced = Math.max(0, stateRef.current.coins - anchor);
+    const reconciled = serverCoins + unsynced;
+    if (Math.abs(reconciled - stateRef.current.coins) > 0.001) {
+      setCoins(reconciled);
+    }
+    try { localStorage.setItem(COINS_SYNC_KEY, String(serverCoins)); } catch { /* */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverCoins]);
 
   const streak = user?.streakCount ?? 0;
   const shownSections = SECTIONS.filter(s => s.category === activeTab);
@@ -858,7 +959,7 @@ export default function GameView() {
         <div className="top-balance-pill">
           <span className="text-base">🪙</span>
           <span className="font-black text-yellow-300 text-sm font-mono tabular-nums">
-            {(user?.coins ?? 0).toLocaleString()}
+            {Math.floor(state.coins).toLocaleString()}
           </span>
         </div>
 
@@ -936,40 +1037,71 @@ export default function GameView() {
           {/* Rich farm scene header */}
           <FarmScene state={state} />
 
-          {/* Farm / Animal tab bar */}
-          <div className="flex flex-shrink-0 px-2 py-1.5 gap-2" style={{ background: 'rgba(0,0,0,0.35)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          {/* Farm / Animal tab bar — glass panel with animated coin-drip accent */}
+          <div
+            className="relative flex-shrink-0 px-2 py-1.5 gap-2 flex overflow-hidden"
+            style={{
+              background: 'linear-gradient(180deg, rgba(20,12,4,0.55), rgba(0,0,0,0.4))',
+              borderBottom: '1px solid rgba(245,200,66,0.18)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
+            }}
+          >
+            {/* Slow-drifting golden sheen across the whole bar */}
+            <motion.div
+              className="absolute inset-y-0 w-1/3 pointer-events-none"
+              style={{ background: 'linear-gradient(90deg, transparent, rgba(245,200,66,0.10), transparent)' }}
+              animate={{ x: ['-40%', '340%'] }}
+              transition={{ repeat: Infinity, duration: 5, ease: 'linear' }}
+            />
             {([
               { key: 'farm',   emoji: '🌾', label: 'TARLALAR',  count: SECTIONS.filter(s => s.category === 'farm' && state.sections[s.id]?.unlocked).length },
               { key: 'animal', emoji: '🐄', label: 'HAYVANLAR', count: SECTIONS.filter(s => s.category === 'animal' && state.sections[s.id]?.unlocked).length },
-            ] as const).map(({ key, emoji, label, count }) => (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key)}
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-xl transition-all active:scale-95"
-                style={activeTab === key ? {
-                  background: 'linear-gradient(135deg, #c4832e, #8b5c1e)',
-                  border: '1.5px solid #f5c842',
-                  boxShadow: '0 2px 8px rgba(196,131,46,0.4)',
-                  paddingTop: 6, paddingBottom: 6,
-                } : {
-                  background: 'rgba(255,255,255,0.07)',
-                  border: '1.5px solid rgba(255,255,255,0.1)',
-                  paddingTop: 6, paddingBottom: 6,
-                }}
-              >
-                <span style={{ fontSize: 15 }}>{emoji}</span>
-                <div className="flex flex-col items-start">
-                  <span className={`font-black leading-none tracking-wide ${activeTab === key ? 'text-yellow-200' : 'text-white/60'}`} style={{ fontSize: 10 }}>{label}</span>
-                  <span className={`font-bold leading-none ${activeTab === key ? 'text-yellow-300/80' : 'text-white/30'}`} style={{ fontSize: 8 }}>{count} aktif</span>
-                </div>
-              </button>
-            ))}
+            ] as const).map(({ key, emoji, label, count }) => {
+              const isActive = activeTab === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setActiveTab(key)}
+                  className="relative z-10 flex-1 flex items-center justify-center gap-1.5 rounded-xl transition-all active:scale-95 overflow-hidden"
+                  style={isActive ? {
+                    background: 'linear-gradient(135deg, #f5c842, #c4832e 55%, #8b5c1e)',
+                    border: '1.5px solid #ffe08a',
+                    boxShadow: '0 3px 10px rgba(196,131,46,0.5), 0 0 14px rgba(245,200,66,0.25)',
+                    paddingTop: 7, paddingBottom: 7,
+                  } : {
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1.5px solid rgba(255,255,255,0.1)',
+                    paddingTop: 7, paddingBottom: 7,
+                  }}
+                >
+                  {isActive && (
+                    <motion.div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)' }}
+                      initial={{ x: '-120%' }}
+                      animate={{ x: '120%' }}
+                      transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+                    />
+                  )}
+                  <motion.span
+                    style={{ fontSize: 16 }}
+                    animate={isActive ? { rotate: [0, -8, 8, 0], scale: [1, 1.12, 1] } : {}}
+                    transition={{ repeat: Infinity, duration: 2.4 }}
+                  >{emoji}</motion.span>
+                  <div className="flex flex-col items-start">
+                    <span className={`font-black leading-none tracking-wide ${isActive ? 'text-yellow-950' : 'text-white/60'}`} style={{ fontSize: 10 }}>{label}</span>
+                    <span className={`font-bold leading-none ${isActive ? 'text-yellow-900/70' : 'text-white/30'}`} style={{ fontSize: 8 }}>{count} aktif</span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
           {/* Scrollable plots */}
           <div className="flex-1 overflow-y-auto custom-scrollbar py-1 pb-4">
-            {/* Platform stats banner — shows real TL paid out + coins + players */}
-            <PlatformStatsBanner />
+            {/* Coin → TL converter teaser — replaces the old platform stats banner and
+                keeps the core loop (harvest → coins → TL) visible at all times */}
+            <CoinConverterTeaser coins={state.coins} onOpen={() => navigate('/stars')} />
             <AnimatePresence mode="popLayout">
               {shownSections.map(cfg => (
                 <FarmPlot

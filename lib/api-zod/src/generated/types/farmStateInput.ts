@@ -11,5 +11,9 @@ export interface FarmStateInput {
   balance: number;
   /** Last confirmed server balance (from previous save response or polling). Used for delta-based updates: new_db = db + (balance - prevBalance). Omit only on first-ever save (server falls back to absolute write). */
   prevBalance?: number;
+  /** Locally-tracked Coin total (earned by selling harvested goods). Used for delta-based updates alongside prevCoins, same pattern as balance. */
+  coins?: number;
+  /** Last confirmed server coin total. Used for delta-based updates: new_db = db + (coins - prevCoins). Omit only on first-ever save. */
+  prevCoins?: number;
   farmState: FarmState;
 }

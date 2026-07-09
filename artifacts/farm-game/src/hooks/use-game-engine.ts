@@ -154,6 +154,7 @@ export function replantCost(cfg: SectionConfig, count: number): number {
 
 export interface GameState {
   balance: number;
+  coins: number;
   sections: Record<string, SectionState>;
   storage: Record<string, number>;
   plotFill: Record<string, number>; // 0.0 → 1.0 fill progress per section
@@ -171,6 +172,7 @@ const defaultSection = (cfg: SectionConfig): SectionState => ({
 
 export const makeInitialState = (): GameState => ({
   balance: 0,
+  coins: 0,
   sections: Object.fromEntries(SECTIONS.map(cfg => [cfg.id, defaultSection(cfg)])),
   storage: Object.fromEntries(SECTIONS.map(cfg => [cfg.id, 0])),
   plotFill: Object.fromEntries(SECTIONS.map(cfg => [cfg.id, 0])),
@@ -180,7 +182,7 @@ export const makeInitialState = (): GameState => ({
   welcomeBonusClaimed: false,
 });
 
-const SAVE_KEY = 'farmGameState_v7';
+const SAVE_KEY = 'farmGameState_v8';
 const AUTO_SELL_KEY = 'farmAutoSell_v1';
 export const AUTO_SELL_PURCHASED_KEY = 'farmAutoSellPurchased_v1';
 export const WELCOME_BONUS = 150;
@@ -213,8 +215,8 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
 
   const [state, setState] = useState<GameState>(() => {
     try {
-      // Try to migrate from v6 save
-      const saved = localStorage.getItem(SAVE_KEY) ?? localStorage.getItem('farmGameState_v6');
+      // Try to migrate from older saves (v8 added `coins`, v7 was TL-only)
+      const saved = localStorage.getItem(SAVE_KEY) ?? localStorage.getItem('farmGameState_v7') ?? localStorage.getItem('farmGameState_v6');
       if (saved) {
         const parsed = JSON.parse(saved) as Partial<GameState>;
 
@@ -244,6 +246,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
 
         return {
           balance: parsed.balance ?? 0,
+          coins: parsed.coins ?? 0,
           sections,
           storage,
           plotFill,
@@ -341,7 +344,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
           }
         });
         if (totalEarned === 0) return prev;
-        return { ...prev, balance: prev.balance + totalEarned, storage: newStorage };
+        return { ...prev, coins: prev.coins + totalEarned, storage: newStorage };
       });
     }, 30000);
     return () => clearInterval(interval);
@@ -445,9 +448,18 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
       });
 
       if (records.length === 0) return prev;
-      return { ...prev, balance: prev.balance + totalEarned, storage: newStorage };
+      return { ...prev, coins: prev.coins + totalEarned, storage: newStorage };
     });
     return records;
+  }, []);
+
+  /** Optimistically apply a Coin → TL conversion (call after the server confirms it). */
+  const applyCoinConversion = useCallback((coinsSpent: number, tlReceived: number) => {
+    setState(prev => ({
+      ...prev,
+      coins: Math.max(0, prev.coins - coinsSpent),
+      balance: prev.balance + tlReceived,
+    }));
   }, []);
 
   const incomePerMin = SECTIONS.reduce((sum, cfg) => {
@@ -458,6 +470,10 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
 
   const setBalance = useCallback((amount: number) => {
     setState(prev => ({ ...prev, balance: amount }));
+  }, []);
+
+  const setCoins = useCallback((amount: number) => {
+    setState(prev => ({ ...prev, coins: amount }));
   }, []);
 
   return {
@@ -471,6 +487,8 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
     showWelcomeBonus,
     setShowWelcomeBonus,
     setBalance,
+    setCoins,
+    applyCoinConversion,
     autoSell,
     toggleAutoSell,
     autoSellPurchased,
