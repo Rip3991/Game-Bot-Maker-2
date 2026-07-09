@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUser } from '../hooks/use-user';
-import { useDailySpin } from '@workspace/api-client-react';
+import { useDailySpin, useGetLeaderboard } from '@workspace/api-client-react';
 import { toast } from 'sonner';
 import mascotAvatar from '../assets/mascot-avatar.png';
 
@@ -181,6 +181,7 @@ function WheelSVG({ rotation, spinning }: { rotation: number; spinning: boolean 
 export default function SpinPage() {
   const { user, telegramId, refresh } = useUser();
   const spinMut = useDailySpin();
+  const { data: leaderboard } = useGetLeaderboard({ limit: 10 });
 
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
@@ -189,6 +190,7 @@ export default function SpinPage() {
   const [confettiOn, setConfettiOn] = useState(false);
   const [history, setHistory] = useState<SpinRecord[]>(() => loadHistory());
   const [mascotMood, setMascotMood] = useState<'idle' | 'excited' | 'sad'>('idle');
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const confetti = useConfetti(confettiOn);
 
   const canSpin = !user?.lastSpinAt || new Date(user.lastSpinAt).getTime() + 24 * 60 * 60 * 1000 < Date.now();
@@ -403,27 +405,81 @@ export default function SpinPage() {
         </div>
       </div>
 
-      {/* ── Son Çarklar ── */}
-      {history.length > 0 && (
-        <div className="flex-shrink-0 px-4 pb-4 z-10">
-          <div className="text-white/40 text-[10px] font-black uppercase tracking-widest mb-2">Son Çarklar</div>
-          <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-            {history.map((h, i) => (
-              <motion.div key={h.ts}
-                initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: i * 0.04 }}
-                className="flex-shrink-0 flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1.5 border"
-                style={h.type === 'miss'
-                  ? { background: 'rgba(55,65,81,0.6)', borderColor: '#4b5563' }
-                  : h.type === 'jackpot'
-                  ? { background: 'rgba(146,64,14,0.6)', borderColor: '#fbbf24' }
-                  : { background: 'rgba(22,163,74,0.25)', borderColor: 'rgba(74,222,128,0.4)' }}>
-                <span className="text-lg">{h.icon}</span>
-                <span className="text-[9px] font-black text-white/70">{h.label}</span>
-              </motion.div>
-            ))}
-          </div>
+      {/* ── Bottom tabs: Son Çarklar / Sıralama ── */}
+      <div className="flex-shrink-0 px-4 pb-4 z-10">
+        {/* Tab switcher */}
+        <div className="flex gap-2 mb-2">
+          <button
+            onClick={() => setShowLeaderboard(false)}
+            className="flex-1 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+            style={!showLeaderboard
+              ? { background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.4)' }
+              : { background: 'transparent', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            🎡 Son Çarklar
+          </button>
+          <button
+            onClick={() => setShowLeaderboard(true)}
+            className="flex-1 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+            style={showLeaderboard
+              ? { background: 'rgba(251,191,36,0.2)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.4)' }
+              : { background: 'transparent', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            🏆 Sıralama
+          </button>
         </div>
-      )}
+
+        <AnimatePresence mode="wait">
+          {!showLeaderboard ? (
+            /* Son Çarklar */
+            <motion.div key="history"
+              initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
+              className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              {history.length === 0 ? (
+                <div className="text-white/30 text-xs font-bold py-2">Henüz çark yok</div>
+              ) : history.map((h, i) => (
+                <motion.div key={h.ts}
+                  initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: i * 0.04 }}
+                  className="flex-shrink-0 flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1.5 border"
+                  style={h.type === 'miss'
+                    ? { background: 'rgba(55,65,81,0.6)', borderColor: '#4b5563' }
+                    : h.type === 'jackpot'
+                    ? { background: 'rgba(146,64,14,0.6)', borderColor: '#fbbf24' }
+                    : { background: 'rgba(22,163,74,0.25)', borderColor: 'rgba(74,222,128,0.4)' }}>
+                  <span className="text-lg">{h.icon}</span>
+                  <span className="text-[9px] font-black text-white/70">{h.label}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            /* Sıralama (Leaderboard) */
+            <motion.div key="leaderboard"
+              initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}
+              className="flex flex-col gap-1 max-h-36 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
+              {!leaderboard || leaderboard.length === 0 ? (
+                <div className="text-white/30 text-xs font-bold py-2 text-center">Henüz sıralama yok</div>
+              ) : leaderboard.map((entry, i) => {
+                const isMe = entry.telegramId === telegramId;
+                const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+                return (
+                  <motion.div key={entry.telegramId}
+                    initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
+                    className="flex items-center gap-2 rounded-xl px-3 py-1.5"
+                    style={isMe
+                      ? { background: 'rgba(251,191,36,0.2)', border: '1px solid rgba(251,191,36,0.5)' }
+                      : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <span className="text-sm w-6 text-center font-black">{medal}</span>
+                    <span className="flex-1 text-xs font-bold truncate" style={{ color: isMe ? '#fbbf24' : 'rgba(255,255,255,0.85)' }}>
+                      {entry.firstName}{isMe ? ' (Sen)' : ''}
+                    </span>
+                    <span className="text-xs font-black text-yellow-400">🪙 {entry.coins.toLocaleString()}</span>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
