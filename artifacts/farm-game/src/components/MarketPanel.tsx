@@ -80,29 +80,29 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
       </AnimatePresence>
 
       {/* Panel header */}
-      <div className="flex items-center gap-2 px-3 pt-2 pb-1">
-        <span className="text-sm">🏪</span>
-        <span className="font-black text-green-300 text-[11px] uppercase tracking-widest">Pazar Yeri</span>
+      <div className="flex items-center gap-2 px-3 pt-2.5">
+        <span className="text-base">🏪</span>
+        <span className="font-black text-green-300 text-xs uppercase tracking-widest">Pazar Yeri</span>
         <div className="flex-1" />
 
         {/* Auto-sell button — locked or toggle */}
         {!autoSellPurchased ? (
           <button
             onClick={() => navigate('/stars')}
-            className="flex items-center gap-1 rounded-full px-2 py-0.5 border transition-all active:scale-90"
+            className="flex items-center gap-1 rounded-full px-2.5 py-1 border transition-all active:scale-90"
             style={{
               background: 'rgba(255,255,255,0.06)',
               borderColor: 'rgba(255,200,0,0.4)',
             }}
           >
-            <span className="text-[9px]">🔒</span>
-            <span className="font-black text-[9px] text-yellow-400/70">OTO-SAT</span>
-            <span className="font-bold text-[8px] text-yellow-400/50">75🪙</span>
+            <span className="text-[10px]">🔒</span>
+            <span className="font-black text-[10px] text-yellow-400/70">OTO-SAT</span>
+            <span className="font-bold text-[9px] text-yellow-400/50">75🪙</span>
           </button>
         ) : (
           <button
             onClick={onToggleAutoSell}
-            className="flex items-center gap-1 rounded-full px-2 py-0.5 border transition-all active:scale-90"
+            className="flex items-center gap-1 rounded-full px-2.5 py-1 border transition-all active:scale-90"
             style={autoSell ? {
               background: 'linear-gradient(135deg, #16a34a, #15803d)',
               borderColor: '#4ade80',
@@ -112,35 +112,47 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
               borderColor: 'rgba(255,255,255,0.15)',
             }}
           >
-            <span className="text-[9px]">🤖</span>
+            <span className="text-[10px]">🤖</span>
             <span
-              className="font-black text-[9px]"
+              className="font-black text-[10px]"
               style={{ color: autoSell ? '#bbf7d0' : 'rgba(255,255,255,0.4)' }}
             >
               {autoSell ? 'OTO-SAT: AÇIK' : 'OTO-SAT'}
             </span>
           </button>
         )}
-
-        {unlockedSections.map(cfg => (
-          <div key={cfg.id} className="flex items-center gap-0.5">
-            <span className="text-[10px]">{cfg.emoji}</span>
-            <span className="text-[9px] font-bold text-yellow-400/70">{formatNum(cfg.sellPrice)}</span>
-          </div>
-        ))}
       </div>
 
-      <div className="flex gap-2 px-2 pb-2 items-center">
-        {/* Depo → Satış flow */}
-        <div className="flex-1 flex items-center gap-1 min-w-0">
-          <div className="flex-shrink-0 flex flex-col items-center">
-            <span className="text-base">🏚️</span>
-            <span className="text-[8px] text-white/40 font-bold">Depo</span>
+      {/* Price list — own row so it never squeezes against the header controls */}
+      {unlockedSections.length > 0 && (
+        <div className="flex flex-wrap gap-1 px-3 pt-1.5">
+          {unlockedSections.map(cfg => (
+            <div
+              key={cfg.id}
+              className="flex items-center gap-1 rounded-full px-1.5 py-0.5"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+            >
+              <span className="text-[11px]">{cfg.emoji}</span>
+              <span className="text-[9px] font-bold text-yellow-400/80">{formatNum(cfg.sellPrice)} TL</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Depo → Satış flow, in its own card so it reads as one clear unit */}
+      <div className="flex gap-2 px-2 pt-2 pb-2.5 items-stretch">
+        <div
+          className="flex-1 flex items-center gap-2 min-w-0 rounded-xl px-2.5 py-2"
+          style={{ background: 'rgba(0,0,0,0.22)', border: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
+            <span className="text-lg leading-none">🏚️</span>
+            <span className="text-[8px] text-white/40 font-bold uppercase tracking-wide">Depo</span>
           </div>
-          <div className="flex-shrink-0 text-white/30 text-xs">→</div>
-          <div className="flex-1 flex flex-wrap gap-1 overflow-hidden">
+          <div className="flex-shrink-0 text-white/25 text-sm">→</div>
+          <div className="flex-1 flex flex-wrap gap-1.5 overflow-hidden min-h-[28px] items-center">
             {storedItems.length === 0 ? (
-              <div className="text-white/30 text-[10px] italic py-1">
+              <div className="text-white/35 text-[10px] italic">
                 {autoSell ? '🤖 Otomatik satılıyor...' : 'Henüz ürün yok...'}
               </div>
             ) : (
@@ -152,10 +164,10 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
                     layout
                     initial={{ scale: 0.7, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="flex items-center gap-0.5 rounded-lg px-1.5 py-0.5 border border-green-500/20"
-                    style={{ background: autoSell ? 'rgba(74,222,128,0.1)' : 'rgba(34,197,94,0.07)' }}
+                    className="flex items-center gap-1 rounded-lg px-1.5 py-1 border border-green-500/25"
+                    style={{ background: autoSell ? 'rgba(74,222,128,0.12)' : 'rgba(34,197,94,0.09)' }}
                   >
-                    <span className="text-xs">{cfg.emoji}</span>
+                    <span className="text-sm leading-none">{cfg.emoji}</span>
                     <span className="text-white font-black text-[10px]">{qty}</span>
                     <span className="text-yellow-400 font-bold text-[9px]">×{formatNum(cfg.sellPrice)}</span>
                   </motion.div>
@@ -164,26 +176,25 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
             )}
           </div>
           {hasAnything && (
-            <div className={`flex-shrink-0 text-xs ${autoSell ? 'text-green-400 animate-pulse' : 'text-green-400/60 animate-pulse'}`}>→</div>
+            <div className={`flex-shrink-0 text-sm ${autoSell ? 'text-green-400 animate-pulse' : 'text-green-400/60 animate-pulse'}`}>→</div>
           )}
-          <div className="flex-shrink-0 flex flex-col items-center">
-            <span className="text-base">{autoSell ? '🤖' : '💰'}</span>
-            <span className="text-[8px] text-white/40 font-bold">Satış</span>
+          <div className="flex-shrink-0 flex flex-col items-center gap-0.5">
+            <span className="text-lg leading-none">{autoSell ? '🤖' : '💰'}</span>
+            <span className="text-[8px] text-white/40 font-bold uppercase tracking-wide">Satış</span>
           </div>
         </div>
 
         {/* Sell button */}
-        <div className="flex-shrink-0 flex flex-col items-center gap-1 w-[76px]">
-          {hasAnything && (
-            <motion.div
-              key={grandTotal}
-              initial={{ scale: 1.2, color: '#fbbf24' }}
-              animate={{ scale: 1 }}
-              className="font-black text-[11px] text-center leading-tight text-yellow-300"
-            >
-              {formatNum(grandTotal)} TL
-            </motion.div>
-          )}
+        <div className="flex-shrink-0 flex flex-col items-center justify-center gap-1.5 w-[80px]">
+          <motion.div
+            key={grandTotal}
+            initial={{ scale: 1.2 }}
+            animate={{ scale: 1 }}
+            className="font-black text-xs text-center leading-tight"
+            style={{ color: hasAnything ? '#fde047' : 'rgba(253,224,71,0.35)' }}
+          >
+            {formatNum(grandTotal)} TL
+          </motion.div>
           <div className="relative w-full">
             {hasAnything && !autoSell && (
               <>
