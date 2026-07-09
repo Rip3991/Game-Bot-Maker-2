@@ -541,9 +541,10 @@ function CasePreviewModal({ caseDef, funds, onOpen, onCancel }: {
 
 // ── Case Opening Overlay ───────────────────────────────────────────────────────
 
-function CaseOpenOverlay({ caseDef, allNfts, onUserSync, onClose, onOpenAnother, onNftMinted }: {
+function CaseOpenOverlay({ caseDef, allNfts, onUserSync, onClose, onOpenAnother, onNftMinted, onSyncBalance }: {
   caseDef: CaseDef; allNfts: NftDef[]; onUserSync: (u: { balance?: number; coins?: number }) => void;
   onClose: () => void; onOpenAnother: () => void; onNftMinted: () => void;
+  onSyncBalance?: () => Promise<void>;
 }) {
   const { telegramId } = useUser();
   const qc = useQueryClient();
@@ -553,10 +554,17 @@ function CaseOpenOverlay({ caseDef, allNfts, onUserSync, onClose, onOpenAnother,
   const [errMsg, setErrMsg] = useState('');
 
   useEffect(() => {
-    fetch(`${API}/nfts/cases/open`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegramId, caseType: caseDef.id }),
-    }).then(async r => {
+    // Sync balance to DB first (only for TL cases), then open
+    const doOpen = async () => {
+      if (onSyncBalance) {
+        try { await onSyncBalance(); } catch { /* non-critical */ }
+      }
+      return fetch(`${API}/nfts/cases/open`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegramId, caseType: caseDef.id }),
+      });
+    };
+    doOpen().then(async r => {
       const data = await r.json();
       if (!r.ok) throw new Error(data.error ?? 'Kasa açılamadı');
       return data as NftItem;
@@ -680,6 +688,26 @@ export default function NftPage() {
   const listMut = useListNftForTrade();
   const offerMut = useCreateTradeOffer();
   const acceptMut = useAcceptTradeOffer();
+
+  // Sync current in-memory balance to DB before opening a TL case.
+  // GameView saves to DB every 30s, but NftPage has its own game engine
+  // instance that only saves to localStorage. Without this sync, the DB
+  // may have a stale (lower) balance and the case open will fail.
+  const syncBalance = useCallback(async () => {
+    if (!telegramId) return;
+    await fetch(`${API}/users/${telegramId}/farm-state`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        balance: state.balance,
+        farmState: {
+          wheat: state.sections['wheat']?.count ?? 0,
+          chicken: state.sections['chicken']?.count ?? 0,
+          cow: state.sections['cow']?.count ?? 0,
+        },
+      }),
+    });
+  }, [telegramId, state.balance, state.sections]);
 
   // Load case definitions
   useEffect(() => {
@@ -1021,6 +1049,7 @@ export default function NftPage() {
       <AnimatePresence>
         {openingCase && (
           <CaseOpenOverlay key={openingCase.id} caseDef={openingCase} allNfts={allNftDefs}
+            onSyncBalance={openingCase.currency === 'tl' ? syncBalance : undefined}
             onUserSync={u => { if (typeof u.balance === 'number') setBalance(u.balance); refreshUser(); }}
             onClose={() => { setOpeningCase(null); setTab('mine'); }}
             onOpenAnother={() => setOpeningCase({ ...openingCase })}
