@@ -546,6 +546,220 @@ function SunflowerSvg() {
   );
 }
 
+// ─── New Crop SVG Illustrations ───────────────────────────────────────────────
+
+function OnionSvg() {
+  injectStyle();
+  return (
+    <svg viewBox="0 0 80 80" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="40" cy="75" rx="28" ry="4" fill="#7c5a2a" opacity="0.5"/>
+      <line x1="40" y1="52" x2="35" y2="18" stroke="#84cc16" strokeWidth="3" strokeLinecap="round" style={{ animation:'farmGrass 2.5s ease-in-out infinite', transformOrigin:'40px 52px' }}/>
+      <line x1="40" y1="52" x2="45" y2="14" stroke="#65a30d" strokeWidth="3" strokeLinecap="round" style={{ animation:'farmGrass 2.5s ease-in-out infinite 0.4s', transformOrigin:'40px 52px' }}/>
+      <line x1="40" y1="52" x2="40" y2="10" stroke="#84cc16" strokeWidth="2.5" strokeLinecap="round" style={{ animation:'farmGrass 2.5s ease-in-out infinite 0.2s', transformOrigin:'40px 52px' }}/>
+      <ellipse cx="40" cy="58" rx="18" ry="20" fill="#d4b8a0" style={{ animation:'farmBreath 2.5s ease-in-out infinite' }}/>
+      <ellipse cx="40" cy="54" rx="13" ry="15" fill="#e8d5c0"/>
+      <ellipse cx="40" cy="50" rx="9" ry="11" fill="#f5ede5"/>
+      <ellipse cx="40" cy="47" rx="5.5" ry="7" fill="#fff8f5"/>
+      <ellipse cx="40" cy="73" rx="14" ry="4" fill="#a07840" opacity="0.7"/>
+      <ellipse cx="40" cy="75" rx="10" ry="2.5" fill="#7c5a2a" opacity="0.5"/>
+    </svg>
+  );
+}
+
+function CarrotSvg() {
+  injectStyle();
+  return (
+    <svg viewBox="0 0 80 80" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="40" cy="75" rx="26" ry="4" fill="#7c5a2a" opacity="0.5"/>
+      {[35,40,46].map((x, i) => (
+        <line key={i} x1={x} y1="28" x2={x + (i-1)*8} y2="8" stroke="#84cc16" strokeWidth="3" strokeLinecap="round"
+          style={{ animation:`farmGrass 2.5s ease-in-out infinite ${i*0.3}s`, transformOrigin:`${x}px 28px` }}/>
+      ))}
+      <polygon points="40,28 54,60 40,72 26,60" fill="#ea580c" style={{ animation:'farmBob 2.2s ease-in-out infinite' }}/>
+      <polygon points="40,28 54,60 40,72 26,60" fill="#f97316" opacity="0.35"/>
+      <line x1="36" y1="35" x2="30" y2="45" stroke="#c2410c" strokeWidth="1.5" opacity="0.6"/>
+      <line x1="44" y1="38" x2="50" y2="50" stroke="#c2410c" strokeWidth="1.5" opacity="0.6"/>
+      <line x1="40" y1="42" x2="40" y2="54" stroke="#c2410c" strokeWidth="1.5" opacity="0.6"/>
+      <line x1="40" y1="72" x2="40" y2="78" stroke="#ea580c" strokeWidth="2.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function StrawberrySvg() {
+  injectStyle();
+  return (
+    <svg viewBox="0 0 80 80" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="76" x2="40" y2="38" stroke="#65a30d" strokeWidth="3.5" strokeLinecap="round" style={{ animation:'farmBloom 2.8s ease-in-out infinite', transformOrigin:'40px 76px' }}/>
+      <path d="M40 55 Q27 48 26 36" stroke="#84cc16" strokeWidth="3" fill="none" strokeLinecap="round"/>
+      <path d="M40 60 Q53 53 54 41" stroke="#84cc16" strokeWidth="3" fill="none" strokeLinecap="round"/>
+      <path d="M28 38 Q33 30 40 28 Q47 30 52 38 Q54 50 48 60 Q44 68 40 70 Q36 68 32 60 Q26 50 28 38 Z" fill="#ef4444" style={{ animation:'farmBob 2s ease-in-out infinite' }}/>
+      <path d="M28 38 Q33 30 40 28 Q47 30 52 38" fill="#4ade80"/>
+      <ellipse cx="36" cy="34" rx="5" ry="3" fill="#86efac" style={{ transform:'rotate(-20deg)', transformOrigin:'36px 34px' }}/>
+      <ellipse cx="44" cy="34" rx="5" ry="3" fill="#86efac" style={{ transform:'rotate(20deg)', transformOrigin:'44px 34px' }}/>
+      <ellipse cx="40" cy="32" rx="4" ry="3" fill="#4ade80"/>
+      {[[35,44],[45,42],[33,54],[47,56],[39,62],[37,50],[43,50]].map(([x,y],i) => (
+        <ellipse key={i} cx={x} cy={y} rx="1.8" ry="2.2" fill="#fbbf24" opacity="0.9"/>
+      ))}
+      <circle cx="32" cy="46" r="4" fill="white" opacity="0.12"/>
+    </svg>
+  );
+}
+
+function GrapeSvg() {
+  injectStyle();
+  return (
+    <svg viewBox="0 0 80 80" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="76" x2="40" y2="16" stroke="#65a30d" strokeWidth="3.5" strokeLinecap="round" style={{ animation:'farmBloom 3s ease-in-out infinite', transformOrigin:'40px 76px' }}/>
+      <path d="M40 38 Q26 32 24 20" stroke="#84cc16" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
+      <path d="M40 42 Q54 36 56 24" stroke="#84cc16" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
+      <path d="M40 18 Q50 8 56 10" stroke="#84cc16" strokeWidth="2" fill="none" strokeLinecap="round"/>
+      {[[32,44],[48,44],[24,52],[40,52],[56,52],[28,62],[44,62],[36,72]].map(([x,y],i) => (
+        <circle key={i} cx={x} cy={y} r="8" fill="#7c3aed" style={{ animation:`farmBob 2s ease-in-out infinite ${i*0.15}s` }}/>
+      ))}
+      {[[32,44],[48,44],[24,52],[40,52],[56,52],[28,62],[44,62],[36,72]].map(([x,y],i) => (
+        <circle key={i} cx={x-2} cy={y-2} r="2.5" fill="white" opacity="0.25"/>
+      ))}
+    </svg>
+  );
+}
+
+function AppleSvg() {
+  injectStyle();
+  return (
+    <svg viewBox="0 0 80 80" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="76" x2="40" y2="24" stroke="#65a30d" strokeWidth="3" strokeLinecap="round" style={{ animation:'farmBloom 2.8s ease-in-out infinite', transformOrigin:'40px 76px' }}/>
+      <path d="M40 50 Q26 44 24 32" stroke="#84cc16" strokeWidth="3" fill="none" strokeLinecap="round"/>
+      <path d="M40 55 Q54 49 56 37" stroke="#84cc16" strokeWidth="3" fill="none" strokeLinecap="round"/>
+      <line x1="40" y1="24" x2="40" y2="16" stroke="#65a30d" strokeWidth="2.5" strokeLinecap="round"/>
+      <path d="M40 16 Q48 10 52 14" stroke="#84cc16" strokeWidth="2" fill="none" strokeLinecap="round"/>
+      <ellipse cx="40" cy="50" rx="20" ry="22" fill="#ef4444" style={{ animation:'farmBob 2.2s ease-in-out infinite' }}/>
+      <ellipse cx="40" cy="50" rx="20" ry="22" fill="#f87171" opacity="0.3"/>
+      <ellipse cx="33" cy="41" rx="7" ry="10" fill="white" opacity="0.15"/>
+      <path d="M27 40 Q40 35 53 40" stroke="#dc2626" strokeWidth="1.5" fill="none" opacity="0.5"/>
+      <ellipse cx="40" cy="28" rx="4" ry="6" fill="#4ade80" opacity="0.8"/>
+    </svg>
+  );
+}
+
+function BlueberrySvg() {
+  injectStyle();
+  return (
+    <svg viewBox="0 0 80 80" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="76" x2="40" y2="20" stroke="#65a30d" strokeWidth="3" strokeLinecap="round" style={{ animation:'farmGrass 3s ease-in-out infinite', transformOrigin:'40px 76px' }}/>
+      <path d="M40 44 Q24 38 22 24" stroke="#84cc16" strokeWidth="3" fill="none" strokeLinecap="round"/>
+      <path d="M40 48 Q56 42 58 28" stroke="#84cc16" strokeWidth="3" fill="none" strokeLinecap="round"/>
+      <path d="M40 32 Q28 26 26 16" stroke="#a3e635" strokeWidth="2" fill="none" strokeLinecap="round"/>
+      {[[32,48],[48,46],[24,56],[42,56],[58,54],[28,66],[46,67],[38,74]].map(([x,y],i) => (
+        <circle key={i} cx={x} cy={y} r="7" fill="#3b82f6" style={{ animation:`farmBob 2.3s ease-in-out infinite ${i*0.18}s` }}/>
+      ))}
+      {[[32,48],[48,46],[24,56],[42,56],[58,54],[28,66],[46,67],[38,74]].map(([x,y],i) => (
+        <React.Fragment key={i}>
+          <circle cx={x-1.5} cy={y-2} r="2" fill="white" opacity="0.2"/>
+          <ellipse cx={x} cy={y-6} rx="2.5" ry="1.5" fill="#93c5fd" opacity="0.6"/>
+        </React.Fragment>
+      ))}
+    </svg>
+  );
+}
+
+// ─── New Animal SVG Illustrations ─────────────────────────────────────────────
+
+function AlpacaSvg() {
+  injectStyle();
+  return (
+    <svg viewBox="0 0 80 80" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <rect x="24" y="65" width="6" height="13" rx="3" fill="#d6d3d1"/>
+      <rect x="34" y="66" width="6" height="12" rx="3" fill="#d6d3d1"/>
+      <rect x="44" y="66" width="6" height="12" rx="3" fill="#d6d3d1"/>
+      <rect x="54" y="65" width="6" height="13" rx="3" fill="#d6d3d1"/>
+      <rect x="24" y="76" width="6" height="4" rx="2" fill="#78716c"/>
+      <rect x="34" y="76" width="6" height="4" rx="2" fill="#78716c"/>
+      <rect x="44" y="76" width="6" height="4" rx="2" fill="#78716c"/>
+      <rect x="54" y="76" width="6" height="4" rx="2" fill="#78716c"/>
+      <ellipse cx="40" cy="56" rx="22" ry="14" fill="#f5f5f4" style={{ animation:'farmBreath 2.2s ease-in-out infinite' }}/>
+      <circle cx="40" cy="54" r="18" fill="#e7e5e4"/>
+      <circle cx="38" cy="50" r="16" fill="#f5f5f4"/>
+      <circle cx="44" cy="52" r="14" fill="#e7e5e4" opacity="0.6"/>
+      <rect x="52" y="38" width="9" height="20" rx="4" fill="#e7e5e4"/>
+      <ellipse cx="57" cy="30" rx="9" ry="11" fill="#e7e5e4"/>
+      <ellipse cx="62" cy="34" rx="5" ry="3.5" fill="#d6d3d1"/>
+      <circle cx="62.5" cy="34" r="1.2" fill="#44403c"/>
+      <circle cx="65.5" cy="34" r="1.2" fill="#44403c"/>
+      <circle cx="53" cy="27" r="2.5" fill="#1c1917"/>
+      <circle cx="53.8" cy="26.2" r="0.8" fill="white"/>
+      <ellipse cx="51" cy="21" rx="3" ry="7" fill="#e7e5e4" style={{ animation:'farmSway 2s ease-in-out infinite', transformOrigin:'51px 26px' }}/>
+      <ellipse cx="61" cy="20" rx="3" ry="7" fill="#e7e5e4" style={{ animation:'farmSway 2s ease-in-out infinite 0.4s', transformOrigin:'61px 26px' }}/>
+      <path d="M34 50 Q24 42 22 34" stroke="#f5f5f4" strokeWidth="4" fill="none" strokeLinecap="round" style={{ animation:'farmTailWag 2.5s ease-in-out infinite', transformOrigin:'34px 50px' }}/>
+    </svg>
+  );
+}
+
+function DeerSvg() {
+  injectStyle();
+  return (
+    <svg viewBox="0 0 80 80" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <rect x="22" y="64" width="6" height="14" rx="3" fill="#92400e"/>
+      <rect x="32" y="65" width="6" height="13" rx="3" fill="#92400e"/>
+      <rect x="44" y="65" width="6" height="13" rx="3" fill="#92400e"/>
+      <rect x="54" y="64" width="6" height="14" rx="3" fill="#92400e"/>
+      <rect x="22" y="76" width="6" height="4" rx="2" fill="#44403c"/>
+      <rect x="32" y="76" width="6" height="4" rx="2" fill="#44403c"/>
+      <rect x="44" y="76" width="6" height="4" rx="2" fill="#44403c"/>
+      <rect x="54" y="76" width="6" height="4" rx="2" fill="#44403c"/>
+      <ellipse cx="38" cy="52" rx="24" ry="16" fill="#d97706" style={{ animation:'farmBreath 2s ease-in-out infinite' }}/>
+      <ellipse cx="38" cy="52" rx="18" ry="11" fill="#b45309" opacity="0.4"/>
+      <rect x="53" y="36" width="10" height="18" rx="5" fill="#d97706"/>
+      <ellipse cx="60" cy="28" rx="10" ry="12" fill="#d97706"/>
+      <ellipse cx="65" cy="33" rx="6" ry="4" fill="#ca8a04"/>
+      <circle cx="62" cy="33" r="1.3" fill="#44403c"/>
+      <circle cx="66" cy="33" r="1.3" fill="#44403c"/>
+      <circle cx="56" cy="24" r="2.5" fill="#1c1917"/>
+      <circle cx="56.8" cy="23.2" r="0.8" fill="white"/>
+      <path d="M57 17 Q52 10 48 12 Q46 8 50 6" stroke="#78350f" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+      <path d="M57 17 Q54 8 56 5" stroke="#78350f" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+      <path d="M64 15 Q68 8 72 10 Q74 6 70 4" stroke="#78350f" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+      <path d="M64 15 Q66 6 64 3" stroke="#78350f" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+      <ellipse cx="52" cy="20" rx="4" ry="6" fill="#d97706" style={{ transform:'rotate(-15deg)', transformOrigin:'52px 20px', animation:'farmSway 2.5s ease-in-out infinite' }}/>
+      <ellipse cx="66" cy="18" rx="4" ry="6" fill="#d97706" style={{ transform:'rotate(15deg)', transformOrigin:'66px 18px', animation:'farmSway 2.5s ease-in-out infinite 0.3s' }}/>
+      <path d="M14 50 Q8 44 10 38" stroke="#d97706" strokeWidth="3" fill="none" strokeLinecap="round" style={{ animation:'farmTailWag 2s ease-in-out infinite', transformOrigin:'14px 50px' }}/>
+    </svg>
+  );
+}
+
+function PeacockSvg() {
+  injectStyle();
+  return (
+    <svg viewBox="0 0 80 80" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      {[[12,30,'#10b981'],[16,22,'#0d9488'],[22,16,'#0891b2'],[30,12,'#2563eb'],[38,10,'#7c3aed'],[46,12,'#db2777'],[54,16,'#ea580c'],[60,22,'#d97706'],[64,30,'#65a30d']].map(([x,y,c],i) => (
+        <React.Fragment key={i}>
+          <line x1={40} y1={52} x2={x as number} y2={y as number} stroke={c as string} strokeWidth="2.5" strokeLinecap="round" style={{ animation:`farmSway ${2+i*0.1}s ease-in-out infinite ${i*0.1}s`, transformOrigin:'40px 52px' }}/>
+          <ellipse cx={x as number} cy={y as number} rx="6" ry="8" fill={c as string} opacity="0.8" style={{ transform:`rotate(${-70+i*16}deg)`, transformOrigin:`${x}px ${y}px` }}/>
+          <circle cx={x as number} cy={(y as number)+2} r="3" fill="#0f172a" opacity="0.7"/>
+          <circle cx={x as number} cy={(y as number)+2} r="1.5" fill={c as string}/>
+        </React.Fragment>
+      ))}
+      <ellipse cx="40" cy="56" rx="20" ry="13" fill="#0284c7" style={{ animation:'farmBreath 2s ease-in-out infinite' }}/>
+      <ellipse cx="40" cy="53" rx="14" ry="9" fill="#0ea5e9"/>
+      <ellipse cx="40" cy="50" rx="9" ry="6" fill="#38bdf8" opacity="0.6"/>
+      <rect x="36" y="40" width="8" height="14" rx="4" fill="#065f46"/>
+      <circle cx="40" cy="34" r="9" fill="#065f46"/>
+      <ellipse cx="47" cy="36" rx="5" ry="3.5" fill="#0f766e"/>
+      <circle cx="46.5" cy="36" r="1.2" fill="#1c1917"/>
+      <circle cx="49" cy="36" r="1.2" fill="#1c1917"/>
+      <circle cx="36" cy="31" r="2.5" fill="#1c1917"/>
+      <circle cx="36.8" cy="30.2" r="0.8" fill="white"/>
+      {[[-8,-10],[0,-12],[8,-10]].map(([dx,dy],i) => (
+        <React.Fragment key={i}>
+          <line x1={40} y1={28} x2={40+dx} y2={28+dy} stroke="#0f172a" strokeWidth="1.5" strokeLinecap="round"/>
+          <circle cx={40+dx} cy={28+dy} r="2.5" fill="#2563eb"/>
+        </React.Fragment>
+      ))}
+      <line x1="34" y1="66" x2="30" y2="77" stroke="#0891b2" strokeWidth="3.5" strokeLinecap="round"/>
+      <line x1="46" y1="66" x2="50" y2="77" stroke="#0891b2" strokeWidth="3.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
 // ─── Illustration map ─────────────────────────────────────────────────────────
 
 const ILLUSTRATIONS: Record<string, () => React.ReactElement> = {
@@ -563,6 +777,15 @@ const ILLUSTRATIONS: Record<string, () => React.ReactElement> = {
   corn: CornSvg,
   tomato: TomatoSvg,
   sunflower: SunflowerSvg,
+  onion: OnionSvg,
+  carrot: CarrotSvg,
+  strawberry: StrawberrySvg,
+  grape: GrapeSvg,
+  apple: AppleSvg,
+  blueberry: BlueberrySvg,
+  alpaca: AlpacaSvg,
+  deer: DeerSvg,
+  peacock: PeacockSvg,
 };
 
 // ─── Public component ─────────────────────────────────────────────────────────

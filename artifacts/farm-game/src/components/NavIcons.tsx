@@ -160,3 +160,15 @@ export function AdminIcon({ size = 22, active }: IconProps) {
     </svg>
   );
 }
+
+export function TradeIcon({ size = 22, active }: IconProps) {
+  const c = active ? '#fbbf24' : '#8a7240';
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M3 8 L21 8" stroke={c} strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M17 4 L21 8 L17 12" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M21 16 L3 16" stroke={active ? '#a8ff78' : '#4a7a30'} strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M7 12 L3 16 L7 20" stroke={active ? '#a8ff78' : '#4a7a30'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}

@@ -14,6 +14,7 @@ import NftPage from './pages/NftPage';
 import AdminPage from './pages/AdminPage';
 import TasksPage from './pages/TasksPage';
 import ProfilePage from './pages/ProfilePage';
+import TradePage from './pages/TradePage';
 import { useUser } from './hooks/use-user';
 import { UserProvider } from './context/UserProvider';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -26,7 +27,7 @@ import LoadingScreen from './components/LoadingScreen';
 import { initBackgroundMusic, resumeBackgroundMusic, setMusicEnabled, isMusicEnabled } from './lib/sound';
 import {
   FarmIcon, SpinIcon, NftIcon, TaskIcon, InviteIcon,
-  LeaderboardIcon, ShopIcon, AchievementIcon, MusicIcon, AdminIcon,
+  LeaderboardIcon, ShopIcon, AchievementIcon, MusicIcon, AdminIcon, TradeIcon,
 } from './components/NavIcons';
 
 initI18n();
