@@ -222,6 +222,16 @@ router.post("/users/init", async (req, res): Promise<void> => {
   res.json({ ...formatUser(existing), isNewUser: !hadExistingUser });
 });
 
+// GET /users/:telegramId/balance — lightweight poll endpoint (balance + coins only)
+router.get("/users/:telegramId/balance", async (req, res): Promise<void> => {
+  const telegramId = req.params.telegramId;
+  const user = await db.query.usersTable.findFirst({
+    where: eq(usersTable.telegramId, telegramId),
+  });
+  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+  res.json({ balance: Number(user.balance), coins: Number(user.coins) });
+});
+
 // GET /users/:telegramId
 router.get("/users/:telegramId", async (req, res): Promise<void> => {
   const parsed = GetUserParams.safeParse(req.params);

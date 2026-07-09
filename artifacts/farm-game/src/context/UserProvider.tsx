@@ -42,6 +42,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     refresh();
   }, [refresh]);
 
+  // Poll balance + coins every 30 seconds so admin-added funds appear automatically
+  useEffect(() => {
+    if (!telegramId || telegramId === 'demo_user') return;
+    const id = setInterval(async () => {
+      try {
+        const res = await fetch(`${import.meta.env.BASE_URL}api/users/${telegramId}/balance`);
+        if (!res.ok) return;
+        const { balance, coins } = await res.json();
+        setUser(prev => prev ? { ...prev, balance, coins } : prev);
+      } catch {}
+    }, 30_000);
+    return () => clearInterval(id);
+  }, [telegramId]);
+
   return (
     <UserContext.Provider value={{ user, isLoading, setUser, refresh, telegramId, isNewUser }}>
       {children}
