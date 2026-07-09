@@ -64,113 +64,249 @@ function FarmPlot({
 }) {
   const income = count * config.baseRate;
   const canAffordUnlock = balance >= config.unlockCost;
+  const isFarm = config.category === 'farm';
+  const fillPct = Math.min(count / config.maxUnits, 1);
 
-  // Richer soil colors per category
-  const soilStyle = config.category === 'farm'
-    ? { background: 'linear-gradient(180deg, #5c3a21 0%, #4a2e14 100%)' }
-    : { background: 'linear-gradient(180deg, #2d4a1a 0%, #1e3310 100%)' };
+  // Category-specific palette
+  const palette = isFarm ? {
+    frameFrom: '#b8832a',
+    frameTo: '#7a5018',
+    frameShadow: '#4a2e08',
+    soilBg: 'linear-gradient(180deg, #3d2810 0%, #2a1a08 100%)',
+    rowColor: 'rgba(92,58,16,0.6)',
+    accentColor: '#4ade80',
+    badgeBg: 'linear-gradient(135deg, #5c3a10, #3d2408)',
+    badgeBorder: '#2a1405',
+    headerBg: 'linear-gradient(135deg, #1a0e04, #2e1a08)',
+    incomeColor: '#86efac',
+    barColor: '#4ade80',
+    zoneDecor: ['🌱', '🌿', '🍃'],
+  } : {
+    frameFrom: '#5a7a28',
+    frameTo: '#3a5618',
+    frameShadow: '#1e3008',
+    soilBg: 'linear-gradient(180deg, #1a2e08 0%, #0f1e05 100%)',
+    rowColor: 'rgba(42,74,20,0.55)',
+    accentColor: '#fbbf24',
+    badgeBg: 'linear-gradient(135deg, #2a4410, #1a2e08)',
+    badgeBorder: '#0f1e05',
+    headerBg: 'linear-gradient(135deg, #0a1804, #142606)',
+    incomeColor: '#fde68a',
+    barColor: '#fbbf24',
+    zoneDecor: ['🌾', '🌻', '🍀'],
+  };
 
   return (
     <motion.div
-      className="relative mx-3 my-2 rounded-xl overflow-hidden shadow-md"
-      initial={{ opacity: 0, y: 12 }}
+      className="relative mx-3 my-2 rounded-2xl overflow-hidden"
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       layout
+      style={{
+        boxShadow: `0 5px 0 ${palette.frameShadow}, 0 8px 20px rgba(0,0,0,0.4)`,
+        background: `linear-gradient(145deg, ${palette.frameFrom}, ${palette.frameTo})`,
+        padding: '2px',
+      }}
     >
-      {/* Wood frame border */}
-      <div
-        className="rounded-xl p-1"
-        style={{
-          background: 'linear-gradient(135deg, #c4832e, #8b5c1e)',
-          boxShadow: '0 4px 0 #5c3a21, 0 6px 12px rgba(0,0,0,0.35)',
-        }}
-      >
-        {/* Inner panel */}
-        <div className="rounded-lg overflow-hidden" style={{ background: 'rgba(0,0,0,0.15)' }}>
-          {/* Top info bar */}
-          <div
-            className="flex items-center justify-between px-2 py-1.5"
-            style={{ background: 'rgba(0,0,0,0.38)' }}
-          >
-            <div className="flex items-center gap-1.5 min-w-0">
-              {/* Emoji badge */}
-              <div className="flex items-center rounded-lg px-1.5 py-0.5 shadow-inner flex-shrink-0"
-                style={{ background: 'linear-gradient(135deg, #7a4e1a, #5c3a10)', border: '1px solid #3d2409' }}>
-                <span className="text-sm leading-none">{config.emoji}</span>
-              </div>
-              {/* Section name */}
-              <div className="flex flex-col min-w-0">
-                <span className="font-black text-white leading-none truncate" style={{ fontSize: 10 }}>{config.name}</span>
-                {unlocked && count > 0 ? (
-                  <span className="font-bold text-green-300 leading-none" style={{ fontSize: 9 }}>📈 {formatNum(income)}/dk</span>
-                ) : unlocked ? (
-                  <span className="font-bold leading-none" style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>Boş</span>
-                ) : null}
-              </div>
+      <div className="rounded-2xl overflow-hidden">
+
+        {/* ── HEADER BAR ── */}
+        <div
+          className="flex items-center justify-between px-3 py-2"
+          style={{ background: palette.headerBg }}
+        >
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            {/* Emoji badge */}
+            <div
+              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-inner"
+              style={{ background: palette.badgeBg, border: `1.5px solid ${palette.badgeBorder}` }}
+            >
+              <span className="text-lg leading-none">{config.emoji}</span>
             </div>
 
-            {unlocked ? (
-              <button
-                onClick={onTap}
-                className="w-7 h-7 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all flex-shrink-0"
-                style={{ background: 'linear-gradient(135deg, #e8a435, #c47820)', border: '1.5px solid #f5c842', boxShadow: '0 2px 6px rgba(232,164,53,0.4)' }}
-              >
-                <Plus size={14} className="text-white" strokeWidth={3} />
-              </button>
-            ) : (
-              <div className="w-7 h-7 rounded-full bg-black/40 border border-white/20 flex items-center justify-center flex-shrink-0">
-                <Lock size={12} className="text-gray-400" />
-              </div>
-            )}
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="font-black text-white leading-none truncate" style={{ fontSize: 11 }}>{config.name}</span>
+              {unlocked ? (
+                <div className="flex items-center gap-2 mt-0.5">
+                  {/* Mini progress bar */}
+                  <div className="flex-1 max-w-[48px] h-1 rounded-full bg-black/40 overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ background: palette.barColor, width: `${fillPct * 100}%` }}
+                      animate={{ width: `${fillPct * 100}%` }}
+                      transition={{ duration: 0.4 }}
+                    />
+                  </div>
+                  <span className="font-bold leading-none" style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)' }}>
+                    {count}/{config.maxUnits}
+                  </span>
+                  {count > 0 && (
+                    <span className="font-bold leading-none" style={{ fontSize: 9, color: palette.incomeColor }}>
+                      📈 {formatNum(income)}/dk
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span className="font-bold leading-none" style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>
+                  🔒 {formatNum(config.unlockCost)} TL gerekli
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* Farm plot visual */}
-          <div
-            className="relative flex flex-wrap items-center justify-center gap-1 py-3 px-2 min-h-[90px]"
-            onClick={onTap}
-            style={{ cursor: 'pointer' }}
-          >
-            {unlocked ? (
-              <>
-                {/* Rich soil/grass background */}
-                <div className="absolute inset-0" style={soilStyle} />
-                <div className="absolute inset-0 farm-plot-soil opacity-40" />
-                {/* Fence top/bottom */}
-                <div className="absolute inset-x-0 top-0 h-1.5" style={{ background: 'linear-gradient(90deg, #8b5c1e, #6b3a10, #8b5c1e)', opacity: 0.7 }} />
-                <div className="absolute inset-x-0 bottom-0 h-1.5" style={{ background: 'linear-gradient(90deg, #8b5c1e, #6b3a10, #8b5c1e)', opacity: 0.7 }} />
+          {unlocked ? (
+            <button
+              onClick={onTap}
+              className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg active:scale-90 transition-all flex-shrink-0 ml-2"
+              style={{
+                background: 'linear-gradient(135deg, #f5c842, #e6a800)',
+                border: '1.5px solid rgba(255,200,60,0.6)',
+                boxShadow: '0 2px 8px rgba(245,200,66,0.4)',
+              }}
+            >
+              <Plus size={14} className="text-yellow-900" strokeWidth={3} />
+            </button>
+          ) : (
+            <div className="w-8 h-8 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center flex-shrink-0 ml-2">
+              <Lock size={12} className="text-gray-500" />
+            </div>
+          )}
+        </div>
 
+        {/* ── PLOT VISUAL ── */}
+        <div
+          className="relative overflow-hidden"
+          onClick={onTap}
+          style={{ cursor: 'pointer', minHeight: 100 }}
+        >
+          {unlocked ? (
+            <>
+              {/* Background */}
+              <div className="absolute inset-0" style={{ background: palette.soilBg }} />
+
+              {isFarm ? (
+                /* Farm: plowed row stripes */
+                <>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="absolute inset-x-0 h-4"
+                      style={{
+                        top: `${i * 17}%`,
+                        background: i % 2 === 0 ? 'rgba(74,42,16,0.5)' : 'rgba(58,32,10,0.35)',
+                        borderTop: '1px solid rgba(120,80,30,0.25)',
+                      }} />
+                  ))}
+                  {/* Soil texture overlay */}
+                  <div className="absolute inset-0 farm-plot-soil opacity-30" />
+                  {/* Fence posts */}
+                  <div className="absolute inset-x-0 top-0 flex gap-6 px-2 pointer-events-none">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="w-1.5 h-3 rounded-b-sm flex-shrink-0"
+                        style={{ background: 'rgba(139,92,30,0.8)' }} />
+                    ))}
+                  </div>
+                  <div className="absolute inset-x-0 top-2.5 h-0.5 mx-2"
+                    style={{ background: 'rgba(139,92,30,0.55)' }} />
+                </>
+              ) : (
+                /* Animal: grass pasture */
+                <>
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #1a3c08 0%, #0f2505 100%)' }} />
+                  {/* Grass patches */}
+                  <div className="absolute inset-x-0 bottom-0 h-6" style={{ background: 'linear-gradient(180deg, transparent, rgba(20,80,8,0.6))' }} />
+                  {/* Fence line top */}
+                  <div className="absolute inset-x-0 top-0 h-2.5"
+                    style={{ background: 'linear-gradient(90deg, #5c3a10, #8b5c1e, #5c3a10)' }} />
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="absolute top-0 w-2 h-4 rounded-b"
+                      style={{ left: `${10 + i * 20}%`, background: 'rgba(92,58,16,0.9)' }} />
+                  ))}
+                  {/* Ground texture */}
+                  <div className="absolute inset-0" style={{
+                    backgroundImage: 'radial-gradient(circle, rgba(34,100,16,0.15) 1px, transparent 1px)',
+                    backgroundSize: '12px 12px',
+                  }} />
+                </>
+              )}
+
+              {/* Emojis */}
+              <div className="relative z-10 flex flex-wrap items-center justify-center gap-1.5 py-4 px-3">
                 {Array.from({ length: Math.min(count, 15) }).map((_, i) => (
                   <motion.span
                     key={i}
-                    className="relative z-10 text-2xl drop-shadow-sm"
-                    initial={{ scale: 0, rotate: -10 }}
+                    className="text-2xl drop-shadow-md leading-none"
+                    initial={{ scale: 0, rotate: -15 }}
                     animate={{ scale: 1, rotate: 0 }}
-                    transition={{ delay: i * 0.02, type: 'spring', stiffness: 300 }}
+                    transition={{ delay: i * 0.03, type: 'spring', stiffness: 280 }}
                   >
                     {config.emoji}
                   </motion.span>
                 ))}
                 {count > 15 && (
-                  <span className="relative z-10 text-white/80 text-xs font-bold bg-black/40 px-1.5 py-0.5 rounded">+{count - 15}</span>
+                  <span className="text-white/75 text-xs font-bold bg-black/50 px-2 py-0.5 rounded-lg">
+                    +{count - 15}
+                  </span>
                 )}
                 {count === 0 && (
-                  <span className="relative z-10 text-white/40 text-sm italic">Boş tarla</span>
+                  <div className="flex flex-col items-center gap-1 opacity-40">
+                    <span className="text-2xl">{isFarm ? '🌱' : '🌿'}</span>
+                    <span className="text-white text-[10px] italic font-bold">{isFarm ? 'Boş tarla' : 'Boş mera'}</span>
+                  </div>
                 )}
-              </>
-            ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2"
-                style={{ background: 'repeating-linear-gradient(45deg, #2a2a2a 0px, #2a2a2a 10px, #222 10px, #222 20px)' }}
-              >
-                <Lock size={28} className={canAffordUnlock ? 'text-yellow-400' : 'text-gray-500'} />
+              </div>
+
+              {/* Bottom zone label */}
+              <div className="absolute bottom-0 inset-x-0 flex items-center justify-between px-2 pb-1 pointer-events-none">
+                <div className="flex items-center gap-0.5">
+                  {palette.zoneDecor.map((d, i) => (
+                    <span key={i} className="text-[9px] opacity-40">{d}</span>
+                  ))}
+                </div>
+                {count > 0 && (
+                  <div className="rounded-full px-1.5 py-0.5"
+                    style={{ background: 'rgba(0,0,0,0.5)', border: `1px solid ${palette.accentColor}30` }}>
+                    <span className="font-black text-[8px]" style={{ color: palette.accentColor }}>
+                      {formatNum(income)}/dk
+                    </span>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            /* Locked state */
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center gap-2"
+              style={{
+                background: 'repeating-linear-gradient(45deg, #1a1a1a 0px, #1a1a1a 10px, #141414 10px, #141414 20px)',
+              }}
+            >
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                  style={{
+                    background: canAffordUnlock
+                      ? 'linear-gradient(135deg, rgba(245,200,66,0.2), rgba(230,168,0,0.1))'
+                      : 'rgba(255,255,255,0.04)',
+                    border: `2px solid ${canAffordUnlock ? 'rgba(245,200,66,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                  }}>
+                  <Lock size={22} className={canAffordUnlock ? 'text-yellow-400' : 'text-gray-600'} />
+                </div>
                 <div className="text-center">
                   <div className="font-black text-white text-sm">{config.name}</div>
-                  <div className={`text-xs font-bold ${canAffordUnlock ? 'text-yellow-300' : 'text-gray-400'}`}>
+                  <div className={`text-xs font-bold mt-0.5 ${canAffordUnlock ? 'text-yellow-300' : 'text-gray-500'}`}>
                     🔒 {formatNum(config.unlockCost)} TL
                   </div>
                 </div>
+                {canAffordUnlock && (
+                  <motion.div
+                    className="text-[9px] font-black text-yellow-300 bg-yellow-400/15 border border-yellow-400/30 rounded-full px-2 py-0.5"
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ repeat: Infinity, duration: 1.2 }}
+                  >
+                    ✨ Açmaya hazır!
+                  </motion.div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 const API = `${import.meta.env.BASE_URL}api`;
 
 // Tiered withdrawal amounts — user picks one
-const AMOUNTS = [150, 350, 750] as const;
+const AMOUNTS = [350, 500, 750] as const;
 type Amount = typeof AMOUNTS[number];
 
 const METHODS = [
@@ -27,7 +27,7 @@ interface WithdrawModalProps {
 export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const { user, telegramId, refresh } = useUser();
   const [method, setMethod] = useState<Method>('papara');
-  const [amount, setAmount] = useState<Amount>(150);
+  const [amount, setAmount] = useState<Amount>(350);
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [lastResult, setLastResult] = useState<{ requestId: string; amount: number } | null>(null);
 
