@@ -18,9 +18,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       const username =
         window.Telegram?.WebApp?.initDataUnsafe?.user?.username ?? null;
 
-      // Correct way to read start_param — from initDataUnsafe, not from initData string
+      // Read referral param from Telegram initData OR URL query string (?startapp=ref_xxx).
+      // When mini app is opened via a web_app button, Telegram may not populate
+      // initDataUnsafe.start_param — the startapp value lives in window.location.search.
       const startParam =
-        window.Telegram?.WebApp?.initDataUnsafe?.start_param ?? null;
+        window.Telegram?.WebApp?.initDataUnsafe?.start_param ??
+        new URLSearchParams(window.location.search).get('startapp') ??
+        null;
 
       const data = await initUserMut.mutateAsync({
         data: { telegramId, firstName, username, referredBy: startParam },
