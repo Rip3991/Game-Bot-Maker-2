@@ -13,6 +13,7 @@ import mascotAvatar from '../assets/mascot-avatar.png';
 import { SellHintMascot } from '../components/SellHintMascot';
 import { FarmBackground } from '../components/FarmBackground';
 import { PlatformStatsBanner } from '../components/PlatformStatsBanner';
+import { FarmIllustration, FarmIllustrationBadge } from '../components/FarmIllustration';
 
 export { formatNum } from '../utils/format';
 
@@ -117,12 +118,12 @@ function FarmPlot({
           style={{ background: palette.headerBg }}
         >
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            {/* Emoji badge */}
+            {/* Illustration badge */}
             <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-inner"
+              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-inner overflow-hidden"
               style={{ background: palette.badgeBg, border: `1.5px solid ${palette.badgeBorder}` }}
             >
-              <span className="text-lg leading-none">{config.emoji}</span>
+              <FarmIllustrationBadge id={config.id} size={30} />
             </div>
 
             <div className="flex flex-col min-w-0 flex-1">
@@ -229,29 +230,15 @@ function FarmPlot({
                 </>
               )}
 
-              {/* Emojis */}
-              <div className="relative z-10 flex flex-wrap items-center justify-center gap-1.5 py-4 px-3">
-                {Array.from({ length: Math.min(count, 15) }).map((_, i) => (
-                  <motion.span
-                    key={i}
-                    className="text-2xl drop-shadow-md leading-none"
-                    initial={{ scale: 0, rotate: -15 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ delay: i * 0.03, type: 'spring', stiffness: 280 }}
-                  >
-                    {config.emoji}
-                  </motion.span>
-                ))}
-                {count > 15 && (
-                  <span className="text-white/75 text-xs font-bold bg-black/50 px-2 py-0.5 rounded-lg">
-                    +{count - 15}
-                  </span>
-                )}
-                {count === 0 && (
-                  <div className="flex flex-col items-center gap-1 opacity-40">
+              {/* Illustrated units */}
+              <div className="relative z-10 flex items-center justify-center py-3 px-3 min-h-[80px]">
+                {count === 0 ? (
+                  <div className="flex flex-col items-center gap-1 opacity-35">
                     <span className="text-2xl">{isFarm ? '🌱' : '🌿'}</span>
                     <span className="text-white text-[10px] italic font-bold">{isFarm ? 'Boş tarla' : 'Boş mera'}</span>
                   </div>
+                ) : (
+                  <FarmIllustration id={config.id} count={count} size={62} />
                 )}
               </div>
 

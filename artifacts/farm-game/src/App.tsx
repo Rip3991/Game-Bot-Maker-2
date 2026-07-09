@@ -37,7 +37,7 @@ const queryClient = new QueryClient();
 const RIGHT_NAV = [
   { label: 'Çiftlik', Icon: FarmIcon,        path: '/',            accentColor: '#4ade80', shadowColor: 'rgba(74,222,128,0.35)' },
   { label: 'Çark',   Icon: SpinIcon,         path: '/spin',        accentColor: '#fde68a', shadowColor: 'rgba(253,230,138,0.35)' },
-  { label: 'NFT',    Icon: NftIcon,          path: '/nfts',        accentColor: '#c084fc', shadowColor: 'rgba(192,132,252,0.35)' },
+  { label: 'İlanlar', Icon: NftIcon,          path: '/nfts',        accentColor: '#c084fc', shadowColor: 'rgba(192,132,252,0.35)' },
   { label: 'Görev',  Icon: TaskIcon,         path: '/tasks',       accentColor: '#fde68a', shadowColor: 'rgba(251,191,36,0.35)' },
   { label: 'Davet',  Icon: InviteIcon,       path: '/invite',      accentColor: '#4ade80', shadowColor: 'rgba(74,222,128,0.35)' },
   { label: 'Liste',  Icon: LeaderboardIcon,  path: '/leaderboard', accentColor: '#fbbf24', shadowColor: 'rgba(251,191,36,0.35)' },

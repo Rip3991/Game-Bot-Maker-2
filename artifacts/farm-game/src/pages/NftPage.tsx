@@ -831,7 +831,7 @@ export default function NftPage() {
   const tabs: { key: TabType; icon: React.ReactNode; label: string; badge?: number }[] = [
     { key: 'cases',  icon: <Package size={14} />,    label: 'Kasalar' },
     { key: 'mine',   icon: <ShoppingBag size={14} />, label: 'Koleksiyon', badge: (myNfts as NftItem[]).length },
-    { key: 'market', icon: <TrendingUp size={14} />,  label: 'Borsa' },
+    { key: 'market', icon: <TrendingUp size={14} />,  label: 'Borsa İlanlar' },
     { key: 'offers', icon: <Inbox size={14} />,       label: 'Teklifler', badge: (offers as any[]).length || undefined },
   ];
 
@@ -852,7 +852,7 @@ export default function NftPage() {
           <span className="text-white/40 text-[10px]">Coin</span>
         </div>
         <div className="flex-1" />
-        <div className="text-white/40 text-[10px] font-bold">NFT Pazarı</div>
+        <div className="text-white/40 text-[10px] font-bold">İlanlar</div>
       </div>
 
       {/* Tab bar */}
