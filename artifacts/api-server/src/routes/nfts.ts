@@ -252,8 +252,8 @@ export const CASE_DEFS = {
     currency: "tl" as const,
     description: "Temel çiftlik NFT'leri",
     bgGradient: "linear-gradient(135deg, #2d5a1b, #4a8c2a)",
-    // efsanevi: 0.5% (eski: 3%), özel: 3% (eski: 7%)
-    drops: { common: 0.765, rare: 0.20, epic: 0.00, special: 0.03, legendary: 0.005 },
+    // Beklenen değer ~1.1-1.2x fiyat — bkz. RARITY_SELL_PRICE_DIVISOR notu.
+    drops: { common: 0.92, rare: 0.065, epic: 0.00, special: 0.012, legendary: 0.003 },
   },
   crystal_case: {
     name: "Kristal Kasa",
@@ -262,9 +262,7 @@ export const CASE_DEFS = {
     currency: "tl" as const,
     description: "Nadir ve değerli NFT'ler",
     bgGradient: "linear-gradient(135deg, #1a3a6b, #2d6bb5)",
-    // efsanevi: 2% (eski: 7%), özel: 16% (eski: 20%)
-    // pahalı nadir eşyalar içi ağırlıklandırmayla zaten çok düşük
-    drops: { common: 0.30, rare: 0.48, epic: 0.04, special: 0.16, legendary: 0.02 },
+    drops: { common: 0.50, rare: 0.38, epic: 0.03, special: 0.08, legendary: 0.01 },
   },
   special_case: {
     name: "Özel Kasa",
@@ -273,8 +271,7 @@ export const CASE_DEFS = {
     currency: "coins" as const,
     description: "Nadir özel koleksiyon NFT'leri",
     bgGradient: "linear-gradient(135deg, #3b1f6e, #6d28d9)",
-    // efsanevi: 6% (eski: 13%)
-    drops: { common: 0.08, rare: 0.30, epic: 0.10, special: 0.46, legendary: 0.06 },
+    drops: { common: 0.30, rare: 0.40, epic: 0.08, special: 0.19, legendary: 0.03 },
   },
   epic_case: {
     name: "Epik Kasa",
@@ -283,8 +280,7 @@ export const CASE_DEFS = {
     currency: "coins" as const,
     description: "Güçlü epik NFT'ler",
     bgGradient: "linear-gradient(135deg, #4a0808, #991b1b)",
-    // efsanevi: 8% (eski: 10%)
-    drops: { common: 0.03, rare: 0.12, epic: 0.62, special: 0.15, legendary: 0.08 },
+    drops: { common: 0.10, rare: 0.25, epic: 0.52, special: 0.10, legendary: 0.03 },
   },
   legend_case: {
     name: "Efsane Kasası",
@@ -293,10 +289,30 @@ export const CASE_DEFS = {
     currency: "coins" as const,
     description: "En nadir efsanevi NFT'ler",
     bgGradient: "linear-gradient(135deg, #5c3000, #b8860b)",
-    // efsanevi: 55% (eski: 40%) — bu kasa için uygun
-    drops: { common: 0.02, rare: 0.08, epic: 0.15, special: 0.20, legendary: 0.55 },
+    drops: { common: 0.05, rare: 0.15, epic: 0.35, special: 0.30, legendary: 0.15 },
   },
 } as const;
+
+// ── Rarity payout scale ────────────────────────────────────────────────────
+// NFT_DEFS.sellPrice values below are "vitrin" / kolleksiyon değerleridir —
+// nadir/epik/özel/efsanevi kalemler kasa fiyatlarına kıyasla çok yüksekti
+// (örn. 75 TL'lik bir kasa ortalamada binlerce TL'lik nadir eşya veriyordu).
+// Kasadan çıkan/satılan gerçek TL karşılığı bu bölücülerle ölçeklenir; vitrin
+// ve pazar ekranlarında görünen isim/emoji/nadirlik aynı kalır, sadece bir
+// NFT'nin sisteme SATIŞ değeri (ve dolayısıyla kasa beklenen değeri) düşer.
+// Bölücüleri değiştirirsen CASE_DEFS.drops oranlarını da EV/fiyat oranına
+// göre yeniden kontrol et.
+const RARITY_SELL_PRICE_DIVISOR: Record<"common" | "rare" | "epic" | "special" | "legendary", number> = {
+  common: 1.6,
+  rare: 20,
+  epic: 150,
+  special: 50,
+  legendary: 800,
+};
+
+function scaledSellPrice(rarity: keyof typeof RARITY_SELL_PRICE_DIVISOR, rawSellPrice: number): number {
+  return Math.max(1, Math.round(rawSellPrice / RARITY_SELL_PRICE_DIVISOR[rarity]));
+}
 
 export type CaseType = keyof typeof CASE_DEFS;
 
@@ -309,7 +325,7 @@ interface PricePoint { price: number; ts: number }
 // Initialize price history for each NFT type with 24 starting points
 const priceHistory = new Map<NftType, PricePoint[]>(
   (Object.entries(NFT_DEFS) as [NftType, typeof NFT_DEFS[NftType]][]).map(([key, def]) => {
-    const base = def.sellPrice;
+    const base = scaledSellPrice(def.rarity, def.sellPrice);
     const now = Date.now();
     const history: PricePoint[] = [];
     let price: number = base;
@@ -436,7 +452,7 @@ function serializeNft(n: typeof nftsTable.$inferSelect) {
     mintNumber: n.mintNumber,
     isListedForTrade: n.isListedForTrade,
     listPrice: n.listPrice ?? null,
-    sellPrice: def?.sellPrice ?? 10,
+    sellPrice: def ? scaledSellPrice(def.rarity, def.sellPrice) : 10,
     marketPrice: getCurrentPrice(n.nftType as NftType),
     createdAt: n.createdAt.toISOString(),
   };
@@ -489,7 +505,7 @@ export async function mintFreeNftFromCase(
     mintNumber,
     isListedForTrade: false,
     listPrice: null,
-    sellPrice: nftDef.sellPrice,
+    sellPrice: scaledSellPrice(nftDef.rarity, nftDef.sellPrice),
     marketPrice: getCurrentPrice(nftType),
     createdAt: now.toISOString(),
   };
@@ -500,7 +516,17 @@ export async function mintFreeNftFromCase(
 // GET /nfts/cases
 router.get("/cases", (_req, res): void => {
   const entries = Object.entries(NFT_DEFS) as [NftType, typeof NFT_DEFS[NftType]][];
-  const byRarity = (rarity: string) => entries.filter(([, d]) => d.rarity === rarity).map(([key, d]) => ({ key, ...d }));
+  const byRarity = (rarity: string) => entries.filter(([, d]) => d.rarity === rarity).map(([key, d]) => {
+    const raw = d as typeof d & { coinBonus?: number };
+    return {
+      key,
+      ...d,
+      sellPrice: scaledSellPrice(d.rarity, d.sellPrice),
+      ...(typeof raw.coinBonus === "number"
+        ? { coinBonus: Math.max(1, Math.round(raw.coinBonus / RARITY_SELL_PRICE_DIVISOR[d.rarity])) }
+        : {}),
+    };
+  });
   const result = (Object.entries(CASE_DEFS) as [CaseType, typeof CASE_DEFS[CaseType]][]).map(([id, def]) => ({
     id,
     ...def,
@@ -529,7 +555,7 @@ router.get("/market/prices", (_req, res): void => {
       emoji: def.emoji,
       name: def.name,
       rarity: def.rarity,
-      basePrice: def.sellPrice,
+      basePrice: scaledSellPrice(def.rarity, def.sellPrice),
       currentPrice: current,
       change: Math.round(change * 100) / 100,
       history: hist.map(h => h.price),
@@ -555,10 +581,13 @@ router.post("/cases/open", async (req, res): Promise<void> => {
   const nftId = crypto.randomUUID();
   const now = new Date();
   const isCoins = caseDef.currency === "coins";
-  // Coin bonus for special/legendary/rare NFTs that have one defined
-  const coinBonus: number = ("coinBonus" in nftDef && typeof (nftDef as { coinBonus?: number }).coinBonus === "number")
+  // Coin bonus for special/legendary/rare NFTs that have one defined — scaled by
+  // the same rarity divisor as sellPrice, since converting Coins to TL is possible
+  // (see COIN_TO_TL_RATE in stars.ts) and this bonus must stay in line with it.
+  const rawCoinBonus: number = ("coinBonus" in nftDef && typeof (nftDef as { coinBonus?: number }).coinBonus === "number")
     ? (nftDef as { coinBonus: number }).coinBonus
     : 0;
+  const coinBonus: number = rawCoinBonus > 0 ? Math.max(1, Math.round(rawCoinBonus / RARITY_SELL_PRICE_DIVISOR[nftDef.rarity])) : 0;
 
   try {
     await db.transaction(async (tx) => {
@@ -600,7 +629,7 @@ router.post("/cases/open", async (req, res): Promise<void> => {
   res.json({
     id: nftId, ownerTelegramId: telegramId, nftType, rarity: nftDef.rarity,
     name: nftDef.name, emoji: nftDef.emoji, mintNumber, isListedForTrade: false,
-    listPrice: null, sellPrice: nftDef.sellPrice, marketPrice: getCurrentPrice(nftType),
+    listPrice: null, sellPrice: scaledSellPrice(nftDef.rarity, nftDef.sellPrice), marketPrice: getCurrentPrice(nftType),
     createdAt: now.toISOString(),
     bonusCoins: coinBonus > 0 ? coinBonus : undefined,
   });
@@ -619,7 +648,7 @@ router.post("/sell", async (req, res): Promise<void> => {
       if (deleted.length === 0) throw new Error("NOT_FOUND");
       const nft = deleted[0];
       const def = NFT_DEFS[nft.nftType as NftType];
-      earnedTl = def?.sellPrice ?? 10; nftType = nft.nftType;
+      earnedTl = def ? scaledSellPrice(def.rarity, def.sellPrice) : 10; nftType = nft.nftType;
       await tx.update(usersTable).set({ balance: sql`${usersTable.balance} + ${earnedTl}` }).where(eq(usersTable.telegramId, telegramId));
     });
   } catch (e: any) {

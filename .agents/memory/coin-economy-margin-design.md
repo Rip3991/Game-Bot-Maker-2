@@ -24,12 +24,30 @@ places. The operator did not know their exact net-per-Star figure when asked;
 `artifacts/api-server/src/routes/stars.ts` has `NET_TL_PER_STAR` as the single
 adjustable placeholder (0.30 TL/star) driving `COIN_TO_TL_RATE`.
 
-## Known related gap (not yet fixed)
-The *paid* NFT case system (`CASE_DEFS` in `artifacts/api-server/src/routes/nfts.ts`,
-e.g. `farm_case` 75 TL) appears to have the same systemic over-payout problem at
-larger scale — its expected NFT payout looks far higher than its TL price. This
-was flagged to the user as a separate, bigger follow-up (would require repricing
-all cases and NFT sell prices) and intentionally left out of scope.
+## Fixed: paid NFT case over-payout (2026-07-09)
+The paid NFT case system (`CASE_DEFS` in `artifacts/api-server/src/routes/nfts.ts`)
+had the same systemic over-payout problem at a much larger scale: `farm_case`
+(75 TL) had an expected NFT payout of ~2,500 TL (~33x price); other cases were
+32x-97x. Root cause: `NFT_DEFS.sellPrice`/`coinBonus` were priced as flavor/
+collector values with no relation to case prices, and those raw values fed
+directly into real TL payouts (`/nfts/sell`, case-open credit) and coin bonuses
+(convertible to TL via `COIN_TO_TL_RATE`).
+
+Fix: added a per-rarity `RARITY_SELL_PRICE_DIVISOR` (common:1.6, rare:20,
+epic:150, special:50, legendary:800) and a `scaledSellPrice()` helper applied at
+every point a real payout or player-facing price is derived from `NFT_DEFS`
+(serialize, sell, case-open, cases listing incl. pool preview, market
+prices/history). `coinBonus` is scaled by the same divisor. Raw `NFT_DEFS`
+values are left untouched — they're the "display" numbers; scaling always
+happens at the read site. Also retuned `CASE_DEFS.drops` to weight commons more
+heavily. `sellPriceWeight()` (used only for within-rarity item selection, not
+payout) intentionally still uses raw sellPrice — this is fine since it's
+relative weighting, not an actual paid amount.
+
+**Why this matters for future edits:** any NEW code path that reads
+`NFT_DEFS[...].sellPrice` or `.coinBonus` directly (bypassing `scaledSellPrice`)
+will silently reintroduce the old inflated real-money payout. Always scale at
+the read site before crediting balance/coins or returning a price to the client.
 
 ## Also noted: no request-level auth
 All `artifacts/api-server/src/routes/*.ts` money-moving endpoints (including
