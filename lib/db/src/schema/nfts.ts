@@ -1,6 +1,6 @@
 import { pgTable, text, integer, boolean, timestamp, pgEnum, numeric } from "drizzle-orm/pg-core";
 
-export const nftRarityEnum = pgEnum("nft_rarity", ["common", "rare", "special", "legendary"]);
+export const nftRarityEnum = pgEnum("nft_rarity", ["common", "rare", "epic", "special", "legendary"]);
 export const tradeStatusEnum = pgEnum("trade_status", ["pending", "accepted", "rejected", "cancelled"]);
 
 export const nftsTable = pgTable("nfts", {
