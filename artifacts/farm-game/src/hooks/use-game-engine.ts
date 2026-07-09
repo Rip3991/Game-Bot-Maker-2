@@ -14,6 +14,7 @@ export interface SectionConfig {
   maxUnits: number;
   description: string;
   scene: string[];
+  harvestMinutes: number; // how many minutes to fill a plot (at count=1, level=1)
 }
 
 export const SECTIONS: SectionConfig[] = [
@@ -22,72 +23,86 @@ export const SECTIONS: SectionConfig[] = [
     id: 'wheat', emoji: '🌾', name: 'Buğday Tarlası', category: 'farm',
     unlockCost: 0, unitCost: 25, baseRate: 1.2, sellPrice: 5, maxUnits: 20,
     description: 'Başlangıç çiftliğin', scene: ['🌳', '🌲'],
+    harvestMinutes: 3,
   },
   {
     id: 'corn', emoji: '🌽', name: 'Mısır Tarlası', category: 'farm',
     unlockCost: 250, unitCost: 120, baseRate: 4, sellPrice: 10, maxUnits: 20,
     description: 'Altın mısır başakları', scene: ['🌻', '🌿'],
+    harvestMinutes: 5,
   },
   {
     id: 'tomato', emoji: '🍅', name: 'Domates Bahçesi', category: 'farm',
     unlockCost: 1800, unitCost: 600, baseRate: 14, sellPrice: 25, maxUnits: 15,
     description: 'Taze kırmızı domatesler', scene: ['🌿', '🪴'],
+    harvestMinutes: 8,
   },
   {
     id: 'sunflower', emoji: '🌻', name: 'Ayçiçeği Tarlası', category: 'farm',
     unlockCost: 10000, unitCost: 3000, baseRate: 60, sellPrice: 100, maxUnits: 12,
     description: 'Yağlık ayçiçeği tarlası', scene: ['☀️', '🌿'],
+    harvestMinutes: 12,
   },
   // ——— HAYVANLAR (ANIMALS) ———
   {
     id: 'chicken', emoji: '🐔', name: 'Tavuk Kümesi', category: 'animal',
     unlockCost: 180, unitCost: 40, baseRate: 3, sellPrice: 8, maxUnits: 20,
     description: 'Yumurta ve et üretimi', scene: ['🏚️', '🌾'],
+    harvestMinutes: 4,
   },
   {
     id: 'cow', emoji: '🐄', name: 'İnek Ahırı', category: 'animal',
     unlockCost: 1000, unitCost: 300, baseRate: 12, sellPrice: 30, maxUnits: 15,
     description: 'Süt ve et üretimi', scene: ['🏠', '🌿'],
+    harvestMinutes: 6,
   },
   {
     id: 'sheep', emoji: '🐑', name: 'Koyun Ağılı', category: 'animal',
     unlockCost: 3500, unitCost: 900, baseRate: 35, sellPrice: 80, maxUnits: 15,
     description: 'Yün ve süt üretimi', scene: ['⛰️', '🌿'],
+    harvestMinutes: 10,
   },
   {
     id: 'pig', emoji: '🐷', name: 'Domuz Çiftliği', category: 'animal',
     unlockCost: 10000, unitCost: 2500, baseRate: 100, sellPrice: 200, maxUnits: 12,
     description: 'Et ve şarküteri ürünleri', scene: ['🏡', '🌱'],
+    harvestMinutes: 15,
   },
   {
     id: 'horse', emoji: '🐴', name: 'At Ahırı', category: 'animal',
     unlockCost: 30000, unitCost: 8000, baseRate: 280, sellPrice: 500, maxUnits: 10,
     description: 'Prestijli at yetiştiriciliği', scene: ['🏟️', '🌿'],
+    harvestMinutes: 20,
   },
   {
     id: 'rabbit', emoji: '🐰', name: 'Tavşan Çiftliği', category: 'animal',
     unlockCost: 80000, unitCost: 20000, baseRate: 650, sellPrice: 1200, maxUnits: 20,
     description: 'Hızlı üreyen tavşanlar', scene: ['🌸', '🌿'],
+    harvestMinutes: 30,
   },
   {
     id: 'duck', emoji: '🦆', name: 'Ördek Göleti', category: 'animal',
     unlockCost: 180000, unitCost: 45000, baseRate: 1400, sellPrice: 2500, maxUnits: 15,
     description: 'Gölet kenarında ördekler', scene: ['💧', '🌊'],
+    harvestMinutes: 40,
   },
   {
     id: 'goat', emoji: '🐐', name: 'Keçi Çiftliği', category: 'animal',
     unlockCost: 400000, unitCost: 100000, baseRate: 3000, sellPrice: 5000, maxUnits: 12,
     description: 'Peynir ve süt üretimi', scene: ['⛰️', '🌿'],
+    harvestMinutes: 60,
   },
   {
     id: 'turkey', emoji: '🦃', name: 'Hindi Çiftliği', category: 'animal',
     unlockCost: 900000, unitCost: 220000, baseRate: 6500, sellPrice: 10000, maxUnits: 10,
     description: 'Premium hindi yetiştiriciliği', scene: ['🌳', '🍂'],
+    harvestMinutes: 90,
   },
   {
     id: 'bee', emoji: '🐝', name: 'Arı Kovanı', category: 'animal',
     unlockCost: 2000000, unitCost: 500000, baseRate: 15000, sellPrice: 25000, maxUnits: 20,
     description: 'Organik bal üretimi', scene: ['🌸', '🌼'],
+    harvestMinutes: 120,
   },
 ];
 
@@ -96,6 +111,7 @@ export type SectionId = typeof SECTIONS[number]['id'];
 export interface SectionState {
   unlocked: boolean;
   count: number;
+  needsReplant: boolean;
 }
 
 export interface SaleRecord {
@@ -107,10 +123,42 @@ export interface SaleRecord {
   total: number;
 }
 
+// ── Level thresholds (total XP needed to reach each level) ───────────────────
+export const LEVEL_THRESHOLDS = [0, 60, 200, 500, 1100, 2500, 5500, 12000, 25000, 50000, 100000];
+export const MAX_LEVEL = LEVEL_THRESHOLDS.length;
+
+export function computeLevel(xp: number): number {
+  let level = 1;
+  for (let i = 1; i < LEVEL_THRESHOLDS.length; i++) {
+    if (xp >= LEVEL_THRESHOLDS[i]) level = i + 1;
+    else break;
+  }
+  return Math.min(level, MAX_LEVEL);
+}
+
+export function levelMultiplier(level: number): number {
+  return 1 + (level - 1) * 0.12; // +12% production per level
+}
+
+export function xpToNextLevel(xp: number): { current: number; needed: number; level: number } {
+  const level = computeLevel(xp);
+  if (level >= MAX_LEVEL) return { current: xp, needed: xp, level };
+  const base = LEVEL_THRESHOLDS[level - 1];
+  const next = LEVEL_THRESHOLDS[level];
+  return { current: xp - base, needed: next - base, level };
+}
+
+export function replantCost(cfg: SectionConfig, count: number): number {
+  return Math.max(1, Math.round(count * cfg.baseRate * cfg.harvestMinutes * 0.25));
+}
+
 export interface GameState {
   balance: number;
   sections: Record<string, SectionState>;
   storage: Record<string, number>;
+  plotFill: Record<string, number>; // 0.0 → 1.0 fill progress per section
+  level: number;
+  xp: number;
   lastSaved: number;
   welcomeBonusClaimed: boolean;
 }
@@ -118,17 +166,21 @@ export interface GameState {
 const defaultSection = (cfg: SectionConfig): SectionState => ({
   unlocked: cfg.unlockCost === 0,
   count: cfg.unlockCost === 0 ? 1 : 0,
+  needsReplant: false,
 });
 
 export const makeInitialState = (): GameState => ({
   balance: 0,
   sections: Object.fromEntries(SECTIONS.map(cfg => [cfg.id, defaultSection(cfg)])),
   storage: Object.fromEntries(SECTIONS.map(cfg => [cfg.id, 0])),
+  plotFill: Object.fromEntries(SECTIONS.map(cfg => [cfg.id, 0])),
+  level: 1,
+  xp: 0,
   lastSaved: Date.now(),
   welcomeBonusClaimed: false,
 });
 
-const SAVE_KEY = 'farmGameState_v6';
+const SAVE_KEY = 'farmGameState_v7';
 const AUTO_SELL_KEY = 'farmAutoSell_v1';
 export const AUTO_SELL_PURCHASED_KEY = 'farmAutoSellPurchased_v1';
 export const WELCOME_BONUS = 150;
@@ -161,34 +213,45 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
 
   const [state, setState] = useState<GameState>(() => {
     try {
-      const saved = localStorage.getItem(SAVE_KEY);
+      // Try to migrate from v6 save
+      const saved = localStorage.getItem(SAVE_KEY) ?? localStorage.getItem('farmGameState_v6');
       if (saved) {
-        const parsed = JSON.parse(saved) as GameState;
-        const now = Date.now();
-        const deltaSec = Math.max(0, (now - parsed.lastSaved) / 1000);
+        const parsed = JSON.parse(saved) as Partial<GameState>;
 
         const sections: Record<string, SectionState> = {
           ...Object.fromEntries(SECTIONS.map(cfg => [cfg.id, defaultSection(cfg)])),
-          ...parsed.sections,
+          ...(parsed.sections ?? {}),
         };
+        // Ensure needsReplant exists on all sections (migration from v6)
+        SECTIONS.forEach(cfg => {
+          if (!(sections[cfg.id] as any).needsReplant) {
+            sections[cfg.id] = { ...sections[cfg.id], needsReplant: false };
+          }
+        });
 
         const storage: Record<string, number> = {
           ...Object.fromEntries(SECTIONS.map(cfg => [cfg.id, 0])),
           ...(parsed.storage ?? {}),
         };
 
-        SECTIONS.forEach(cfg => {
-          const s = sections[cfg.id];
-          if (s?.unlocked && s.count > 0) {
-            const ratePerSec = (s.count * cfg.baseRate) / cfg.sellPrice / 60;
-            storage[cfg.id] = Math.min(
-              (storage[cfg.id] ?? 0) + ratePerSec * deltaSec,
-              s.count * cfg.maxUnits * 10,
-            );
-          }
-        });
+        const plotFill: Record<string, number> = {
+          ...Object.fromEntries(SECTIONS.map(cfg => [cfg.id, 0])),
+          ...(parsed.plotFill ?? {}),
+        };
 
-        return { ...parsed, sections, storage, lastSaved: now };
+        const level = parsed.level ?? 1;
+        const xp = parsed.xp ?? 0;
+
+        return {
+          balance: parsed.balance ?? 0,
+          sections,
+          storage,
+          plotFill,
+          level,
+          xp,
+          lastSaved: Date.now(),
+          welcomeBonusClaimed: parsed.welcomeBonusClaimed ?? false,
+        };
       }
     } catch (e) {
       console.error('Failed to load save', e);
@@ -200,13 +263,10 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
   stateRef.current = state;
 
   const [showWelcomeBonus, setShowWelcomeBonus] = useState(false);
-  // Only grant the welcome bonus when the backend confirms this is a brand-new account.
-  // Checking `isNewUser` (from the server) prevents returning users from claiming the
-  // bonus again on a new device or after clearing localStorage.
   useEffect(() => {
     if (!isNewUser) return;
     setState(prev => {
-      if (prev.welcomeBonusClaimed) return prev; // safety: don't double-grant same session
+      if (prev.welcomeBonusClaimed) return prev;
       return { ...prev, balance: prev.balance + WELCOME_BONUS, welcomeBonusClaimed: true };
     });
     const wasAlreadyClaimed = stateRef.current.welcomeBonusClaimed;
@@ -216,7 +276,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isNewUser]);
 
-  // Real-time product accumulation (20 ticks/sec)
+  // ── Real-time plot fill accumulation (20 ticks/sec) ──────────────────────
   useEffect(() => {
     let lastTime = Date.now();
     const interval = setInterval(() => {
@@ -224,28 +284,29 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
       const deltaSec = (now - lastTime) / 1000;
       lastTime = now;
       const current = stateRef.current;
+      const lMult = levelMultiplier(current.level);
 
       let hasChange = false;
-      const storageUpdates: Record<string, number> = {};
+      const fillUpdates: Record<string, number> = {};
 
       SECTIONS.forEach(cfg => {
         const s = current.sections[cfg.id];
-        if (s?.unlocked && s.count > 0) {
-          const ratePerSec = (s.count * cfg.baseRate) / cfg.sellPrice / 60;
-          const cap = s.count * 200;
-          const current_amount = current.storage[cfg.id] ?? 0;
-          const newAmt = Math.min(current_amount + ratePerSec * deltaSec, cap);
-          if (newAmt !== current_amount) {
-            storageUpdates[cfg.id] = newAmt;
-            hasChange = true;
-          }
+        if (!s?.unlocked || s.count === 0) return;
+        if (s.needsReplant) return;
+        const fill = current.plotFill[cfg.id] ?? 0;
+        if (fill >= 1.0) return; // already full, wait for harvest tap
+        const fillRatePerSec = lMult / (cfg.harvestMinutes * 60);
+        const newFill = Math.min(fill + fillRatePerSec * deltaSec, 1.0);
+        if (Math.abs(newFill - fill) > 0.000001) {
+          fillUpdates[cfg.id] = newFill;
+          hasChange = true;
         }
       });
 
       if (hasChange) {
         setState(prev => ({
           ...prev,
-          storage: { ...prev.storage, ...storageUpdates },
+          plotFill: { ...prev.plotFill, ...fillUpdates },
         }));
       }
     }, 50);
@@ -260,7 +321,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-sell every 30 sec when enabled
+  // Auto-sell depo every 30 sec when enabled
   const autoSellRef = useRef(autoSell);
   autoSellRef.current = autoSell;
   useEffect(() => {
@@ -286,6 +347,8 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
     return () => clearInterval(interval);
   }, []);
 
+  // ── Actions ──────────────────────────────────────────────────────────────
+
   const unlockSection = useCallback((id: string) => {
     const cfg = SECTIONS.find(s => s.id === id)!;
     setState(prev => {
@@ -296,7 +359,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
         balance: prev.balance - cfg.unlockCost,
         sections: {
           ...prev.sections,
-          [id]: { unlocked: true, count: 1 },
+          [id]: { unlocked: true, count: 1, needsReplant: false },
         },
       };
     });
@@ -316,6 +379,51 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
           ...prev.sections,
           [id]: { ...sec, count: sec.count + 1 },
         },
+      };
+    });
+  }, []);
+
+  /** Tap to harvest: move yield to depo, mark needsReplant, gain XP */
+  const harvestPlot = useCallback((id: string) => {
+    const cfg = SECTIONS.find(s => s.id === id)!;
+    setState(prev => {
+      const sec = prev.sections[id];
+      if (!sec?.unlocked || sec.count === 0) return prev;
+      if (sec.needsReplant) return prev;
+      const fill = prev.plotFill[id] ?? 0;
+      if (fill < 1.0) return prev;
+
+      const lMult = levelMultiplier(prev.level);
+      // items = units of sellPrice each, worth (baseRate * harvestMinutes * lMult) TL total
+      const yieldItems = (sec.count * cfg.baseRate * cfg.harvestMinutes * lMult) / cfg.sellPrice;
+      const xpGain = Math.ceil(sec.count * cfg.harvestMinutes);
+      const newXp = prev.xp + xpGain;
+      const newLevel = computeLevel(newXp);
+
+      return {
+        ...prev,
+        storage: { ...prev.storage, [id]: (prev.storage[id] ?? 0) + yieldItems },
+        plotFill: { ...prev.plotFill, [id]: 0 },
+        sections: { ...prev.sections, [id]: { ...sec, needsReplant: true } },
+        xp: newXp,
+        level: newLevel,
+      };
+    });
+  }, []);
+
+  /** Pay replant cost to restart growth cycle */
+  const replantPlot = useCallback((id: string) => {
+    const cfg = SECTIONS.find(s => s.id === id)!;
+    setState(prev => {
+      const sec = prev.sections[id];
+      if (!sec?.unlocked || !sec.needsReplant) return prev;
+      const cost = replantCost(cfg, sec.count);
+      if (prev.balance < cost) return prev;
+      return {
+        ...prev,
+        balance: prev.balance - cost,
+        sections: { ...prev.sections, [id]: { ...sec, needsReplant: false } },
+        plotFill: { ...prev.plotFill, [id]: 0 },
       };
     });
   }, []);
@@ -344,7 +452,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
 
   const incomePerMin = SECTIONS.reduce((sum, cfg) => {
     const s = state.sections[cfg.id];
-    if (s?.unlocked && s.count > 0) return sum + s.count * cfg.baseRate;
+    if (s?.unlocked && s.count > 0 && !s.needsReplant) return sum + s.count * cfg.baseRate * levelMultiplier(state.level);
     return sum;
   }, 0);
 
@@ -352,5 +460,20 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
     setState(prev => ({ ...prev, balance: amount }));
   }, []);
 
-  return { state, unlockSection, buyUnit, sellProducts, incomePerMin, showWelcomeBonus, setShowWelcomeBonus, setBalance, autoSell, toggleAutoSell, autoSellPurchased, unlockAutoSell };
+  return {
+    state,
+    unlockSection,
+    buyUnit,
+    harvestPlot,
+    replantPlot,
+    sellProducts,
+    incomePerMin,
+    showWelcomeBonus,
+    setShowWelcomeBonus,
+    setBalance,
+    autoSell,
+    toggleAutoSell,
+    autoSellPurchased,
+    unlockAutoSell,
+  };
 }

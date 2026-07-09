@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useGameEngine, SECTIONS, WELCOME_BONUS, SectionConfig } from '../hooks/use-game-engine';
+import { useGameEngine, SECTIONS, WELCOME_BONUS, SectionConfig, replantCost, xpToNextLevel, levelMultiplier } from '../hooks/use-game-engine';
 import { MarketPanel } from '../components/MarketPanel';
 import { useUser } from '../hooks/use-user';
 import { useSaveFarmState, useGetOnlineStats, getGetOnlineStatsQueryKey } from '@workspace/api-client-react';
@@ -56,17 +56,32 @@ function FarmPlot({
   count,
   unlocked,
   balance,
+  plotFill,
+  needsReplant,
+  level,
   onTap,
+  onHarvest,
+  onReplant,
 }: {
   config: SectionConfig;
   count: number;
   unlocked: boolean;
   balance: number;
+  plotFill: number;
+  needsReplant: boolean;
+  level: number;
   onTap: () => void;
+  onHarvest: () => void;
+  onReplant: () => void;
 }) {
-  const income = count * config.baseRate;
+  const lMult = levelMultiplier(level);
+  const income = count * config.baseRate * lMult;
   const canAffordUnlock = balance >= config.unlockCost;
   const isFarm = config.category === 'farm';
+  const isHarvestReady = unlocked && count > 0 && !needsReplant && plotFill >= 1.0;
+  const replantNeeded = unlocked && count > 0 && needsReplant;
+  const rcost = replantNeeded ? replantCost(config, count) : 0;
+  const canAffordReplant = balance >= rcost;
   const fillPct = Math.min(count / config.maxUnits, 1);
 
   // Category-specific palette
@@ -230,7 +245,7 @@ function FarmPlot({
                 </>
               )}
 
-              {/* Illustrated units */}
+              {/* Illustrated units + harvest overlay */}
               <div className="relative z-10 flex items-center justify-center py-3 px-3 min-h-[80px]">
                 {count === 0 ? (
                   <div className="flex flex-col items-center gap-1 opacity-35">
@@ -240,7 +255,91 @@ function FarmPlot({
                 ) : (
                   <FarmIllustration id={config.id} count={count} size={62} />
                 )}
+
+                {/* Harvest ready overlay */}
+                {isHarvestReady && (
+                  <motion.div
+                    className="absolute inset-0 flex items-center justify-center"
+                    style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(1px)' }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <motion.button
+                      className="flex flex-col items-center gap-1 px-5 py-3 rounded-2xl font-black"
+                      style={{
+                        background: 'linear-gradient(135deg, #f5c842, #e6a800)',
+                        border: '2.5px solid #fde68a',
+                        boxShadow: '0 0 20px rgba(245,200,66,0.6)',
+                        color: '#451a00',
+                      }}
+                      animate={{ scale: [1, 1.06, 1] }}
+                      transition={{ repeat: Infinity, duration: 1 }}
+                      onClick={(e) => { e.stopPropagation(); onHarvest(); }}
+                    >
+                      <span style={{ fontSize: 22 }}>{isFarm ? '🌾' : '🐄'}</span>
+                      <span style={{ fontSize: 12 }}>Hasat Et!</span>
+                    </motion.button>
+                  </motion.div>
+                )}
+
+                {/* Replant overlay */}
+                {replantNeeded && (
+                  <motion.div
+                    className="absolute inset-0 flex items-center justify-center"
+                    style={{ background: 'rgba(0,0,0,0.6)' }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <motion.button
+                      className="flex flex-col items-center gap-1 px-4 py-2.5 rounded-2xl font-black"
+                      style={{
+                        background: canAffordReplant
+                          ? 'linear-gradient(135deg, #22c55e, #15803d)'
+                          : 'linear-gradient(135deg, #374151, #1f2937)',
+                        border: `2px solid ${canAffordReplant ? '#4ade80' : '#6b7280'}`,
+                        boxShadow: canAffordReplant ? '0 0 16px rgba(74,222,128,0.5)' : 'none',
+                        color: 'white',
+                      }}
+                      animate={canAffordReplant ? { scale: [1, 1.04, 1] } : {}}
+                      transition={{ repeat: Infinity, duration: 1.5 }}
+                      onClick={(e) => { e.stopPropagation(); if (canAffordReplant) onReplant(); }}
+                    >
+                      <span style={{ fontSize: 20 }}>🌱</span>
+                      <span style={{ fontSize: 11 }}>
+                        {canAffordReplant ? `Ek! (${formatNum(rcost)} TL)` : `Yetersiz: ${formatNum(rcost)} TL`}
+                      </span>
+                    </motion.button>
+                  </motion.div>
+                )}
               </div>
+
+              {/* Harvest fill progress bar */}
+              {unlocked && count > 0 && !needsReplant && !isHarvestReady && (
+                <div className="mx-3 mb-2 relative z-10">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-[8px] font-bold text-white/40">
+                      {isFarm ? 'Büyüyor' : 'Üretiyor'} {Math.round(plotFill * 100)}%
+                    </span>
+                    <span className="text-[8px] font-bold" style={{ color: palette.incomeColor }}>
+                      {formatNum(income)}/dk
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full bg-black/40 overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full relative overflow-hidden"
+                      style={{
+                        background: `linear-gradient(90deg, ${palette.barColor}88, ${palette.barColor})`,
+                        width: `${plotFill * 100}%`,
+                      }}
+                      animate={{ width: `${plotFill * 100}%` }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <div className="absolute inset-0 animate-pulse opacity-40"
+                        style={{ background: 'linear-gradient(90deg, transparent, white, transparent)' }} />
+                    </motion.div>
+                  </div>
+                </div>
+              )}
 
               {/* Bottom zone label */}
               <div className="absolute bottom-0 inset-x-0 flex items-center justify-between px-2 pb-1 pointer-events-none">
@@ -323,7 +422,7 @@ function PurchaseSheet({
   onClose,
 }: {
   config: SectionConfig;
-  sectionState: { unlocked: boolean; count: number };
+  sectionState: { unlocked: boolean; count: number; needsReplant?: boolean };
   balance: number;
   onUnlock: () => void;
   onBuy: () => void;
@@ -598,7 +697,7 @@ function FarmScene({ state }: { state: any }) {
 /* ── Main GameView ── */
 export default function GameView() {
   const { user, telegramId, isNewUser } = useUser();
-  const { state, unlockSection, buyUnit, sellProducts, incomePerMin, showWelcomeBonus, setShowWelcomeBonus, autoSell, toggleAutoSell, autoSellPurchased, setBalance } = useGameEngine({ isNewUser });
+  const { state, unlockSection, buyUnit, harvestPlot, replantPlot, sellProducts, incomePerMin, showWelcomeBonus, setShowWelcomeBonus, autoSell, toggleAutoSell, autoSellPurchased, setBalance } = useGameEngine({ isNewUser });
   const saveFarmMut = useSaveFarmState();
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -697,6 +796,8 @@ export default function GameView() {
 
   const streak = user?.streakCount ?? 0;
   const shownSections = SECTIONS.filter(s => s.category === activeTab);
+  const xpInfo = xpToNextLevel(state.xp);
+  const xpPct = xpInfo.needed > 0 ? Math.min(xpInfo.current / xpInfo.needed, 1) : 1;
 
   const selectedConfig = selectedId ? SECTIONS.find(s => s.id === selectedId) ?? null : null;
   const selectedState = selectedId ? (state.sections[selectedId] ?? { unlocked: false, count: 0 }) : null;
@@ -746,7 +847,8 @@ export default function GameView() {
       </AnimatePresence>
 
       {/* ══ TOP BAR ══ */}
-      <div className="flex items-center gap-2 px-3 py-2 z-40 relative flex-shrink-0" style={{ background: 'rgba(0,0,0,0.4)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+      <div className="z-40 relative flex-shrink-0" style={{ background: 'rgba(0,0,0,0.4)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+        <div className="flex items-center gap-2 px-3 py-2">
         <div className="top-balance-pill">
           <span className="text-base">💵</span>
           <span className="font-black text-white text-sm font-mono tabular-nums">{formatNum(state.balance)}</span>
@@ -781,12 +883,35 @@ export default function GameView() {
 
         <OnlineCounterPill />
 
+        {/* Level badge */}
+        <div className="flex items-center gap-1 px-2 py-1 rounded-full"
+          style={{ background: 'linear-gradient(135deg, #7c3aed, #4c1d95)', border: '1.5px solid #a78bfa' }}>
+          <span style={{ fontSize: 11 }}>⭐</span>
+          <span className="font-black text-white text-xs">Sv.{state.level}</span>
+        </div>
+
         {streak > 0 && (
           <div className="top-balance-pill">
             <Flame size={12} className="text-orange-400" />
             <span className="text-white font-black text-xs">{streak}</span>
           </div>
         )}
+        </div>
+
+        {/* XP bar */}
+        <div className="px-3 pb-1.5 flex items-center gap-2">
+          <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <motion.div
+              className="h-full rounded-full"
+              style={{ background: 'linear-gradient(90deg, #a78bfa, #7c3aed)', width: `${xpPct * 100}%` }}
+              animate={{ width: `${xpPct * 100}%` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
+          <span className="text-[9px] font-bold text-white/40 flex-shrink-0">
+            {xpInfo.current}/{xpInfo.needed} XP
+          </span>
+        </div>
       </div>
 
       {/* ══ MARKET PANEL ══ */}
@@ -853,7 +978,12 @@ export default function GameView() {
                   count={state.sections[cfg.id]?.count ?? 0}
                   unlocked={state.sections[cfg.id]?.unlocked ?? false}
                   balance={state.balance}
+                  plotFill={state.plotFill[cfg.id] ?? 0}
+                  needsReplant={state.sections[cfg.id]?.needsReplant ?? false}
+                  level={state.level}
                   onTap={() => setSelectedId(s => s === cfg.id ? null : cfg.id)}
+                  onHarvest={() => harvestPlot(cfg.id)}
+                  onReplant={() => replantPlot(cfg.id)}
                 />
               ))}
             </AnimatePresence>
