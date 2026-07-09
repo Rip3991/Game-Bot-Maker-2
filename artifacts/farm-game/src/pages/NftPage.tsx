@@ -31,6 +31,7 @@ interface NftItem {
   name: string; emoji: string; mintNumber: number;
   isListedForTrade: boolean; listPrice?: number | null;
   sellPrice?: number; marketPrice?: number; createdAt: string;
+  bonusCoins?: number;
 }
 interface MarketPrice {
   nftType: string; emoji: string; name: string; rarity: Rarity;
@@ -616,6 +617,25 @@ function CaseOpenOverlay({ caseDef, allNfts, onUserSync, onClose, onOpenAnother,
             {won.rarity === 'epic' && <motion.div className="text-red-400 font-black text-base text-center" animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 1.2 }}>🔥 EPİK KAZANIM! 🔥</motion.div>}
             {won.rarity === 'special' && <motion.div className="text-purple-300 font-black text-sm text-center" animate={{ scale: [1, 1.04, 1] }} transition={{ repeat: Infinity, duration: 1.4 }}>✨ ÖZEL NFT KAZANDIN! ✨</motion.div>}
             {won.rarity === 'rare' && <div className="text-blue-300 font-black text-sm text-center">💙 Nadir NFT Kazandın!</div>}
+            {won.bonusCoins && won.bonusCoins > 0 && (
+              <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.3, type: 'spring', stiffness: 300 }}
+                className="w-full rounded-2xl px-4 py-3 flex items-center justify-center gap-2"
+                style={{ background: 'linear-gradient(135deg, rgba(245,200,11,0.25), rgba(180,140,0,0.15))', border: '2px solid rgba(245,200,11,0.6)', boxShadow: '0 0 20px rgba(245,200,11,0.3)' }}>
+                <span className="text-2xl">🪙</span>
+                <div className="text-center">
+                  <div className="font-black text-yellow-300 text-lg">+{won.bonusCoins.toLocaleString()} Coin Bonusu!</div>
+                  <div className="text-yellow-400/70 text-[10px] font-bold">
+                    {won.rarity === 'legendary' ? 'Efsanevi NFT ödülü hesabına eklendi' :
+                     won.rarity === 'epic' ? 'Epik NFT ödülü hesabına eklendi' :
+                     won.rarity === 'special' ? 'Özel NFT ödülü hesabına eklendi' :
+                     'Nadir NFT ödülü hesabına eklendi'}
+                  </div>
+                </div>
+              </motion.div>
+            )}
             <div className="flex gap-3 w-full">
               <button onClick={onOpenAnother} className="flex-1 py-3 rounded-2xl font-black text-yellow-900 active:scale-95" style={{ background: 'linear-gradient(135deg, #f5c842, #e6a800)' }}>🎰 Bir Daha</button>
               <button onClick={handleClose} className="flex-1 py-3 rounded-2xl font-black text-white active:scale-95" style={{ background: 'linear-gradient(135deg, #374151, #1f2937)', border: '1px solid #4b5563' }}>✅ Koleksiyona Git</button>
