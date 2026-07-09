@@ -12,6 +12,7 @@ import MascotTutorial, { useMascotTutorial } from '../components/MascotTutorial'
 import mascotAvatar from '../assets/mascot-avatar.png';
 import { SellHintMascot } from '../components/SellHintMascot';
 import { FarmBackground } from '../components/FarmBackground';
+import { PlatformStatsBanner } from '../components/PlatformStatsBanner';
 
 export { formatNum } from '../utils/format';
 
@@ -855,6 +856,8 @@ export default function GameView() {
 
           {/* Scrollable plots */}
           <div className="flex-1 overflow-y-auto custom-scrollbar py-1 pb-4">
+            {/* Platform stats banner — shows real TL paid out + coins + players */}
+            <PlatformStatsBanner />
             <AnimatePresence mode="popLayout">
               {shownSections.map(cfg => (
                 <FarmPlot

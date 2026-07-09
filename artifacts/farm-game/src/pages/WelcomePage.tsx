@@ -42,7 +42,7 @@ const SLIDES = [
     emoji: '👥🎁',
     mascot: 'avatar',
     title: 'Arkadaşını Davet Et',
-    subtitle: 'Her davet = 🪙 50 Coin! Bağlantını paylaş, çiftliğini büyüt, 350 TL çek!',
+    subtitle: 'Her davet = 🪙 25 Coin! Bağlantını paylaş, çiftliğini büyüt, 350 TL çek!',
     color: 'from-[#2a1060] to-[#160830]',
     cta: 'Devam →',
   },

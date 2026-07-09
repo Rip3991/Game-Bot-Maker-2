@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { sql } from "drizzle-orm";
-import { db, usersTable } from "@workspace/db";
+import { sql, eq } from "drizzle-orm";
+import { db, usersTable, withdrawalsTable } from "@workspace/db";
 import { getOnlineCount } from "./users";
 
 const router = Router();
@@ -47,6 +47,35 @@ router.get("/stats/online", async (_req, res): Promise<void> => {
     onlineCount,
     totalPlayers,
     totalCoinsInCirculation: Number(totals[0]?.totalCoins ?? 0),
+  });
+});
+
+// GET /stats/platform — cumulative platform impact stats
+// Shows total TL paid out to users, total coins distributed, total players.
+// Used by the "platform proof" banner in the game UI.
+router.get("/stats/platform", async (_req, res): Promise<void> => {
+  const [userTotals, withdrawTotals] = await Promise.all([
+    db
+      .select({
+        totalPlayers: sql<number>`count(*)`,
+        totalCoinsDistributed: sql<number>`coalesce(sum(${usersTable.coins}::numeric), 0)`,
+      })
+      .from(usersTable),
+
+    db
+      .select({
+        totalTlPaid: sql<number>`coalesce(sum(amount::numeric), 0)`,
+        totalWithdrawals: sql<number>`count(*)`,
+      })
+      .from(withdrawalsTable)
+      .where(eq(withdrawalsTable.status, "approved")),
+  ]);
+
+  res.json({
+    totalPlayers: Number(userTotals[0]?.totalPlayers ?? 0),
+    totalCoinsDistributed: Number(userTotals[0]?.totalCoinsDistributed ?? 0),
+    totalTlPaid: Number(withdrawTotals[0]?.totalTlPaid ?? 0),
+    totalWithdrawals: Number(withdrawTotals[0]?.totalWithdrawals ?? 0),
   });
 });
 
