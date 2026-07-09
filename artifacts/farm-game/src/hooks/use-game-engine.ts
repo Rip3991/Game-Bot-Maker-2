@@ -412,14 +412,10 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
       const fill = prev.plotFill[id] ?? 0;
       if (fill < 1.0) return prev;
 
-      // NOTE: level bonus is applied ONCE, to fill speed only (see the fill-
-      // tick effect above, `fillRatePerSec = lMult / harvestMinutes`), which
-      // already makes plots harvest more often per minute at higher levels.
-      // Do NOT also multiply the yield here — doing both compounded the bonus
-      // to lMult^2 (e.g. ~4.8x instead of ~2.2x at max level), silently
-      // reopening the coin→TL payout risk the baseRate tuning was meant to
-      // close. Yield per harvest must stay level-independent.
-      const yieldItems = (sec.count * cfg.baseRate * cfg.harvestMinutes) / cfg.sellPrice;
+      // Yield = exactly how many units the player planted (count).
+      // Selling count items at sellPrice each gives total = count × sellPrice coins.
+      // This is intentionally simpler and more conservative than the old formula.
+      const yieldItems = sec.count;
       const xpGain = Math.ceil(sec.count * cfg.harvestMinutes);
       const newXp = prev.xp + xpGain;
       const newLevel = computeLevel(newXp);
