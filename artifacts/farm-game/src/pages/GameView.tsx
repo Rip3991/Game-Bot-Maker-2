@@ -475,7 +475,7 @@ function FarmScene({ state }: { state: any }) {
 /* ── Main GameView ── */
 export default function GameView() {
   const { user, telegramId, isNewUser } = useUser();
-  const { state, unlockSection, buyUnit, sellProducts, incomePerMin, showWelcomeBonus, setShowWelcomeBonus, autoSell, toggleAutoSell, autoSellPurchased } = useGameEngine({ isNewUser });
+  const { state, unlockSection, buyUnit, sellProducts, incomePerMin, showWelcomeBonus, setShowWelcomeBonus, autoSell, toggleAutoSell, autoSellPurchased, setBalance } = useGameEngine({ isNewUser });
   const saveFarmMut = useSaveFarmState();
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -541,6 +541,20 @@ export default function GameView() {
     }, 30000);
     return () => clearInterval(interval);
   }, [telegramId]);
+
+  // Sync admin-added balance into local game state.
+  // When the server balance (polled every 10s) is higher than the local
+  // game-engine balance, it means an admin credited the user externally.
+  // We pull it in immediately so (a) the player sees it in the UI and
+  // (b) the next 30s farm-save writes the correct (higher) value to DB
+  // instead of overwriting the admin addition with the stale local value.
+  const serverBalance = user?.balance ?? 0;
+  useEffect(() => {
+    if (serverBalance > stateRef.current.balance) {
+      setBalance(serverBalance);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverBalance]);
 
   const streak = user?.streakCount ?? 0;
   const shownSections = SECTIONS.filter(s => s.category === activeTab);

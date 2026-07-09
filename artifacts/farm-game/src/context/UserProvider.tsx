@@ -46,7 +46,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     refresh();
   }, [refresh]);
 
-  // Poll balance + coins every 30 seconds so admin-added funds appear automatically
+  // Poll balance + coins every 10 seconds so admin-added funds appear quickly.
+  // Interval is intentionally short: admin balance additions must propagate to
+  // the player's local game state before the 30-second farm-save overwrites DB.
   useEffect(() => {
     if (!telegramId || telegramId === 'demo_user') return;
     const id = setInterval(async () => {
@@ -56,7 +58,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         const { balance, coins } = await res.json();
         setUser(prev => prev ? { ...prev, balance, coins } : prev);
       } catch {}
-    }, 30_000);
+    }, 10_000);
     return () => clearInterval(id);
   }, [telegramId]);
 
