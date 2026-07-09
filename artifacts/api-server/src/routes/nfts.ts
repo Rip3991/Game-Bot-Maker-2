@@ -234,6 +234,15 @@ export const NFT_DEFS = {
 export type NftType = keyof typeof NFT_DEFS;
 
 // ── Case Definitions ──────────────────────────────────────────────────────────
+//
+// Drop rate design rules:
+//  • farm_case  : efsanevi çok nadir (0.5%) — temel kasa, yaygın ürünler ağırlıklı
+//  • crystal_case: nadir (rare) ağırlıklı ama pahalı rares item içi ağırlıklandırma ile
+//                  daha az çıkar; efsanevi sadece %2
+//  • special/epic/legend: Coin ile alınır, oranlar kademeli yükselir
+//
+// İçi ağırlıklandırma (sellPriceWeight) ayrıca her rarity havuzu içinde
+// ucuz item'ları pahalılara göre çok daha sık düşürür.
 
 export const CASE_DEFS = {
   farm_case: {
@@ -243,7 +252,8 @@ export const CASE_DEFS = {
     currency: "tl" as const,
     description: "Temel çiftlik NFT'leri",
     bgGradient: "linear-gradient(135deg, #2d5a1b, #4a8c2a)",
-    drops: { common: 0.67, rare: 0.23, epic: 0.00, special: 0.07, legendary: 0.03 },
+    // efsanevi: 0.5% (eski: 3%), özel: 3% (eski: 7%)
+    drops: { common: 0.765, rare: 0.20, epic: 0.00, special: 0.03, legendary: 0.005 },
   },
   crystal_case: {
     name: "Kristal Kasa",
@@ -252,7 +262,9 @@ export const CASE_DEFS = {
     currency: "tl" as const,
     description: "Nadir ve değerli NFT'ler",
     bgGradient: "linear-gradient(135deg, #1a3a6b, #2d6bb5)",
-    drops: { common: 0.22, rare: 0.44, epic: 0.03, special: 0.20, legendary: 0.07 },
+    // efsanevi: 2% (eski: 7%), özel: 16% (eski: 20%)
+    // pahalı nadir eşyalar içi ağırlıklandırmayla zaten çok düşük
+    drops: { common: 0.30, rare: 0.48, epic: 0.04, special: 0.16, legendary: 0.02 },
   },
   special_case: {
     name: "Özel Kasa",
@@ -261,7 +273,8 @@ export const CASE_DEFS = {
     currency: "coins" as const,
     description: "Nadir özel koleksiyon NFT'leri",
     bgGradient: "linear-gradient(135deg, #3b1f6e, #6d28d9)",
-    drops: { common: 0.08, rare: 0.28, epic: 0.09, special: 0.42, legendary: 0.13 },
+    // efsanevi: 6% (eski: 13%)
+    drops: { common: 0.08, rare: 0.30, epic: 0.10, special: 0.46, legendary: 0.06 },
   },
   epic_case: {
     name: "Epik Kasa",
@@ -270,7 +283,8 @@ export const CASE_DEFS = {
     currency: "coins" as const,
     description: "Güçlü epik NFT'ler",
     bgGradient: "linear-gradient(135deg, #4a0808, #991b1b)",
-    drops: { common: 0.05, rare: 0.18, epic: 0.55, special: 0.12, legendary: 0.10 },
+    // efsanevi: 8% (eski: 10%)
+    drops: { common: 0.03, rare: 0.12, epic: 0.62, special: 0.15, legendary: 0.08 },
   },
   legend_case: {
     name: "Efsane Kasası",
@@ -279,7 +293,8 @@ export const CASE_DEFS = {
     currency: "coins" as const,
     description: "En nadir efsanevi NFT'ler",
     bgGradient: "linear-gradient(135deg, #5c3000, #b8860b)",
-    drops: { common: 0.05, rare: 0.18, epic: 0.17, special: 0.20, legendary: 0.40 },
+    // efsanevi: 55% (eski: 40%) — bu kasa için uygun
+    drops: { common: 0.02, rare: 0.08, epic: 0.15, special: 0.20, legendary: 0.55 },
   },
 } as const;
 
@@ -346,16 +361,58 @@ export async function grantNft(telegramId: string, nftType: NftType): Promise<vo
   }).onConflictDoNothing();
 }
 
+// ── Within-rarity drop weight ─────────────────────────────────────────────────
+// Kontroller YÜKSEKTEN DÜŞÜĞE sıralanmıştır — bu sayede daha yüksek bir eşik
+// yanlışlıkla önceki dalda yakalanmaz.
+//
+//  Fiyat aralığı          → ağırlık   (açıklama)
+//  ≥ 500 000 TL           →  1×   ultra-nadir legendary
+//  ≥ 200 000 TL           →  2×   çok nadir legendary
+//  ≥  70 000 TL           →  3×   nadir legendary + pahalı epic
+//  ≥  40 000 TL           →  5×   orta legendary + orta epic
+//  ≥  22 000 TL           → 10×   ucuz legendary + ucuz epic (22k-40k)
+//  ≥  16 000 TL           →  2×   pahalı special
+//  ≥  12 000 TL           →  4×   orta special
+//  ≥   8 000 TL           →  8×   ucuz special
+//  ≥   7 000 TL           →  1×   pahalı rare (7k+)
+//  ≥   5 000 TL           →  2×   nadir rare (5-7k)
+//  ≥   3 500 TL           →  4×   orta rare (3.5-5k)
+//  ≥   2 000 TL           →  7×   ucuz-orta rare (2-3.5k)
+//  < 2 000 TL             → 12×   en ucuz rare + tüm common'lar
+function sellPriceWeight(sellPrice: number): number {
+  if (sellPrice >= 500_000) return 1;
+  if (sellPrice >= 200_000) return 2;
+  if (sellPrice >= 70_000)  return 3;
+  if (sellPrice >= 40_000)  return 5;
+  if (sellPrice >= 22_000)  return 10;
+  // Special tier (8.5k – 22k)
+  if (sellPrice >= 16_000)  return 2;
+  if (sellPrice >= 12_000)  return 4;
+  if (sellPrice >= 8_000)   return 8;
+  // Rare tier (1.5k – 7.2k)
+  if (sellPrice >= 7_000)   return 1;
+  if (sellPrice >= 5_000)   return 2;
+  if (sellPrice >= 3_500)   return 4;
+  if (sellPrice >= 2_000)   return 7;
+  // Common + en ucuz rares
+  return 12;
+}
+
 function pickRandomNft(rarity: "common" | "rare" | "epic" | "special" | "legendary"): NftType {
   const pool = (Object.entries(NFT_DEFS) as [NftType, typeof NFT_DEFS[NftType]][])
-    .filter(([, def]) => def.rarity === rarity)
-    .map(([key]) => key);
-  // Safety fallback: "special" rarity has no defined NFTs — fall back to "rare"
-  // to avoid an undefined nftType (which would previously crash case-opening).
-  if (pool.length === 0) {
-    return pickRandomNft("rare");
+    .filter(([, def]) => def.rarity === rarity);
+
+  // Güvenlik: "special" vb. boş kalırsa rare'e geri dön
+  if (pool.length === 0) return pickRandomNft("rare");
+
+  // Ağırlıklı rastgele seçim — pahalı item'lar daha nadir düşer
+  const totalWeight = pool.reduce((sum, [, def]) => sum + sellPriceWeight(def.sellPrice), 0);
+  let rand = Math.random() * totalWeight;
+  for (const [key, def] of pool) {
+    rand -= sellPriceWeight(def.sellPrice);
+    if (rand <= 0) return key;
   }
-  return pool[Math.floor(Math.random() * pool.length)];
+  return pool[pool.length - 1][0];
 }
 
 function rollRarity(drops: { common: number; rare: number; epic?: number; special: number; legendary: number }): "common" | "rare" | "epic" | "special" | "legendary" {
