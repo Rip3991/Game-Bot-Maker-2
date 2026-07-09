@@ -129,25 +129,26 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 50px;
-  min-height: 52px;
-  background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
-  border: 2px solid #ccc;
-  border-radius: 10px;
-  box-shadow: 2px 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.8);
+  width: 46px;
+  min-height: 50px;
+  background: linear-gradient(180deg, #1e3a08 0%, #142806 100%);
+  border: 1.5px solid rgba(74,122,47,0.35);
+  border-radius: 12px;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.06) inset;
   cursor: pointer;
-  transition: transform 0.1s;
-  gap: 2px;
+  transition: transform 0.1s, box-shadow 0.1s;
+  gap: 3px;
 }
 
 .right-nav-btn:active {
-  transform: scale(0.94);
+  transform: scale(0.93);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.4);
 }
 
 .right-nav-btn.active {
-  background: linear-gradient(180deg, #4ea824 0%, #3d8b1c 100%);
-  border-color: #2e6612;
-  color: white;
+  background: linear-gradient(180deg, #3d8b1c 0%, #2a6010 100%);
+  border-color: #6abf30;
+  box-shadow: 0 3px 0 #1a4008, 0 0 10px rgba(74,222,128,0.3), 0 1px 0 rgba(255,255,255,0.12) inset;
 }
 
 /* ── NFT Artwork Animations ── */
