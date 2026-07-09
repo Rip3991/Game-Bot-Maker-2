@@ -197,11 +197,28 @@ body {
   100% { transform: translate(-50%, -110vh) rotate(360deg); opacity: 0; }
 }
 
+/* Vehicles (🚛🚜🚗) face left by default in most emoji sets, so they must
+   drive leftward to look correct — moving rightward with a left-facing icon
+   reads as "driving backwards". */
 @keyframes truckMove {
-  0%   { transform: translateX(-60px); }
-  40%  { transform: translateX(0px); }
-  60%  { transform: translateX(0px); }
-  100% { transform: translateX(60px); }
+  0%   { transform: translateX(60px)  translateY(0); }
+  40%  { transform: translateX(0px)   translateY(0); }
+  60%  { transform: translateX(0px)   translateY(0); }
+  100% { transform: translateX(-60px) translateY(0); }
+}
+
+/* Subtle suspension bounce layered on top of truckMove for extra polish. */
+@keyframes vehicleBounce {
+  0%, 100% { margin-top: 0px; }
+  50%      { margin-top: -1px; }
+}
+
+/* Dust puffs kicked up behind a moving vehicle (appears to its right since
+   it drives leftward). */
+@keyframes dustPuff {
+  0%   { transform: translate(0, 0) scale(0.4); opacity: 0; }
+  25%  { opacity: 0.55; }
+  100% { transform: translate(10px, -4px) scale(1.3); opacity: 0; }
 }
 .truck-anim {
   animation: truckMove 6s ease-in-out infinite;

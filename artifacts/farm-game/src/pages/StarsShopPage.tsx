@@ -1,9 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../hooks/use-user';
+import { useGetReferralStats } from '@workspace/api-client-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Star, ShoppingBag, Zap, RefreshCw } from 'lucide-react';
+import { Star, ShoppingBag, Zap, RefreshCw, Lock } from 'lucide-react';
 import { AUTO_SELL_PURCHASED_KEY } from '../hooks/use-game-engine';
+import { useLocation } from 'wouter';
+
+function readLocalCoins(): number {
+  try {
+    const saved = localStorage.getItem('farmGameState_v8');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return Math.floor(parsed.coins ?? 0);
+    }
+  } catch { /* */ }
+  return 0;
+}
 
 const API = `${import.meta.env.BASE_URL}api`;
 
@@ -29,6 +42,7 @@ type Tab = 'buy' | 'spend';
 
 export default function StarsShopPage() {
   const { user, telegramId, refresh } = useUser();
+  const [, navigate] = useLocation();
   const [tab, setTab] = useState<Tab>('buy');
   const [packages, setPackages] = useState<CoinPackage[]>([]);
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
@@ -41,11 +55,21 @@ export default function StarsShopPage() {
   const [convertRate, setConvertRate] = useState<{ rate: number; minCoins: number } | null>(null);
   const [convertAmount, setConvertAmount] = useState('');
   const [converting, setConverting] = useState(false);
+  const [localCoins, setLocalCoins] = useState<number>(() => readLocalCoins());
+
+  const { data: referralStats } = useGetReferralStats(telegramId);
+  const hasInvite = (referralStats?.totalReferrals ?? 0) >= 1;
 
   useEffect(() => {
     fetch(`${API}/stars/coin-packages`).then(r => r.json()).then(setPackages).catch(() => {});
     fetch(`${API}/stars/coin-shop`).then(r => r.json()).then(setShopItems).catch(() => {});
     fetch(`${API}/stars/coin-convert-rate`).then(r => r.json()).then(setConvertRate).catch(() => {});
+  }, []);
+
+  // Refresh local coins every 5s to stay in sync with game engine
+  useEffect(() => {
+    const id = setInterval(() => setLocalCoins(readLocalCoins()), 5000);
+    return () => clearInterval(id);
   }, []);
 
   // ── Convert Coins → TL ──────────────────────────────────────────────────
@@ -169,7 +193,10 @@ export default function StarsShopPage() {
     }
   };
 
-  const coins = user?.coins ?? 0;
+  // Use the higher of server or local coins for display — the local game engine
+  // may have unsyced coins not yet pushed to the server (10s sync interval).
+  const serverCoins = user?.coins ?? 0;
+  const coins = Math.max(serverCoins, localCoins);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -414,42 +441,75 @@ export default function StarsShopPage() {
                 );
               })}
 
-              {/* Coin → TL Converter */}
-              <div className="rounded-2xl overflow-hidden p-4"
-                style={{ background: 'linear-gradient(135deg, #1a2e1a, #162816)', border: '1px solid rgba(74,200,74,0.3)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">💵</span>
-                  <div className="font-black text-white text-sm">Coin'i TL'ye Çevir</div>
-                </div>
-                <div className="text-white/50 text-[10px] font-bold mb-3 leading-relaxed">
-                  Coin'lerini anında çekilebilir TL bakiyesine çevir.
-                  {convertRate ? ` (${convertRate.minCoins}+ Coin, oran: 1.000 Coin ≈ ${(convertRate.rate * 1000).toFixed(2)} TL)` : ''}
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    value={convertAmount}
-                    onChange={(e) => setConvertAmount(e.target.value)}
-                    placeholder={convertRate ? `Min. ${convertRate.minCoins}` : '...'}
-                    className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white font-black text-sm outline-none"
-                  />
-                  <button
-                    onClick={handleConvert}
-                    disabled={converting || !convertRate}
-                    className="px-4 py-2.5 rounded-xl font-black text-sm text-white flex-shrink-0"
-                    style={{ background: 'linear-gradient(135deg, #22c55e, #15803d)' }}
-                  >
-                    {converting ? (
-                      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.8 }}>
-                        <RefreshCw size={16} />
-                      </motion.div>
-                    ) : 'Çevir'}
-                  </button>
-                </div>
-                {convertRate && convertAmount && !isNaN(parseInt(convertAmount, 10)) && (
-                  <div className="text-green-400 text-[10px] font-bold mt-2">
-                    ≈ {(Math.floor(parseInt(convertAmount, 10) * convertRate.rate * 100) / 100).toFixed(2)} TL alacaksın
+              {/* Coin → TL Converter — gated behind first invite */}
+              <div className="rounded-2xl overflow-hidden"
+                style={{ background: 'linear-gradient(135deg, #1a2e1a, #162816)', border: `1px solid ${hasInvite ? 'rgba(74,200,74,0.3)' : 'rgba(255,200,0,0.25)'}` }}>
+
+                {!hasInvite ? (
+                  /* 🔒 Invite gate */
+                  <div className="p-4 flex flex-col items-center gap-3 text-center">
+                    <motion.div
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                      style={{ background: 'rgba(255,200,0,0.12)', border: '2px solid rgba(255,200,0,0.35)' }}
+                      animate={{ scale: [1, 1.06, 1] }}
+                      transition={{ repeat: Infinity, duration: 2 }}
+                    >
+                      <Lock size={24} className="text-yellow-400" />
+                    </motion.div>
+                    <div>
+                      <div className="font-black text-white text-sm mb-1">💵 Coin → TL Dönüşümü Kilitli</div>
+                      <div className="text-yellow-300/80 text-[11px] font-bold leading-relaxed">
+                        Bu özelliği açmak için en az <span className="text-yellow-300 font-black">1 arkadaşını davet etmelisin!</span>
+                      </div>
+                    </div>
+                    <motion.button
+                      onClick={() => navigate('/invite')}
+                      className="w-full py-3 rounded-xl font-black text-sm"
+                      style={{ background: 'linear-gradient(135deg, #f5c842, #e6a800)', color: '#451a00' }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      👥 Arkadaş Davet Et → Kilidi Aç
+                    </motion.button>
+                  </div>
+                ) : (
+                  /* ✅ Conversion UI */
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">💵</span>
+                      <div className="font-black text-white text-sm">Coin'i TL'ye Çevir</div>
+                      <div className="ml-auto text-[9px] font-black text-green-400 bg-green-900/30 border border-green-600/30 rounded-full px-2 py-0.5">✓ Açık</div>
+                    </div>
+                    <div className="text-white/50 text-[10px] font-bold mb-3 leading-relaxed">
+                      Coin'lerini anında çekilebilir TL bakiyesine çevir.
+                      {convertRate ? ` (${convertRate.minCoins}+ Coin, oran: 1.000 Coin ≈ ${(convertRate.rate * 1000).toFixed(2)} TL)` : ''}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        value={convertAmount}
+                        onChange={(e) => setConvertAmount(e.target.value)}
+                        placeholder={convertRate ? `Min. ${convertRate.minCoins}` : '...'}
+                        className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white font-black text-sm outline-none"
+                      />
+                      <button
+                        onClick={handleConvert}
+                        disabled={converting || !convertRate}
+                        className="px-4 py-2.5 rounded-xl font-black text-sm text-white flex-shrink-0"
+                        style={{ background: 'linear-gradient(135deg, #22c55e, #15803d)' }}
+                      >
+                        {converting ? (
+                          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.8 }}>
+                            <RefreshCw size={16} />
+                          </motion.div>
+                        ) : 'Çevir'}
+                      </button>
+                    </div>
+                    {convertRate && convertAmount && !isNaN(parseInt(convertAmount, 10)) && (
+                      <div className="text-green-400 text-[10px] font-bold mt-2">
+                        ≈ {(Math.floor(parseInt(convertAmount, 10) * convertRate.rate * 100) / 100).toFixed(2)} TL alacaksın
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

@@ -258,7 +258,13 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
 
         {/* Sell action column */}
         <div className="flex-shrink-0 flex flex-col items-center justify-center gap-1 w-[76px]">
-          {/* Total value */}
+          {/* Total value of items currently sitting in storage, waiting to be
+              sold — this is NOT the wallet coin balance shown in the top bar,
+              so it's labeled "Depoda" to avoid the two numbers looking like
+              the same thing when they legitimately differ. */}
+          <div className="text-[7px] font-bold uppercase tracking-wide leading-none" style={{ color: 'rgba(253,224,71,0.6)' }}>
+            Depoda
+          </div>
           <motion.div
             key={grandTotal}
             initial={{ scale: 1.15 }}

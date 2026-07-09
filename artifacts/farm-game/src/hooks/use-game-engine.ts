@@ -19,90 +19,106 @@ export interface SectionConfig {
 
 export const SECTIONS: SectionConfig[] = [
   // ——— TARLALAR (FARMS) ———
+  // NOTE: baseRates for wheat-sheep were reduced ~40% and harvestMinutes were
+  // increased 2-3x (2026-07-09) to slow down early coin accumulation and force
+  // players to spend more real time in the app. Do NOT reduce harvestMinutes
+  // below these values without a full economy review — see coin-economy-margin
+  // memory notes. Upper tiers (pig-bee) keep their already-tuned baseRates but
+  // also got harvestMinutes doubled to extend end-game session time.
   {
     id: 'wheat', emoji: '🌾', name: 'Buğday Tarlası', category: 'farm',
-    unlockCost: 0, unitCost: 25, baseRate: 1.2, sellPrice: 5, maxUnits: 20,
+    unlockCost: 0, unitCost: 25, baseRate: 0.7, sellPrice: 5, maxUnits: 20,
     description: 'Başlangıç çiftliğin', scene: ['🌳', '🌲'],
-    harvestMinutes: 3,
+    harvestMinutes: 10,
   },
   {
     id: 'corn', emoji: '🌽', name: 'Mısır Tarlası', category: 'farm',
-    unlockCost: 250, unitCost: 120, baseRate: 4, sellPrice: 10, maxUnits: 20,
+    unlockCost: 250, unitCost: 120, baseRate: 2, sellPrice: 10, maxUnits: 20,
     description: 'Altın mısır başakları', scene: ['🌻', '🌿'],
-    harvestMinutes: 5,
+    harvestMinutes: 15,
   },
   {
     id: 'tomato', emoji: '🍅', name: 'Domates Bahçesi', category: 'farm',
-    unlockCost: 1800, unitCost: 600, baseRate: 14, sellPrice: 25, maxUnits: 15,
+    unlockCost: 1800, unitCost: 600, baseRate: 8, sellPrice: 25, maxUnits: 15,
     description: 'Taze kırmızı domatesler', scene: ['🌿', '🪴'],
-    harvestMinutes: 8,
+    harvestMinutes: 20,
   },
   {
     id: 'sunflower', emoji: '🌻', name: 'Ayçiçeği Tarlası', category: 'farm',
-    unlockCost: 10000, unitCost: 3000, baseRate: 60, sellPrice: 100, maxUnits: 12,
+    unlockCost: 10000, unitCost: 3000, baseRate: 35, sellPrice: 100, maxUnits: 12,
     description: 'Yağlık ayçiçeği tarlası', scene: ['☀️', '🌿'],
-    harvestMinutes: 12,
+    harvestMinutes: 30,
   },
   // ——— HAYVANLAR (ANIMALS) ———
   {
     id: 'chicken', emoji: '🐔', name: 'Tavuk Kümesi', category: 'animal',
-    unlockCost: 180, unitCost: 40, baseRate: 3, sellPrice: 8, maxUnits: 20,
+    unlockCost: 180, unitCost: 40, baseRate: 1.5, sellPrice: 8, maxUnits: 20,
     description: 'Yumurta ve et üretimi', scene: ['🏚️', '🌾'],
-    harvestMinutes: 4,
+    harvestMinutes: 12,
   },
   {
     id: 'cow', emoji: '🐄', name: 'İnek Ahırı', category: 'animal',
-    unlockCost: 1000, unitCost: 300, baseRate: 12, sellPrice: 30, maxUnits: 15,
+    unlockCost: 1000, unitCost: 300, baseRate: 7, sellPrice: 30, maxUnits: 15,
     description: 'Süt ve et üretimi', scene: ['🏠', '🌿'],
-    harvestMinutes: 6,
+    harvestMinutes: 18,
   },
   {
     id: 'sheep', emoji: '🐑', name: 'Koyun Ağılı', category: 'animal',
-    unlockCost: 3500, unitCost: 900, baseRate: 35, sellPrice: 80, maxUnits: 15,
+    unlockCost: 3500, unitCost: 900, baseRate: 20, sellPrice: 80, maxUnits: 15,
     description: 'Yün ve süt üretimi', scene: ['⛰️', '🌿'],
-    harvestMinutes: 10,
+    harvestMinutes: 28,
   },
+  // NOTE on baseRate for pig..bee: these are the coin-earning rate (coins/min
+  // per unit). Coins convert to real TL at COIN_TO_TL_RATE (see stars.ts), so
+  // this directly controls real-money payout risk. The original values here
+  // let a fully-built, max-level farm earn ~900k coins/min (~45k TL/min) —
+  // an effectively unlimited cash-out once maxed. baseRate for these seven
+  // top tiers was cut ~8x (2026-07-09, operator request) to bring max
+  // end-game payout down to a much safer ~6k TL/min while leaving unlockCost/
+  // unitCost (the TL investment side) untouched — see coin-economy-margin
+  // memory notes before raising these again. harvestMinutes doubled 2026-07-09
+  // to extend session time without reopening the payout risk.
   {
     id: 'pig', emoji: '🐷', name: 'Domuz Çiftliği', category: 'animal',
-    unlockCost: 10000, unitCost: 2500, baseRate: 100, sellPrice: 200, maxUnits: 12,
+    unlockCost: 10000, unitCost: 2500, baseRate: 12.5, sellPrice: 200, maxUnits: 12,
     description: 'Et ve şarküteri ürünleri', scene: ['🏡', '🌱'],
-    harvestMinutes: 15,
-  },
-  {
-    id: 'horse', emoji: '🐴', name: 'At Ahırı', category: 'animal',
-    unlockCost: 30000, unitCost: 8000, baseRate: 280, sellPrice: 500, maxUnits: 10,
-    description: 'Prestijli at yetiştiriciliği', scene: ['🏟️', '🌿'],
-    harvestMinutes: 20,
-  },
-  {
-    id: 'rabbit', emoji: '🐰', name: 'Tavşan Çiftliği', category: 'animal',
-    unlockCost: 80000, unitCost: 20000, baseRate: 650, sellPrice: 1200, maxUnits: 20,
-    description: 'Hızlı üreyen tavşanlar', scene: ['🌸', '🌿'],
     harvestMinutes: 30,
   },
   {
-    id: 'duck', emoji: '🦆', name: 'Ördek Göleti', category: 'animal',
-    unlockCost: 180000, unitCost: 45000, baseRate: 1400, sellPrice: 2500, maxUnits: 15,
-    description: 'Gölet kenarında ördekler', scene: ['💧', '🌊'],
-    harvestMinutes: 40,
+    id: 'horse', emoji: '🐴', name: 'At Ahırı', category: 'animal',
+    unlockCost: 30000, unitCost: 8000, baseRate: 35, sellPrice: 500, maxUnits: 10,
+    description: 'Prestijli at yetiştiriciliği', scene: ['🏟️', '🌿'],
+    harvestMinutes: 45,
   },
   {
-    id: 'goat', emoji: '🐐', name: 'Keçi Çiftliği', category: 'animal',
-    unlockCost: 400000, unitCost: 100000, baseRate: 3000, sellPrice: 5000, maxUnits: 12,
-    description: 'Peynir ve süt üretimi', scene: ['⛰️', '🌿'],
+    id: 'rabbit', emoji: '🐰', name: 'Tavşan Çiftliği', category: 'animal',
+    unlockCost: 80000, unitCost: 20000, baseRate: 81.25, sellPrice: 1200, maxUnits: 20,
+    description: 'Hızlı üreyen tavşanlar', scene: ['🌸', '🌿'],
     harvestMinutes: 60,
   },
   {
-    id: 'turkey', emoji: '🦃', name: 'Hindi Çiftliği', category: 'animal',
-    unlockCost: 900000, unitCost: 220000, baseRate: 6500, sellPrice: 10000, maxUnits: 10,
-    description: 'Premium hindi yetiştiriciliği', scene: ['🌳', '🍂'],
+    id: 'duck', emoji: '🦆', name: 'Ördek Göleti', category: 'animal',
+    unlockCost: 180000, unitCost: 45000, baseRate: 175, sellPrice: 2500, maxUnits: 15,
+    description: 'Gölet kenarında ördekler', scene: ['💧', '🌊'],
     harvestMinutes: 90,
   },
   {
-    id: 'bee', emoji: '🐝', name: 'Arı Kovanı', category: 'animal',
-    unlockCost: 2000000, unitCost: 500000, baseRate: 15000, sellPrice: 25000, maxUnits: 20,
-    description: 'Organik bal üretimi', scene: ['🌸', '🌼'],
+    id: 'goat', emoji: '🐐', name: 'Keçi Çiftliği', category: 'animal',
+    unlockCost: 400000, unitCost: 100000, baseRate: 375, sellPrice: 5000, maxUnits: 12,
+    description: 'Peynir ve süt üretimi', scene: ['⛰️', '🌿'],
     harvestMinutes: 120,
+  },
+  {
+    id: 'turkey', emoji: '🦃', name: 'Hindi Çiftliği', category: 'animal',
+    unlockCost: 900000, unitCost: 220000, baseRate: 812.5, sellPrice: 10000, maxUnits: 10,
+    description: 'Premium hindi yetiştiriciliği', scene: ['🌳', '🍂'],
+    harvestMinutes: 180,
+  },
+  {
+    id: 'bee', emoji: '🐝', name: 'Arı Kovanı', category: 'animal',
+    unlockCost: 2000000, unitCost: 500000, baseRate: 1875, sellPrice: 25000, maxUnits: 20,
+    description: 'Organik bal üretimi', scene: ['🌸', '🌼'],
+    harvestMinutes: 240,
   },
 ];
 
@@ -149,7 +165,7 @@ export function xpToNextLevel(xp: number): { current: number; needed: number; le
 }
 
 export function replantCost(cfg: SectionConfig, count: number): number {
-  return Math.max(1, Math.round(count * cfg.baseRate * cfg.harvestMinutes * 0.25));
+  return Math.max(1, Math.round(count * cfg.baseRate * cfg.harvestMinutes * 0.40));
 }
 
 export interface GameState {
@@ -396,9 +412,14 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
       const fill = prev.plotFill[id] ?? 0;
       if (fill < 1.0) return prev;
 
-      const lMult = levelMultiplier(prev.level);
-      // items = units of sellPrice each, worth (baseRate * harvestMinutes * lMult) TL total
-      const yieldItems = (sec.count * cfg.baseRate * cfg.harvestMinutes * lMult) / cfg.sellPrice;
+      // NOTE: level bonus is applied ONCE, to fill speed only (see the fill-
+      // tick effect above, `fillRatePerSec = lMult / harvestMinutes`), which
+      // already makes plots harvest more often per minute at higher levels.
+      // Do NOT also multiply the yield here — doing both compounded the bonus
+      // to lMult^2 (e.g. ~4.8x instead of ~2.2x at max level), silently
+      // reopening the coin→TL payout risk the baseRate tuning was meant to
+      // close. Yield per harvest must stay level-independent.
+      const yieldItems = (sec.count * cfg.baseRate * cfg.harvestMinutes) / cfg.sellPrice;
       const xpGain = Math.ceil(sec.count * cfg.harvestMinutes);
       const newXp = prev.xp + xpGain;
       const newLevel = computeLevel(newXp);

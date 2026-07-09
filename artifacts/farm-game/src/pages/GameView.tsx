@@ -393,6 +393,17 @@ function FarmPlot({
                   <div className="flex items-center justify-between mb-0.5">
                     <span className="text-[8px] font-bold text-white/40">
                       {isFarm ? 'Büyüyor' : 'Üretiyor'} {Math.round(plotFill * 100)}%
+                      {(() => {
+                        const remSec = Math.ceil((1 - plotFill) * config.harvestMinutes * 60 / lMult);
+                        if (remSec <= 0) return null;
+                        const m = Math.floor(remSec / 60);
+                        const s = remSec % 60;
+                        return (
+                          <span className="ml-1 text-white/30">
+                            · {m > 0 ? `${m}dk ` : ''}{s > 0 ? `${s}sn` : ''}
+                          </span>
+                        );
+                      })()}
                     </span>
                     <span className="text-[8px] font-bold" style={{ color: palette.incomeColor }}>
                       {formatNum(income)}/dk
@@ -640,6 +651,32 @@ function PurchaseSheet({
   );
 }
 
+/* ── Day/night cycle synced to real Türkiye (Europe/Istanbul) time ── */
+type DayPeriod = 'gece' | 'sabah' | 'gunduz' | 'aksam';
+
+function getIstanbulHour(): number {
+  try {
+    const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Istanbul', hour: '2-digit', hour12: false });
+    return parseInt(fmt.format(new Date()), 10) % 24;
+  } catch {
+    return new Date().getHours();
+  }
+}
+
+function getDayPeriod(hour: number): DayPeriod {
+  if (hour >= 6 && hour < 9) return 'sabah';   // dawn
+  if (hour >= 9 && hour < 18) return 'gunduz';  // day
+  if (hour >= 18 && hour < 21) return 'aksam';  // dusk
+  return 'gece';                                // night
+}
+
+const SKY_PALETTES: Record<DayPeriod, { scene: string; sky: string; grass: string; ground: string }> = {
+  sabah:  { scene: 'linear-gradient(180deg, #f2a765 0%, #8fc768 62%, #4ea824 100%)', sky: 'linear-gradient(180deg, #6b6bb0 0%, #e8946a 55%, #ffd39a 100%)', grass: 'linear-gradient(180deg, #8fd955 0%, #5cb52c 100%)', ground: '#5a4a35' },
+  gunduz: { scene: 'linear-gradient(180deg, #4a90d9 0%, #74c04a 62%, #4ea824 100%)', sky: 'linear-gradient(180deg, #2e6db4 0%, #5bb3e8 55%, #a8d8f0 100%)', grass: 'linear-gradient(180deg, #6acf38 0%, #4ea824 100%)', ground: '#6b5840' },
+  aksam:  { scene: 'linear-gradient(180deg, #d9622e 0%, #6a7a3e 62%, #395218 100%)', sky: 'linear-gradient(180deg, #2b1f4a 0%, #a1466b 55%, #f0894a 100%)', grass: 'linear-gradient(180deg, #5aa430 0%, #3c7d1c 100%)', ground: '#4a3a2a' },
+  gece:   { scene: 'linear-gradient(180deg, #0b1330 0%, #1c3a2a 62%, #16290f 100%)', sky: 'linear-gradient(180deg, #050a1e 0%, #10214a 55%, #1f3a63 100%)', grass: 'linear-gradient(180deg, #2c5a1c 0%, #1a3d0f 100%)', ground: '#332a1e' },
+};
+
 /* ── Scene Header: Farm buildings & sky ── */
 function FarmScene({ state }: { state: any }) {
   const totalUnlocked = SECTIONS.filter(s => state.sections[s.id]?.unlocked).length;
@@ -649,35 +686,62 @@ function FarmScene({ state }: { state: any }) {
     return sum + sec.count * s.baseRate;
   }, 0);
 
+  // Re-check the Türkiye saati every minute so the scene transitions live
+  // (sabah → gündüz → akşam → gece) without needing a page reload.
+  const [hour, setHour] = useState(() => getIstanbulHour());
+  useEffect(() => {
+    const id = setInterval(() => setHour(getIstanbulHour()), 60000);
+    return () => clearInterval(id);
+  }, []);
+  const period = getDayPeriod(hour);
+  const isNight = period === 'gece';
+  const palette = SKY_PALETTES[period];
+
   return (
     <div
-      className="relative flex-shrink-0 overflow-hidden"
-      style={{
-        height: 156,
-        background: 'linear-gradient(180deg, #4a90d9 0%, #74c04a 62%, #4ea824 100%)',
-      }}
+      className="relative flex-shrink-0 overflow-hidden transition-colors duration-1000"
+      style={{ height: 156, background: palette.scene }}
     >
       {/* Sky gradient */}
-      <div className="absolute inset-x-0 top-0" style={{ height: 78, background: 'linear-gradient(180deg, #2e6db4 0%, #5bb3e8 55%, #a8d8f0 100%)' }} />
+      <div className="absolute inset-x-0 top-0 transition-colors duration-1000" style={{ height: 78, background: palette.sky }} />
 
-      {/* Sun */}
-      <div className="absolute select-none" style={{ top: 6, right: 12, fontSize: 26, animation: 'sunGlow 4s ease-in-out infinite' }}>☀️</div>
+      {/* Stars (night only) */}
+      {isNight && (
+        <div className="absolute inset-x-0 top-0 h-16 overflow-hidden pointer-events-none">
+          {[...Array(10)].map((_, i) => (
+            <span key={i} className="absolute text-[6px]" style={{ left: `${(i * 11 + 4) % 100}%`, top: `${(i * 17 + 3) % 60}%`, animation: `sunGlow ${3 + (i % 3)}s ease-in-out ${i * 0.3}s infinite` }}>✨</span>
+          ))}
+        </div>
+      )}
 
-      {/* Clouds */}
-      <div className="absolute top-0 left-0 right-0 h-20 overflow-hidden pointer-events-none">
-        <Cloud top="6px"  size={16} delay={0}   duration={24} />
-        <Cloud top="14px" size={12} delay={-9}  duration={32} />
-        <Cloud top="3px"  size={14} delay={-17} duration={28} />
+      {/* Sun / Moon */}
+      <div className="absolute select-none" style={{ top: 6, right: 12, fontSize: 26, animation: 'sunGlow 4s ease-in-out infinite' }}>
+        {period === 'sabah' ? '🌅' : period === 'gunduz' ? '☀️' : period === 'aksam' ? '🌇' : '🌙'}
       </div>
 
-      {/* Birds */}
+      {/* Clouds (hidden at night for a clear starry sky) */}
+      {!isNight && (
+        <div className="absolute top-0 left-0 right-0 h-20 overflow-hidden pointer-events-none">
+          <Cloud top="6px"  size={16} delay={0}   duration={24} />
+          <Cloud top="14px" size={12} delay={-9}  duration={32} />
+          <Cloud top="3px"  size={14} delay={-17} duration={28} />
+        </div>
+      )}
+
+      {/* Birds by day, owl by night */}
       <div className="absolute left-0 right-0 overflow-hidden pointer-events-none" style={{ top: 16 }}>
-        <div style={{ animation: 'birdFly 16s linear -5s infinite', position: 'absolute', fontSize: 10 }}>🐦</div>
-        <div style={{ animation: 'birdFly 22s linear -12s infinite', position: 'absolute', top: 8, fontSize: 9 }}>🐦</div>
+        {isNight ? (
+          <div style={{ animation: 'birdFly 20s linear -5s infinite', position: 'absolute', fontSize: 10 }}>🦉</div>
+        ) : (
+          <>
+            <div style={{ animation: 'birdFly 16s linear -5s infinite', position: 'absolute', fontSize: 10 }}>🐦</div>
+            <div style={{ animation: 'birdFly 22s linear -12s infinite', position: 'absolute', top: 8, fontSize: 9 }}>🐦</div>
+          </>
+        )}
       </div>
 
       {/* Tree line */}
-      <div className="absolute" style={{ top: 44, left: 0, right: 0 }}>
+      <div className="absolute" style={{ top: 44, left: 0, right: 0, filter: isNight ? 'brightness(0.55)' : 'none' }}>
         <span className="absolute text-4xl" style={{ top: 0, left: 2, animation: 'sway 5s ease-in-out infinite', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>🌳</span>
         <span className="absolute text-3xl opacity-80" style={{ top: 8, left: 38, animation: 'sway 6.5s ease-in-out 1s infinite' }}>🌲</span>
         <span className="absolute text-3xl opacity-80" style={{ top: 6, right: 38, animation: 'sway 5.5s ease-in-out 2s infinite' }}>🌲</span>
@@ -685,10 +749,10 @@ function FarmScene({ state }: { state: any }) {
       </div>
 
       {/* Grass base */}
-      <div className="absolute inset-x-0" style={{ top: 76, height: 22, background: 'linear-gradient(180deg, #6acf38 0%, #4ea824 100%)' }} />
+      <div className="absolute inset-x-0 transition-colors duration-1000" style={{ top: 76, height: 22, background: palette.grass }} />
 
       {/* Road */}
-      <div className="absolute inset-x-0 flex items-center overflow-hidden" style={{ top: 98, height: 26, background: 'linear-gradient(180deg, #6b5840, #5a4a35)' }}>
+      <div className="absolute inset-x-0 flex items-center overflow-hidden transition-colors duration-1000" style={{ top: 98, height: 26, background: `linear-gradient(180deg, ${palette.ground}, ${palette.ground}dd)` }}>
         <div className="absolute inset-x-0 top-0 h-px bg-black/25" />
         <div className="absolute inset-x-0 bottom-0 h-px bg-black/15" />
         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex gap-2.5 px-3">
@@ -696,15 +760,38 @@ function FarmScene({ state }: { state: any }) {
             <div key={i} className="h-0.5 flex-1 rounded-full" style={{ background: 'rgba(255,220,60,0.45)' }} />
           ))}
         </div>
-        <span className="absolute text-lg" style={{ animation: 'truckMove 8s ease-in-out infinite', left: 20 }}>🚛</span>
-        <span className="absolute text-base" style={{ animation: 'truckMove 13s linear -5s infinite', left: 55, opacity: 0.9 }}>🚜</span>
+        {/* Delivery truck — front vehicle, biggest, drives leftward (matches emoji facing) */}
+        <span className="absolute" style={{ left: 20, top: '50%', animation: 'truckMove 8s ease-in-out infinite' }}>
+          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.35s ease-in-out infinite' }}>
+            <span className="absolute text-[8px]" style={{ right: -8, top: 2, animation: 'dustPuff 0.9s ease-out infinite' }}>💨</span>
+            <span className="absolute text-[7px]" style={{ right: -4, top: 4, animation: 'dustPuff 0.9s ease-out 0.35s infinite' }}>💨</span>
+            <span className="text-lg" style={{ filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.35))' }}>🚛</span>
+            {isNight && <span className="absolute text-[6px]" style={{ left: -3, top: 4, filter: 'brightness(2) blur(0.5px)' }}>🔆</span>}
+          </span>
+        </span>
+
+        {/* Tractor — mid depth, slightly smaller/slower, opposite phase */}
+        <span className="absolute" style={{ left: 55, top: '50%', animation: 'truckMove 13s linear -5s infinite', opacity: 0.9 }}>
+          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.45s ease-in-out infinite' }}>
+            <span className="absolute text-[7px]" style={{ right: -6, top: 1, animation: 'dustPuff 1.1s ease-out 0.2s infinite' }}>💨</span>
+            <span className="text-base" style={{ filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))' }}>🚜</span>
+          </span>
+        </span>
+
+        {/* Small car — background depth, fastest pass, adds traffic variety */}
+        <span className="absolute" style={{ left: 80, top: '50%', animation: 'truckMove 5.5s ease-in-out -2s infinite', opacity: 0.75 }}>
+          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.3s ease-in-out infinite' }}>
+            <span className="absolute text-[6px]" style={{ right: -5, top: 1, animation: 'dustPuff 0.7s ease-out 0.15s infinite' }}>💨</span>
+            <span className="text-sm">🚗</span>
+          </span>
+        </span>
       </div>
 
       {/* Fence strip */}
-      <div className="absolute inset-x-0" style={{ top: 124, height: 7, background: 'linear-gradient(90deg, #7a4e1a, #a06235, #7a4e1a)', opacity: 0.85 }} />
+      <div className="absolute inset-x-0" style={{ top: 124, height: 7, background: 'linear-gradient(90deg, #7a4e1a, #a06235, #7a4e1a)', opacity: 0.85, filter: isNight ? 'brightness(0.55)' : 'none' }} />
 
       {/* ── LEFT: Market shop ── */}
-      <div className="absolute flex flex-col items-end" style={{ bottom: 4, left: 5 }}>
+      <div className="absolute flex flex-col items-end transition-opacity duration-1000" style={{ bottom: 4, left: 5, filter: isNight ? 'brightness(0.6)' : 'none' }}>
         <div className="flex flex-col items-center">
           {/* Striped awning */}
           <div className="rounded-t-sm overflow-hidden flex shadow" style={{ width: 62, height: 14 }}>
@@ -825,7 +912,7 @@ export default function GameView() {
   const BALANCE_SYNC_KEY = 'farm_balance_sync_v1';
   const COINS_SYNC_KEY = 'farm_coins_sync_v1';
 
-  // Backend save (every 30s) — delta-based balance + coins update.
+  // Backend save (every 10s) — delta-based balance + coins update.
   // Sends prevBalance/prevCoins (last server-confirmed values) so the server can
   // apply the correct delta instead of blindly overwriting the columns.
   useEffect(() => {
@@ -858,7 +945,7 @@ export default function GameView() {
           },
         },
       );
-    }, 30000);
+    }, 10000);
     return () => clearInterval(interval);
   }, [telegramId]);
 
