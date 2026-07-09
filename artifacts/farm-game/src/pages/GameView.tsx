@@ -325,26 +325,7 @@ function FarmPlot({
                     <span className="text-white text-[10px] italic font-bold">{isFarm ? 'Boş tarla' : 'Boş mera'}</span>
                   </div>
                 ) : (
-                  /* 2 rows × 10 emoji grid — shows every unit inside the plot */
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(10, 1fr)',
-                    gap: 2,
-                    padding: '4px 6px',
-                    width: '100%',
-                  }}>
-                    {Array.from({ length: Math.min(count, config.maxUnits) }).map((_, i) => (
-                      <motion.span
-                        key={i}
-                        style={{ fontSize: 14, textAlign: 'center', lineHeight: 1, display: 'block' }}
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: i * 0.02, type: 'spring', stiffness: 400, damping: 22 }}
-                      >
-                        {config.emoji}
-                      </motion.span>
-                    ))}
-                  </div>
+                  <FarmIllustration id={config.id} count={count} maxUnits={config.maxUnits} size={62} />
                 )}
 
                 {/* Harvest ready overlay */}

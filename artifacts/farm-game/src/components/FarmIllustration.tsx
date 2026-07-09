@@ -570,39 +570,61 @@ const ILLUSTRATIONS: Record<string, () => React.ReactElement> = {
 interface FarmIllustrationProps {
   id: string;
   count: number;
+  maxUnits?: number;
   size?: number;
   animate?: boolean;
 }
 
-export function FarmIllustration({ id, count, size = 64, animate = true }: FarmIllustrationProps) {
+export function FarmIllustration({ id, count, maxUnits = 20, size = 64, animate = true }: FarmIllustrationProps) {
   const Svg = ILLUSTRATIONS[id];
   if (!Svg) return <span style={{ fontSize: size * 0.5 }}>?</span>;
 
-  const show = Math.min(count, 5);
+  const show = Math.min(count, maxUnits);
   if (show === 0) return null;
 
-  // For counts 1–2: big, centered. 3–4: medium. 5+: small grid.
-  const displaySize = show <= 2 ? size : show <= 4 ? size * 0.75 : size * 0.55;
-  const extraCount = count - 5;
+  // Layout tiers based on unit count:
+  // 1      → single big SVG centred
+  // 2–4    → medium, 2-column wrap
+  // 5–10   → small, 5-column grid
+  // 11–20  → tiny, 10-column grid
+  let cols: number;
+  let unitSize: number;
+  if (show === 1) {
+    cols = 1;
+    unitSize = size;
+  } else if (show <= 4) {
+    cols = 2;
+    unitSize = size * 0.72;
+  } else if (show <= 10) {
+    cols = 5;
+    unitSize = size * 0.48;
+  } else {
+    cols = 10;
+    unitSize = size * 0.30;
+  }
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-1">
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(${cols}, 1fr)`,
+        gap: show > 10 ? 1 : 2,
+        width: '100%',
+        justifyItems: 'center',
+        alignItems: 'center',
+      }}
+    >
       {Array.from({ length: show }).map((_, i) => (
         <motion.div
           key={i}
-          style={{ width: displaySize, height: displaySize }}
+          style={{ width: unitSize, height: unitSize }}
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          transition={{ delay: i * 0.06, type: 'spring', stiffness: 300, damping: 20 }}
+          transition={{ delay: i * 0.03, type: 'spring', stiffness: 350, damping: 22 }}
         >
           <Svg />
         </motion.div>
       ))}
-      {extraCount > 0 && (
-        <span className="text-white/75 text-xs font-bold bg-black/50 px-2 py-0.5 rounded-lg">
-          +{extraCount}
-        </span>
-      )}
     </div>
   );
 }
