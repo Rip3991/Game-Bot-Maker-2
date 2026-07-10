@@ -247,6 +247,7 @@ function Router() {
                 <Route path="/stars" component={StarsShopPage} />
                 <Route path="/leaderboard" component={LeaderboardPage} />
                 <Route path="/admin" component={AdminPage} />
+                <Route path="/trade" component={TradePage} />
                 <Route path="/profile/:telegramId" component={({ params }: { params: { telegramId: string } }) => <ProfilePage telegramId={params.telegramId} />} />
                 <Route component={NotFound} />
               </Switch>

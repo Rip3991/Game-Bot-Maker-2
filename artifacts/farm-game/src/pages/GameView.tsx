@@ -122,6 +122,15 @@ function Cloud({ top, size, delay, duration }: { top: string; size: number; dela
   );
 }
 
+/* Product emojis per section — shown as floating particles on harvest */
+const HARVEST_EMOJI: Record<string, string> = {
+  wheat: '🌾', onion: '🧅', corn: '🌽', carrot: '🥕', tomato: '🍅',
+  strawberry: '🍓', sunflower: '🌻', grape: '🍇', apple: '🍎', blueberry: '🫐',
+  chicken: '🥚', cow: '🥛', sheep: '🧶', pig: '🥩', horse: '🐎',
+  rabbit: '🐇', duck: '🦆', goat: '🧀', turkey: '🍖', bee: '🍯',
+  alpaca: '🦙', deer: '🦌', peacock: '🪶',
+};
+
 /* ── Single farm plot card ── */
 function FarmPlot({
   config,
@@ -147,7 +156,9 @@ function FarmPlot({
   onReplant: () => void;
 }) {
   const lMult = levelMultiplier(level);
-  const income = count * config.baseRate * lMult;
+  const income = count > 0 ? Math.round(config.sellPrice / config.harvestMinutes * lMult) : 0;
+  const harvestEmoji = HARVEST_EMOJI[config.id] ?? config.emoji;
+  const [fxParticles, setFxParticles] = React.useState<{ id: number; x: number }[]>([]);
   const canAffordUnlock = balance >= config.unlockCost;
   const isFarm = config.category === 'farm';
   const isHarvestReady = unlocked && count > 0 && !needsReplant && plotFill >= 1.0;
@@ -346,9 +357,18 @@ function FarmPlot({
                       }}
                       animate={{ scale: [1, 1.06, 1] }}
                       transition={{ repeat: Infinity, duration: 1 }}
-                      onClick={(e) => { e.stopPropagation(); onHarvest(); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const now = Date.now();
+                        setFxParticles(Array.from({ length: 6 }, (_, i) => ({
+                          id: now + i,
+                          x: 10 + Math.floor(Math.random() * 80),
+                        })));
+                        setTimeout(() => setFxParticles([]), 1100);
+                        onHarvest();
+                      }}
                     >
-                      <span style={{ fontSize: 22 }}>{isFarm ? '🌾' : '🐄'}</span>
+                      <span style={{ fontSize: 22 }}>{harvestEmoji}</span>
                       <span style={{ fontSize: 12 }}>Hasat Et!</span>
                     </motion.button>
                   </motion.div>
@@ -483,6 +503,27 @@ function FarmPlot({
               </div>
             </div>
           )}
+
+          {/* Floating harvest product particles */}
+          {fxParticles.map(p => (
+            <motion.span
+              key={p.id}
+              style={{
+                position: 'absolute',
+                bottom: '40%',
+                left: `${p.x}%`,
+                fontSize: 20,
+                pointerEvents: 'none',
+                zIndex: 60,
+                userSelect: 'none',
+              }}
+              initial={{ y: 0, opacity: 1, scale: 0.9 }}
+              animate={{ y: -70, opacity: 0, scale: 1.4 }}
+              transition={{ duration: 0.9, ease: 'easeOut' }}
+            >
+              {harvestEmoji}
+            </motion.span>
+          ))}
         </div>
       </div>
     </motion.div>

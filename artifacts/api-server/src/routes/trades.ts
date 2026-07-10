@@ -1,25 +1,33 @@
 import { Router } from "express";
 import { eq, and, desc, ne } from "drizzle-orm";
 import { db, tradeListingsTable, usersTable } from "@workspace/db";
-import { z } from "zod/v4";
 
 const router = Router();
 
-const CreateListingBody = z.object({
-  sellerId: z.string(),
-  sellerName: z.string(),
-  itemId: z.string(),
-  itemEmoji: z.string(),
-  itemName: z.string(),
-  quantity: z.number().int().positive().max(1000),
-  priceCoins: z.number().int().positive().max(100_000_000),
-  isSpecial: z.boolean().optional().default(false),
-});
+function parseCreateListing(body: unknown) {
+  const b = body as Record<string, unknown>;
+  if (!b) return null;
+  const { sellerId, sellerName, itemId, itemEmoji, itemName, quantity, priceCoins, isSpecial } = b;
+  if (typeof sellerId !== "string" || !sellerId) return null;
+  if (typeof sellerName !== "string" || !sellerName) return null;
+  if (typeof itemId !== "string" || !itemId) return null;
+  if (typeof itemEmoji !== "string" || !itemEmoji) return null;
+  if (typeof itemName !== "string" || !itemName) return null;
+  const qty = Number(quantity);
+  const price = Number(priceCoins);
+  if (!Number.isInteger(qty) || qty <= 0 || qty > 1000) return null;
+  if (!Number.isInteger(price) || price <= 0 || price > 100_000_000) return null;
+  return { sellerId, sellerName, itemId, itemEmoji, itemName, quantity: qty, priceCoins: price, isSpecial: Boolean(isSpecial) };
+}
 
-const BuyListingBody = z.object({
-  buyerId: z.string(),
-  buyerName: z.string(),
-});
+function parseBuyListing(body: unknown) {
+  const b = body as Record<string, unknown>;
+  if (!b) return null;
+  const { buyerId, buyerName } = b;
+  if (typeof buyerId !== "string" || !buyerId) return null;
+  if (typeof buyerName !== "string" || !buyerName) return null;
+  return { buyerId, buyerName };
+}
 
 // GET /api/trades — active listings (optionally excluding caller's own)
 router.get("/", async (req, res): Promise<void> => {
@@ -59,9 +67,8 @@ router.get("/mine", async (req, res): Promise<void> => {
 
 // POST /api/trades — create a listing
 router.post("/", async (req, res): Promise<void> => {
-  const parsed = CreateListingBody.safeParse(req.body);
-  if (!parsed.success) { res.status(400).json({ error: "Geçersiz veri" }); return; }
-  const d = parsed.data;
+  const d = parseCreateListing(req.body);
+  if (!d) { res.status(400).json({ error: "Geçersiz veri" }); return; }
   try {
     const [listing] = await db.insert(tradeListingsTable).values({
       sellerId: d.sellerId,
@@ -83,9 +90,9 @@ router.post("/", async (req, res): Promise<void> => {
 // POST /api/trades/:id/buy — purchase a listing
 router.post("/:id/buy", async (req, res): Promise<void> => {
   const { id } = req.params;
-  const parsed = BuyListingBody.safeParse(req.body);
-  if (!parsed.success) { res.status(400).json({ error: "Geçersiz veri" }); return; }
-  const { buyerId, buyerName } = parsed.data;
+  const d = parseBuyListing(req.body);
+  if (!d) { res.status(400).json({ error: "Geçersiz veri" }); return; }
+  const { buyerId, buyerName } = d;
 
   try {
     const [listing] = await db.select().from(tradeListingsTable).where(eq(tradeListingsTable.id, id));
@@ -104,7 +111,6 @@ router.post("/:id/buy", async (req, res): Promise<void> => {
       res.status(400).json({ error: "Yetersiz coin" }); return;
     }
 
-    // Transfer coins: buyer → seller
     await db.update(usersTable)
       .set({ coins: String(buyerCoins - listing.priceCoins) })
       .where(eq(usersTable.telegramId, buyerId));
