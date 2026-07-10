@@ -3,7 +3,7 @@ import { useGameEngine, SECTIONS, WELCOME_BONUS, SectionConfig, replantCost, xpT
 import { MarketPanel } from '../components/MarketPanel';
 import { useUser } from '../hooks/use-user';
 import { useSaveFarmState, useGetOnlineStats, getGetOnlineStatsQueryKey } from '@workspace/api-client-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useIsPresent } from 'framer-motion';
 import { Plus, Lock, Volume2, VolumeX, Settings } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { formatNum } from '../utils/format';
@@ -575,6 +575,12 @@ function PurchaseSheet({
   onBuy: () => void;
   onClose: () => void;
 }) {
+  // While this sheet is exiting (its section became harvest-ready/needs-replant
+  // and GameView auto-closed it, or the user tapped away), the fixed full-screen
+  // backdrop must stop capturing taps immediately — not just once fully
+  // unmounted — so a tap aimed at the harvest/replant overlay button underneath
+  // isn't swallowed mid-exit-animation.
+  const isPresent = useIsPresent();
   const isLocked = !sectionState.unlocked;
   const isMaxed = sectionState.count >= config.maxUnits;
   const cost = isLocked ? config.unlockCost : config.unitCost;
@@ -599,7 +605,11 @@ function PurchaseSheet({
       exit={{ y: '100%' }}
       transition={{ type: 'spring', damping: 28, stiffness: 320 }}
     >
-      <div className="fixed inset-0 -z-10" onClick={onClose} />
+      <div
+        className="fixed inset-0 -z-10"
+        style={{ pointerEvents: isPresent ? 'auto' : 'none' }}
+        onClick={onClose}
+      />
 
       {/* Mascot speech bubble */}
       <AnimatePresence>
@@ -1061,6 +1071,20 @@ export default function GameView() {
 
   const selectedConfig = selectedId ? SECTIONS.find(s => s.id === selectedId) ?? null : null;
   const selectedState = selectedId ? (state.sections[selectedId] ?? { unlocked: false, count: 0 }) : null;
+
+  // Auto-close the purchase sheet the instant its section becomes harvest-ready
+  // or needs replanting. Otherwise the sheet's full-screen invisible backdrop
+  // (fixed inset-0, rendered above the board) keeps intercepting taps aimed at
+  // the "Hasat Et!"/"Ek!" overlay button underneath — the tap just closes the
+  // sheet instead of harvesting, making the button look unresponsive.
+  useEffect(() => {
+    if (!selectedId) return;
+    const fill = state.plotFill[selectedId] ?? 0;
+    const needsReplant = state.sections[selectedId]?.needsReplant ?? false;
+    if (fill >= 1.0 || needsReplant) {
+      setSelectedId(null);
+    }
+  }, [selectedId, state.plotFill, state.sections]);
 
   return (
     <div className="h-full flex flex-col relative z-0" style={{ background: '#2e6012' }}>
