@@ -30,14 +30,28 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
     0,
   );
 
+  // Guards against the "have to tap twice" bug: onSell() mutates game state
+  // via a functional setState updater, so if a render is already in flight
+  // (e.g. the game-tick loop firing right as the user taps), a second rapid
+  // tap could fire before state settles. A ref (not state) blocks re-entrancy
+  // synchronously — a state flag would itself trigger a re-render and could
+  // race with the very same tick that caused the double-fire.
+  const isSellingRef = React.useRef(false);
+
   const handleSell = () => {
+    if (isSellingRef.current) return;
+    isSellingRef.current = true;
     const records = onSell();
-    if (records.length === 0) return;
-    const total = records.reduce((s, r) => s + r.total, 0);
-    setLastSale(records);
-    setTotalEarned(total);
-    setShowResult(true);
-    setTimeout(() => setShowResult(false), 4000);
+    if (records.length > 0) {
+      const total = records.reduce((s, r) => s + r.total, 0);
+      setLastSale(records);
+      setTotalEarned(total);
+      setShowResult(true);
+      setTimeout(() => setShowResult(false), 4000);
+    }
+    // Release on the next frame — long enough to swallow a duplicate tap
+    // event, short enough to feel instant.
+    requestAnimationFrame(() => { isSellingRef.current = false; });
   };
 
   const unlockedSections = SECTIONS.filter(cfg => gameState.sections[cfg.id]?.unlocked);
@@ -299,13 +313,10 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
                 <Zap size={10} className="inline mr-0.5" />OTO
               </div>
             ) : (
-              <motion.button
+              <button
                 onClick={handleSell}
                 disabled={!hasAnything}
-                whileTap={hasAnything ? { scale: 0.88 } : undefined}
-                animate={hasAnything ? { scale: [1, 1.06, 1], y: [0, -2, 0] } : { scale: 1 }}
-                transition={hasAnything ? { repeat: Infinity, duration: 1, ease: 'easeInOut' } : undefined}
-                className="relative w-full py-2.5 rounded-xl font-black text-sm border transition-colors"
+                className={`relative w-full py-2.5 rounded-xl font-black text-sm border transition-colors ${hasAnything ? 'sell-btn-pulse' : ''}`}
                 style={hasAnything ? {
                   background: 'linear-gradient(180deg, #4ade80, #16a34a)',
                   borderColor: '#86efac',
@@ -320,7 +331,7 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
                 }}
               >
                 {hasAnything ? '💰 SAT!' : '⏳'}
-              </motion.button>
+              </button>
             )}
           </div>
         </div>

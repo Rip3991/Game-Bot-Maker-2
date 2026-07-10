@@ -224,6 +224,20 @@ body {
   animation: truckMove 6s ease-in-out infinite;
 }
 
+/* Sell button idle pulse — driven by CSS, not a Framer Motion `animate` loop,
+   so frequent game-tick re-renders never restart/interrupt it mid-press. */
+@keyframes sellPulse {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50%      { transform: scale(1.06) translateY(-2px); }
+}
+.sell-btn-pulse {
+  animation: sellPulse 1s ease-in-out infinite;
+}
+.sell-btn-pulse:active {
+  animation-play-state: paused;
+  transform: scale(0.88);
+}
+
 .spin-wheel-shadow {
   box-shadow: 0 0 40px rgba(245, 200, 66, 0.4), inset 0 0 20px rgba(0,0,0,0.5);
 }
