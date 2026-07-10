@@ -368,6 +368,24 @@ function FarmPlot({
                   <FarmIllustration id={config.id} count={count} maxUnits={config.maxUnits} size={62} />
                 )}
 
+                {/* Animal product cue (egg/milk/wool/etc.) — bobs above the pasture
+                    while the cycle is in progress, so it's clear what's being
+                    produced, not just a generic fill bar. Operator request 2026-07-10. */}
+                {!isFarm && count > 0 && !replantNeeded && (
+                  <motion.div
+                    className="absolute top-1 right-2 flex items-center justify-center rounded-full z-10"
+                    style={{
+                      width: 22, height: 22,
+                      background: isHarvestReady ? 'rgba(251,191,36,0.25)' : 'rgba(0,0,0,0.25)',
+                      boxShadow: isHarvestReady ? '0 0 10px rgba(251,191,36,0.7)' : 'none',
+                    }}
+                    animate={{ y: [0, -4, 0], scale: isHarvestReady ? [1, 1.15, 1] : 1 }}
+                    transition={{ repeat: Infinity, duration: isHarvestReady ? 0.9 : 2.2, ease: 'easeInOut' }}
+                  >
+                    <span style={{ fontSize: 13, opacity: 0.3 + fillPct * 0.7 }}>{harvestEmoji}</span>
+                  </motion.div>
+                )}
+
                 {/* Harvest ready overlay */}
                 {isHarvestReady && (
                   <motion.div
@@ -397,7 +415,7 @@ function FarmPlot({
                       }}
                     >
                       <span style={{ fontSize: 22 }}>{harvestEmoji}</span>
-                      <span style={{ fontSize: 12 }}>Hasat Et!</span>
+                      <span style={{ fontSize: 12 }}>{isFarm ? 'Hasat Et!' : 'Topla!'}</span>
                     </motion.button>
                   </motion.div>
                 )}

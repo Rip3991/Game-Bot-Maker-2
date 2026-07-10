@@ -205,7 +205,7 @@ export default function LoadingScreen({ onDone }: { onDone: () => void }) {
       {/* Moving Tractor */}
       <motion.div
         className="absolute text-5xl select-none z-10"
-        style={{ top: 'calc(45% - 10px)' }}
+        style={{ top: 'calc(45% - 10px)', scaleX: -1 }}
         animate={{ 
           x: ['-20vw', '120vw'],
           y: [0, -2, 0, -1, 0]

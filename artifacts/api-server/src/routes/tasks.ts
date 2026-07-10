@@ -11,13 +11,16 @@ export function getAnnouncementChannel(): string {
 }
 
 // Task definitions — claimable once per user
+// Reward amounts tightened 2026-07-10 (operator request: task payouts should
+// be small and hard-earned, both in Coins and real TL — previous amounts
+// let a handful of tasks pay out real money too easily).
 export const TASK_DEFS = [
   {
     id: "task_channel_join",
     title: "Kanala Katıl",
     description: `@${getAnnouncementChannel()} kanalına katıl`,
     icon: "📢",
-    reward: { tl: 5, coins: 0 },
+    reward: { tl: 2, coins: 0 },
     type: "channel_join",     // verified server-side via getChatMember
     link: `https://t.me/${getAnnouncementChannel()}`,
   },
@@ -26,7 +29,7 @@ export const TASK_DEFS = [
     title: "İlk Davet",
     description: "1 arkadaşını davet et",
     icon: "👥",
-    reward: { tl: 2, coins: 0 },
+    reward: { tl: 1, coins: 0 },
     type: "referral",
     required: 1,
   },
@@ -35,7 +38,7 @@ export const TASK_DEFS = [
     title: "5 Davet",
     description: "5 arkadaşını davet et",
     icon: "🤝",
-    reward: { tl: 12, coins: 0 },
+    reward: { tl: 5, coins: 0 },
     type: "referral",
     required: 5,
   },
@@ -44,7 +47,7 @@ export const TASK_DEFS = [
     title: "10 Davet",
     description: "10 arkadaşını davet et",
     icon: "🏅",
-    reward: { tl: 25, coins: 250 },
+    reward: { tl: 10, coins: 100 },
     type: "referral",
     required: 10,
   },
@@ -53,7 +56,7 @@ export const TASK_DEFS = [
     title: "25 Davet",
     description: "25 arkadaşını davet et",
     icon: "🥇",
-    reward: { tl: 75, coins: 1000 },
+    reward: { tl: 30, coins: 400 },
     type: "referral",
     required: 25,
   },
@@ -62,7 +65,7 @@ export const TASK_DEFS = [
     title: "Oyunu Paylaş",
     description: "Oyunu arkadaşlarınla paylaş (Davet sayfasındaki paylaş butonu)",
     icon: "📤",
-    reward: { tl: 0, coins: 50 },
+    reward: { tl: 0, coins: 20 },
     type: "share",
   },
   {
@@ -70,7 +73,7 @@ export const TASK_DEFS = [
     title: "Haftalık Hedef",
     description: "7 gün üst üste giriş yap ve en az 3 görev tamamla",
     icon: "🏆",
-    reward: { tl: 10, coins: 0 },
+    reward: { tl: 4, coins: 0 },
     type: "weekly_goal",
     requiredStreak: 7,
     requiredTasks: 3,
