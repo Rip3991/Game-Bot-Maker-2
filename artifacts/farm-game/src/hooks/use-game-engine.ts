@@ -250,20 +250,26 @@ export function xpToNextLevel(xp: number): { current: number; needed: number; le
   return { current: xp - base, needed: next - base, level };
 }
 
+/** Replant/"Ek" fee — paid in real TL (from withdrawable balance), not Coins.
+ *  Operator request 2026-07-10: cost is simply 1 TL per owned unit, so a
+ *  5-unit plot costs 5 TL to replant. */
 export function replantCost(cfg: SectionConfig, count: number): number {
-  return Math.max(1, Math.round(count * cfg.sellPrice * 0.20));
+  return Math.max(1, Math.round(count));
 }
 
 /** How many units' cycle time counts toward slowing down a plot. Base
  *  harvestMinutes values assume this multiplier is applied on top, and the
- *  cycle further scales with sqrt(unit count) — more units planted take
- *  longer to tend. Any UI displaying cycle time or income/min MUST use this
- *  helper instead of raw `cfg.harvestMinutes`, or the numbers shown will
- *  disagree with the actual fill rate in the tick effect below. */
+ *  cycle further scales with unit count^HARVEST_COUNT_EXPONENT — more units
+ *  planted take noticeably longer to tend (operator request 2026-07-10:
+ *  previous sqrt scaling made the wait barely grow with count). Any UI
+ *  displaying cycle time or income/min MUST use this helper instead of raw
+ *  `cfg.harvestMinutes`, or the numbers shown will disagree with the actual
+ *  fill rate in the tick effect below. */
 export const HARVEST_TIME_MULTIPLIER = 4;
+export const HARVEST_COUNT_EXPONENT = 0.7;
 
 export function getEffectiveHarvestMinutes(cfg: SectionConfig, count: number): number {
-  return cfg.harvestMinutes * HARVEST_TIME_MULTIPLIER * Math.sqrt(Math.max(1, count));
+  return cfg.harvestMinutes * HARVEST_TIME_MULTIPLIER * Math.pow(Math.max(1, count), HARVEST_COUNT_EXPONENT);
 }
 
 export interface GameState {
@@ -366,11 +372,13 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
             sections[cfg.id] = { ...sections[cfg.id], needsReplant: false };
           }
         });
-        // Ensure growCount exists (migration from pre-growCount saves) —
-        // default to the live count so existing in-progress harvests keep
-        // their current expected yield instead of resetting to 0.
+        // growCount always mirrors the live count now (operator request
+        // 2026-07-10: harvest pays out however many units you currently own,
+        // not a cycle-start snapshot) — force-sync on every load so saves
+        // from before this change pick up the new behavior immediately,
+        // instead of waiting for the next buy/replant to resync.
         SECTIONS.forEach(cfg => {
-          if (typeof (sections[cfg.id] as any).growCount !== 'number') {
+          if (sections[cfg.id].growCount !== sections[cfg.id].count) {
             sections[cfg.id] = { ...sections[cfg.id], growCount: sections[cfg.id].count };
           }
         });
@@ -504,10 +512,9 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
 
   // ── Actions ──────────────────────────────────────────────────────────────
 
-  // Farm/animal progression (unlock, buy, replant) is paid entirely in Coins —
-  // Coins are the in-game currency. Balance (TL) is the real-money currency:
-  // it only comes from tasks, referrals, streaks, the welcome bonus, and the
-  // explicit Coin→TL converter, and is never spent on gameplay purchases.
+  // Unlock/buy are paid in Coins (in-game currency). Replant ("Ek"/"Büyüt")
+  // is the one exception — paid in real TL balance at 1 TL/unit (operator
+  // request 2026-07-10), so upkeep draws directly on withdrawable balance.
   const unlockSection = useCallback((id: string) => {
     const cfg = SECTIONS.find(s => s.id === id)!;
     setState(prev => {
@@ -533,19 +540,16 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
       if (sec.count >= cfg.maxUnits) return prev;
       if (prev.coins < cfg.unitCost) return prev;
       const newCount = sec.count + 1;
-      // Growth time is independent of unit count (see fillRatePerSec in the
-      // tick effect), so in-progress fill doesn't need to be rescaled here.
-      // `growCount` (the yield snapshot for the harvest already in progress)
-      // is intentionally left untouched — the extra unit only starts
-      // contributing to yield once the current cycle is harvested and
-      // replanted, so buying right before a harvest completes can't grant
-      // an instant bonus-sized payout.
+      // growCount now always mirrors the live count (operator request
+      // 2026-07-10: harvest should pay out however many units you currently
+      // own, including ones bought mid-cycle) — kept as a separate field for
+      // save-format compatibility, but no longer snapshotted/locked.
       return {
         ...prev,
         coins: prev.coins - cfg.unitCost,
         sections: {
           ...prev.sections,
-          [id]: { ...sec, count: newCount },
+          [id]: { ...sec, count: newCount, growCount: newCount },
         },
       };
     });
@@ -587,19 +591,19 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
     });
   }, []);
 
-  /** Pay replant cost to restart growth cycle */
+  /** Pay replant cost (in TL, from the real-money balance — operator
+   *  request 2026-07-10) to restart growth cycle */
   const replantPlot = useCallback((id: string) => {
     const cfg = SECTIONS.find(s => s.id === id)!;
     setState(prev => {
       const sec = prev.sections[id];
       if (!sec?.unlocked || !sec.needsReplant) return prev;
       const cost = replantCost(cfg, sec.count);
-      if (prev.coins < cost) return prev;
+      if (prev.balance < cost) return prev;
       return {
         ...prev,
-        coins: prev.coins - cost,
-        // Snapshot the live count as the new cycle's growCount — any units
-        // bought since the last harvest now start counting toward yield.
+        balance: prev.balance - cost,
+        // growCount already mirrors the live count (kept in sync on buy).
         sections: { ...prev.sections, [id]: { ...sec, needsReplant: false, growCount: sec.count } },
         plotFill: { ...prev.plotFill, [id]: 0 },
       };

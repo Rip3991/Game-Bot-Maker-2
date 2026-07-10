@@ -138,6 +138,7 @@ function FarmPlot({
   growCount,
   unlocked,
   coins,
+  balance,
   plotFill,
   needsReplant,
   level,
@@ -151,8 +152,10 @@ function FarmPlot({
   /** Units contributing to the harvest currently in progress (see growCount in the engine). */
   growCount: number;
   unlocked: boolean;
-  /** Coin balance — all farm/animal purchases and replants are paid in Coins, never TL. */
+  /** Coin balance — unlock/buy are paid in Coins, never TL. */
   coins: number;
+  /** Real TL balance — replant ("Ek"/"Büyüt") is paid from this, 1 TL/unit. */
+  balance: number;
   plotFill: number;
   needsReplant: boolean;
   level: number;
@@ -174,7 +177,7 @@ function FarmPlot({
   const isHarvestReady = unlocked && count > 0 && !needsReplant && plotFill >= 1.0;
   const replantNeeded = unlocked && count > 0 && needsReplant;
   const rcost = replantNeeded ? replantCost(config, count) : 0;
-  const canAffordReplant = coins >= rcost;
+  const canAffordReplant = balance >= rcost;
   const fillPct = Math.min(count / config.maxUnits, 1);
 
   // Category-specific palette
@@ -413,8 +416,8 @@ function FarmPlot({
                       <span style={{ fontSize: 20 }}>{isFarm ? '🌱' : '🐣'}</span>
                       <span style={{ fontSize: 11 }}>
                         {canAffordReplant
-                          ? (isFarm ? `Ek! (${formatNum(rcost)} 🪙)` : `Büyüt! (${formatNum(rcost)} 🪙)`)
-                          : `Yetersiz: ${formatNum(rcost)} 🪙`}
+                          ? (isFarm ? `Ek! (${formatNum(rcost)} TL)` : `Büyüt! (${formatNum(rcost)} TL)`)
+                          : `Yetersiz bakiye: ${formatNum(rcost)} TL`}
                       </span>
                     </motion.button>
                   </motion.div>
@@ -1295,6 +1298,7 @@ export default function GameView() {
                   growCount={state.sections[cfg.id]?.growCount ?? 0}
                   unlocked={state.sections[cfg.id]?.unlocked ?? false}
                   coins={state.coins}
+                  balance={state.balance}
                   plotFill={state.plotFill[cfg.id] ?? 0}
                   needsReplant={state.sections[cfg.id]?.needsReplant ?? false}
                   level={state.level}
