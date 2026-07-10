@@ -22,7 +22,7 @@ export default function InvitePage() {
   };
 
   const handleShare = () => {
-    const text = encodeURIComponent(`Sarı'nın Çiftliği'ni oyna ve 10 Coin kazan! 🌾🪙 Sen davet edersen 25 Coin kazanırsın!`);
+    const text = encodeURIComponent(`Sarı'nın Çiftliği'ni oyna ve 5 Coin kazan! 🌾🪙 Sen davet edersen 12 Coin kazanırsın!`);
     const url = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${text}`;
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.openTelegramLink(url);
@@ -45,11 +45,11 @@ export default function InvitePage() {
 
         <div className="relative bg-white text-[#a06235] font-black px-4 py-2 rounded-xl mb-4 text-sm shadow-md border-2 border-[#a06235] z-10 mt-2">
           <div className="absolute -top-2 left-6 w-4 h-4 bg-white border-l-2 border-t-2 border-[#a06235] transform rotate-45"></div>
-          Sen 25 Coin, arkadaşın 10 Coin kazan!
+          Sen 12 Coin, arkadaşın 5 Coin kazan!
         </div>
 
         <div className="bg-[#5c3a21] border-2 border-[#f5c842] rounded-xl px-4 py-2 shadow-lg inline-flex items-center gap-2 z-10">
-          <span className="text-xl font-black text-[#f5c842]">Her Davet = 🪙 25 Coin</span>
+          <span className="text-xl font-black text-[#f5c842]">Her Davet = 🪙 12 Coin</span>
         </div>
       </div>
 
@@ -118,7 +118,7 @@ export default function InvitePage() {
           {[
             { step: '1', text: 'Bağlantını arkadaşlarınla paylaş' },
             { step: '2', text: 'Arkadaşın oyuna katılır' },
-            { step: '3', text: 'Sen 25 Coin, arkadaşın 10 Coin kazanır' },
+            { step: '3', text: 'Sen 12 Coin, arkadaşın 5 Coin kazanır' },
             { step: '4', text: 'Davet sayına göre özel NFT kazan!' },
           ].map((item) => (
             <div key={item.step} className="flex items-center gap-3">

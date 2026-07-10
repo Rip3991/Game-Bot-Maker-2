@@ -7,14 +7,14 @@ import mascotAvatar from '../assets/mascot-avatar.png';
 
 // ── Wheel segments ────────────────────────────────────────────────────────────
 const SEGMENTS = [
-  { prize: '5',       icon: '🪙', label: '5 Coin',   value: 5,   color: '#b45309', light: '#fbbf24', type: 'coins'   },
-  { prize: '10',      icon: '🪙', label: '10 Coin',  value: 10,  color: '#15803d', light: '#4ade80', type: 'coins'   },
+  { prize: '2',       icon: '🪙', label: '2 Coin',   value: 2,   color: '#b45309', light: '#fbbf24', type: 'coins'   },
+  { prize: '5',       icon: '🪙', label: '5 Coin',   value: 5,  color: '#15803d', light: '#4ade80', type: 'coins'   },
   { prize: 'boost',   icon: '✨', label: '2× Boost', value: 0,   color: '#6d28d9', light: '#a78bfa', type: 'boost'   },
-  { prize: '15',      icon: '🪙', label: '15 Coin',  value: 15,  color: '#1d4ed8', light: '#60a5fa', type: 'coins'   },
+  { prize: '7',       icon: '🪙', label: '7 Coin',  value: 7,  color: '#1d4ed8', light: '#60a5fa', type: 'coins'   },
   { prize: 'miss',    icon: '💨', label: 'Kaçtı!',   value: 0,   color: '#374151', light: '#9ca3af', type: 'miss'    },
-  { prize: '25',      icon: '🪙', label: '25 Coin',  value: 25,  color: '#c2410c', light: '#fb923c', type: 'coins'   },
-  { prize: 'jackpot', icon: '🎰', label: 'JACKPOT',  value: 100, color: '#854d0e', light: '#facc15', type: 'jackpot' },
-  { prize: '8',       icon: '🪙', label: '8 Coin',   value: 8,   color: '#166534', light: '#86efac', type: 'coins'   },
+  { prize: '12',      icon: '🪙', label: '12 Coin',  value: 12,  color: '#c2410c', light: '#fb923c', type: 'coins'   },
+  { prize: 'jackpot', icon: '🎰', label: 'JACKPOT',  value: 50, color: '#854d0e', light: '#facc15', type: 'jackpot' },
+  { prize: '4',       icon: '🪙', label: '4 Coin',   value: 4,   color: '#166534', light: '#86efac', type: 'coins'   },
 ];
 
 const N = SEGMENTS.length;

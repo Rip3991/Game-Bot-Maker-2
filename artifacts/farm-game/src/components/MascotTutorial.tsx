@@ -26,7 +26,7 @@ const STEPS = [
     emoji: '🎡',
   },
   {
-    bubble: "👥 Arkadaşlarını davet et!\nHer davet = 🪙 50 Coin, arkadaşın = 🪙 25 Coin!\nDavet sayfasına bak →",
+    bubble: "👥 Arkadaşlarını davet et!\nHer davet = 🪙 12 Coin, arkadaşın = 🪙 5 Coin!\nDavet sayfasına bak →",
     highlight: null,
     emoji: '👥',
   },

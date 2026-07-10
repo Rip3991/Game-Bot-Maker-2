@@ -7,14 +7,14 @@ const router = Router();
 
 // Reduced rewards — coins are valuable, don't give them away cheaply
 const SPIN_SEGMENTS = [
-  { label: "5 Coin",     prizeType: "coins" as const, coinsEarned: 5,   segmentIndex: 0 },
-  { label: "10 Coin",    prizeType: "coins" as const, coinsEarned: 10,  segmentIndex: 1 },
+  { label: "2 Coin",     prizeType: "coins" as const, coinsEarned: 2,   segmentIndex: 0 },
+  { label: "5 Coin",     prizeType: "coins" as const, coinsEarned: 5,  segmentIndex: 1 },
   { label: "2x Boost",   prizeType: "boost" as const, coinsEarned: 0,   segmentIndex: 2 },
-  { label: "15 Coin",    prizeType: "coins" as const, coinsEarned: 15,  segmentIndex: 3 },
+  { label: "7 Coin",     prizeType: "coins" as const, coinsEarned: 7,  segmentIndex: 3 },
   { label: "Pas",        prizeType: "miss"  as const, coinsEarned: 0,   segmentIndex: 4 },
-  { label: "25 Coin",    prizeType: "coins" as const, coinsEarned: 25,  segmentIndex: 5 },
-  { label: "JACKPOT 100",prizeType: "jackpot" as const, coinsEarned: 100, segmentIndex: 6 },
-  { label: "8 Coin",     prizeType: "coins" as const, coinsEarned: 8,   segmentIndex: 7 },
+  { label: "12 Coin",    prizeType: "coins" as const, coinsEarned: 12,  segmentIndex: 5 },
+  { label: "JACKPOT 50", prizeType: "jackpot" as const, coinsEarned: 50, segmentIndex: 6 },
+  { label: "4 Coin",     prizeType: "coins" as const, coinsEarned: 4,   segmentIndex: 7 },
 ];
 
 // Higher miss/low-reward weight — more tension, more value when you do win

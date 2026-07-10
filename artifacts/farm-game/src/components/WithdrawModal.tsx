@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 const API = `${import.meta.env.BASE_URL}api`;
 
 // Tiered withdrawal amounts — user picks one
-const AMOUNTS = [350, 500, 750] as const;
+const AMOUNTS = [750, 1000, 1500] as const;
 type Amount = typeof AMOUNTS[number];
 
 const METHODS = [
@@ -27,7 +27,7 @@ interface WithdrawModalProps {
 export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const { user, telegramId, refresh } = useUser();
   const [method, setMethod] = useState<Method>('papara');
-  const [amount, setAmount] = useState<Amount>(350);
+  const [amount, setAmount] = useState<Amount>(750);
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [lastResult, setLastResult] = useState<{ requestId: string; amount: number } | null>(null);
 
@@ -42,9 +42,9 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const coins = user?.coins ?? 0;
   const canWithdraw = balance >= amount;
 
-  // Rate: 1000 coins = 50 TL (0.05 TL per coin), min 500 coins
-  const COIN_RATE = 0.05;
-  const MIN_COINS = 500;
+  // Rate: 1000 coins = 25 TL (0.025 TL per coin), min 1000 coins
+  const COIN_RATE = 0.025;
+  const MIN_COINS = 1000;
   // Parse strictly — only accept positive integers (no decimals, no scientific notation)
   const parsedCoinAmount = /^\d+$/.test(coinConvertAmount.trim()) ? parseInt(coinConvertAmount.trim(), 10) : NaN;
   const coinInputEmpty = coinConvertAmount.trim() === '';
@@ -159,7 +159,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         <span className="text-base">🪙</span>
                         <span className="font-black text-green-300 text-sm">Coin → TL Çevir</span>
                         <span className="ml-auto text-[9px] font-bold bg-green-800/60 border border-green-600/40 text-green-300 px-2 py-0.5 rounded-full">
-                          1.000 Coin = 50 TL
+                          1.000 Coin = 25 TL
                         </span>
                       </div>
                       <p className="text-white/40 text-[10px] font-bold">Min. {MIN_COINS} Coin · Anında TL bakiyene yüklenir</p>

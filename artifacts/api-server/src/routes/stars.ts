@@ -32,18 +32,18 @@ export type CoinShopItemId = (typeof COIN_SHOP_ITEMS)[number]["id"];
 
 // ── Coin → TL conversion (the safe, margin-aware alternative to fixed TL items) ─
 //
-// Rate set per operator request: 1.000 Coin ≈ 50 TL.
+// Rate set per operator request (aggressive tightening pass): 1.000 Coin ≈ 25 TL.
 //
 // ⚠️ ECONOMICS WARNING: at this rate, a user who buys the cheapest Coin package
 // (Efsane: 250 Stars → 3.750 Coins, 15 Coins/Star) and immediately converts gets
-// 3.750 × 0.05 = 187,5 TL for 250 Stars — i.e. you need to net at least ~0,75 TL
+// 3.750 × 0.025 = 93,75 TL for 250 Stars — i.e. you need to net at least ~0,375 TL
 // per Star just to break even on that path (and more than that to keep any
 // margin). If your real net TL-per-Star (after Telegram's cut) is lower than
 // that, the house loses money on every purchase→convert cycle, same as the old
 // tl_ultra item. Please confirm your real net-per-Star figure and adjust
 // COIN_TO_TL_RATE below if needed — it's the single number driving this feature.
-export const COIN_TO_TL_RATE = 0.05; // TL per Coin (1.000 Coin = 50 TL)
-export const MIN_COIN_CONVERT = 500; // smallest amount convertible in one go
+export const COIN_TO_TL_RATE = 0.025; // TL per Coin (1.000 Coin = 25 TL) — halved for a tighter economy
+export const MIN_COIN_CONVERT = 1000; // smallest amount convertible in one go — raised alongside the lower rate
 
 // ── GET /stars/coin-convert-rate ────────────────────────────────────────────
 router.get("/stars/coin-convert-rate", (_req, res) => {

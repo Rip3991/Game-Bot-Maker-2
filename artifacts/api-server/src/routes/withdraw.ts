@@ -8,7 +8,7 @@ const router = Router();
 
 // Tiered withdrawal amounts — lets users cash out smaller wins sooner while
 // keeping a meaningful ceiling per request.
-export const ALLOWED_WITHDRAW_AMOUNTS = [350, 500, 750] as const;
+export const ALLOWED_WITHDRAW_AMOUNTS = [750, 1000, 1500] as const;
 const MIN_ACCOUNT_AGE_DAYS_FOR_FIRST_WITHDRAW = 3;
 
 // POST /withdraw/request

@@ -12,10 +12,10 @@ import { notifyUser, getBotUsername, getGameUrl } from "../lib/telegram";
 
 const router = Router();
 
-const REFERRAL_COINS = 25;          // coins to referrer
-const REFERRAL_TL = 10;             // TL to referrer (real money reward)
-const REFERRAL_BONUS_FOR_REFERRED = 10; // coins to invited user
-const SECOND_TIER_REFERRAL_TL = 2;  // TL to the referrer's referrer (chain bonus)
+const REFERRAL_COINS = 12;          // coins to referrer
+const REFERRAL_TL = 5;              // TL to referrer (real money reward)
+const REFERRAL_BONUS_FOR_REFERRED = 5; // coins to invited user
+const SECOND_TIER_REFERRAL_TL = 1;  // TL to the referrer's referrer (chain bonus)
 
 // Streak TL milestones — { day: TL, achievementKey }
 const STREAK_TL_MILESTONES = [

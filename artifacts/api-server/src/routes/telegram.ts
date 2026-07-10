@@ -273,7 +273,7 @@ router.post("/telegram/webhook", async (req, res): Promise<void> => {
       `✨ <b>Neler yapabilirsin?</b>\n` +
       `🌾 Çiftliğini büyüt, mahsul yetiştir\n` +
       `🐄 Hayvanlardan ürün topla ve sat\n` +
-      `🪙 Her arkadaş davetinde <b>50 Coin</b> kazan\n` +
+      `🪙 Her arkadaş davetinde <b>12 Coin</b> kazan\n` +
       `🎡 Her gün çarkı çevir, ödül kazan\n` +
       `💸 Kazandığını gerçek paraya çevir\n\n` +
       `👇 <b>Oyuna girmek için aşağıdaki butona bas!</b>`;
