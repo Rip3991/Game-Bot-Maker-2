@@ -35,7 +35,7 @@
 set -u
 
 # ── Configure this ──
-RENDER_URL="https://YOUR-APP.onrender.com/api/healthz"
+RENDER_URL="https://game-bot-maker-2.onrender.com/api/healthz"
 INTERVAL_SECONDS=240   # 4 minutes — safely under Render's ~15min idle timeout
 
 echo "Pinging $RENDER_URL every ${INTERVAL_SECONDS}s to keep it awake. Ctrl+C to stop."
