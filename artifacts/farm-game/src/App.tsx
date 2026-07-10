@@ -34,15 +34,31 @@ initI18n();
 
 const queryClient = new QueryClient();
 
-/* ── Permanent right-side navigation strip ── */
+/* ── Permanent right-side navigation strip ──
+   Every button carries its own idle + active color pair so the rail reads
+   as a row of little painted farm signposts rather than one flat block. */
 const RIGHT_NAV = [
-  { label: 'Çiftlik', Icon: FarmIcon,        path: '/',            accentColor: '#4ade80', shadowColor: 'rgba(74,222,128,0.35)' },
-  { label: 'Çark',   Icon: SpinIcon,         path: '/spin',        accentColor: '#fde68a', shadowColor: 'rgba(253,230,138,0.35)' },
-  { label: 'İlanlar', Icon: NftIcon,          path: '/nfts',        accentColor: '#c084fc', shadowColor: 'rgba(192,132,252,0.35)' },
-  { label: 'Görev',  Icon: TaskIcon,         path: '/tasks',       accentColor: '#fde68a', shadowColor: 'rgba(251,191,36,0.35)' },
-  { label: 'Davet',  Icon: InviteIcon,       path: '/invite',      accentColor: '#4ade80', shadowColor: 'rgba(74,222,128,0.35)' },
-  { label: 'Liste',  Icon: LeaderboardIcon,  path: '/leaderboard', accentColor: '#fbbf24', shadowColor: 'rgba(251,191,36,0.35)' },
-  { label: 'Mağaza', Icon: ShopIcon,         path: '/stars',       accentColor: '#fde68a', shadowColor: 'rgba(253,230,138,0.35)' },
+  { label: 'Çiftlik', Icon: FarmIcon,       path: '/',            accentColor: '#4ade80', shadowColor: 'rgba(74,222,128,0.35)',
+    idleBg: 'linear-gradient(180deg, #2f6b16 0%, #1c4409 100%)', idleBorder: 'rgba(134,239,172,0.4)',
+    activeBg: 'linear-gradient(180deg, #4ade80 0%, #2a6010 100%)', activeBorder: '#86efac' },
+  { label: 'Çark',    Icon: SpinIcon,       path: '/spin',        accentColor: '#fde68a', shadowColor: 'rgba(253,230,138,0.35)',
+    idleBg: 'linear-gradient(180deg, #a8621c 0%, #6b3a0e 100%)', idleBorder: 'rgba(253,230,138,0.4)',
+    activeBg: 'linear-gradient(180deg, #f5c842 0%, #c4832e 100%)', activeBorder: '#fde68a' },
+  { label: 'İlanlar', Icon: NftIcon,        path: '/nfts',        accentColor: '#c084fc', shadowColor: 'rgba(192,132,252,0.35)',
+    idleBg: 'linear-gradient(180deg, #6d28d9 0%, #3f1a80 100%)', idleBorder: 'rgba(216,180,254,0.4)',
+    activeBg: 'linear-gradient(180deg, #c084fc 0%, #7c3aed 100%)', activeBorder: '#e9d5ff' },
+  { label: 'Görev',   Icon: TaskIcon,       path: '/tasks',       accentColor: '#fbbf24', shadowColor: 'rgba(251,191,36,0.35)',
+    idleBg: 'linear-gradient(180deg, #b45309 0%, #78350f 100%)', idleBorder: 'rgba(253,224,71,0.4)',
+    activeBg: 'linear-gradient(180deg, #fbbf24 0%, #d97706 100%)', activeBorder: '#fde68a' },
+  { label: 'Davet',   Icon: InviteIcon,     path: '/invite',      accentColor: '#7dd3fc', shadowColor: 'rgba(56,189,248,0.35)',
+    idleBg: 'linear-gradient(180deg, #0e7490 0%, #0c4a5e 100%)', idleBorder: 'rgba(125,211,252,0.4)',
+    activeBg: 'linear-gradient(180deg, #38bdf8 0%, #0284c7 100%)', activeBorder: '#bae6fd' },
+  { label: 'Liste',   Icon: LeaderboardIcon, path: '/leaderboard', accentColor: '#fb923c', shadowColor: 'rgba(251,146,60,0.35)',
+    idleBg: 'linear-gradient(180deg, #c2410c 0%, #7c2d12 100%)', idleBorder: 'rgba(253,186,116,0.4)',
+    activeBg: 'linear-gradient(180deg, #fb923c 0%, #ea580c 100%)', activeBorder: '#fed7aa' },
+  { label: 'Mağaza',  Icon: ShopIcon,       path: '/stars',       accentColor: '#fde68a', shadowColor: 'rgba(253,230,138,0.35)',
+    idleBg: 'linear-gradient(180deg, #a16207 0%, #713f12 100%)', idleBorder: 'rgba(253,230,138,0.4)',
+    activeBg: 'linear-gradient(180deg, #f5c842 0%, #e6a800 100%)', activeBorder: '#fef3c7' },
 ] as const;
 
 const ADMIN_IDS = ['8652151076'];
@@ -69,16 +85,18 @@ function RightNav({ onAchievementsOpen, musicOn, onMusicToggle }: { onAchievemen
             key={item.path}
             onClick={() => navigate(item.path)}
             className="right-nav-btn flex-shrink-0"
-            style={isActive ? {
-              background: 'linear-gradient(180deg, #3d8b1c 0%, #2a6010 100%)',
-              borderColor: '#6abf30',
-              boxShadow: `0 3px 0 #1a4008, 0 0 10px ${item.shadowColor}`,
-            } : {}}
+            style={{
+              background: isActive ? item.activeBg : item.idleBg,
+              borderColor: isActive ? item.activeBorder : item.idleBorder,
+              boxShadow: isActive
+                ? `0 3px 0 #1a4008, 0 0 10px ${item.shadowColor}`
+                : `0 3px 0 rgba(0,0,0,0.45), 0 0 6px ${item.shadowColor}`,
+            }}
           >
             <item.Icon size={20} active={isActive} />
             <span
               className="font-black leading-tight text-center"
-              style={{ fontSize: 7.5, color: isActive ? item.accentColor : 'rgba(180,220,140,0.55)' }}
+              style={{ fontSize: 7.5, color: isActive ? item.activeBorder : 'rgba(255,255,255,0.85)', textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}
             >
               {item.label}
             </span>
