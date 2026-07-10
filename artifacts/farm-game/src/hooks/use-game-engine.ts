@@ -23,6 +23,11 @@ export const SECTIONS: SectionConfig[] = [
   // income/min per section = growCount × sellPrice / harvestMinutes × lMult
   // unitCost doubled from the original balance (2026-07-10, operator request:
   // tighten the economy so unit purchases aren't too cheap).
+  // 2026-07-10 (later same day): unlockCost/unitCost from onion→blueberry
+  // re-leveled onto a consistent geometric curve (~4.3x/step for unlockCost,
+  // ~3.6x/step for unitCost) — previous values had irregular jumps (e.g.
+  // tomato→strawberry was 5.6x while strawberry→sunflower was only 2.9x),
+  // making some "Bahçe" tiers unlock too easily relative to neighbors.
   {
     id: 'wheat', emoji: '🌾', name: 'Buğday Tarlası', category: 'farm',
     unlockCost: 0, unitCost: 40, baseRate: 10, sellPrice: 2, maxUnits: 20,
@@ -31,55 +36,55 @@ export const SECTIONS: SectionConfig[] = [
   },
   {
     id: 'onion', emoji: '🧅', name: 'Soğan Tarlası', category: 'farm',
-    unlockCost: 130, unitCost: 100, baseRate: 12, sellPrice: 3, maxUnits: 20,
+    unlockCost: 150, unitCost: 100, baseRate: 12, sellPrice: 3, maxUnits: 20,
     description: 'Tatlı soğan tarlası', scene: ['🌿', '🌱'],
     harvestMinutes: 0.5,
   },
   {
     id: 'corn', emoji: '🌽', name: 'Mısır Tarlası', category: 'farm',
-    unlockCost: 500, unitCost: 260, baseRate: 19, sellPrice: 7, maxUnits: 20,
+    unlockCost: 650, unitCost: 360, baseRate: 19, sellPrice: 7, maxUnits: 20,
     description: 'Altın mısır başakları', scene: ['🌻', '🌿'],
     harvestMinutes: 0.75,
   },
   {
     id: 'carrot', emoji: '🥕', name: 'Havuç Tarlası', category: 'farm',
-    unlockCost: 2000, unitCost: 900, baseRate: 20, sellPrice: 10, maxUnits: 20,
+    unlockCost: 2800, unitCost: 1300, baseRate: 20, sellPrice: 10, maxUnits: 20,
     description: 'Taze turuncu havuçlar', scene: ['🌿', '🌱'],
     harvestMinutes: 1,
   },
   {
     id: 'tomato', emoji: '🍅', name: 'Domates Bahçesi', category: 'farm',
-    unlockCost: 8000, unitCost: 3200, baseRate: 33, sellPrice: 25, maxUnits: 15,
+    unlockCost: 12000, unitCost: 4700, baseRate: 33, sellPrice: 25, maxUnits: 15,
     description: 'Taze kırmızı domatesler', scene: ['🌿', '🪴'],
     harvestMinutes: 1.5,
   },
   {
     id: 'strawberry', emoji: '🍓', name: 'Çilek Bahçesi', category: 'farm',
-    unlockCost: 45000, unitCost: 16000, baseRate: 65, sellPrice: 65, maxUnits: 15,
+    unlockCost: 52000, unitCost: 17000, baseRate: 65, sellPrice: 65, maxUnits: 15,
     description: 'Tatlı kırmızı çilekler', scene: ['🌸', '🌿'],
     harvestMinutes: 2,
   },
   {
     id: 'sunflower', emoji: '🌻', name: 'Ayçiçeği Tarlası', category: 'farm',
-    unlockCost: 130000, unitCost: 50000, baseRate: 100, sellPrice: 125, maxUnits: 12,
+    unlockCost: 224000, unitCost: 61000, baseRate: 100, sellPrice: 125, maxUnits: 12,
     description: 'Yağlık ayçiçeği tarlası', scene: ['☀️', '🌿'],
     harvestMinutes: 2.5,
   },
   {
     id: 'grape', emoji: '🍇', name: 'Üzüm Bağı', category: 'farm',
-    unlockCost: 420000, unitCost: 160000, baseRate: 163, sellPrice: 325, maxUnits: 12,
+    unlockCost: 960000, unitCost: 220000, baseRate: 163, sellPrice: 325, maxUnits: 12,
     description: 'Verimli üzüm asmaları', scene: ['🍂', '🌿'],
     harvestMinutes: 4,
   },
   {
     id: 'apple', emoji: '🍎', name: 'Elma Bahçesi', category: 'farm',
-    unlockCost: 1600000, unitCost: 560000, baseRate: 250, sellPrice: 750, maxUnits: 10,
+    unlockCost: 4100000, unitCost: 790000, baseRate: 250, sellPrice: 750, maxUnits: 10,
     description: 'Taze kırmızı elmalar', scene: ['🌳', '🌿'],
     harvestMinutes: 6,
   },
   {
     id: 'blueberry', emoji: '🫐', name: 'Yaban Mersini', category: 'farm',
-    unlockCost: 6500000, unitCost: 2000000, baseRate: 400, sellPrice: 2000, maxUnits: 8,
+    unlockCost: 17600000, unitCost: 2850000, baseRate: 400, sellPrice: 2000, maxUnits: 8,
     description: 'Antioksidan yaban mersini', scene: ['🌿', '🌳'],
     harvestMinutes: 10,
   },
