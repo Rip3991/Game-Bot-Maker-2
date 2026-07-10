@@ -283,7 +283,16 @@ export interface GameState {
   sections: Record<string, SectionState>;
   storage: Record<string, number>;
   specialStorage: Record<string, number>;
-  plotFill: Record<string, number>; // 0.0 → 1.0 fill progress per section
+  plotFill: Record<string, number>; // 0.0 → 1.0 fill progress per section — always
+    // *derived* from plotElapsedSec each tick, never accumulated directly, so
+    // it can never drift or "stick" independently of the elapsed clock.
+  /** Real elapsed seconds (level-multiplier-adjusted) invested in the current
+   *  grow cycle per section. This — not plotFill — is the source of truth:
+   *  plotFill is recomputed from it every tick using the *current* unit count,
+   *  so buying a new unit mid-cycle (which changes the effective cycle
+   *  length) instantly and correctly reflows both the remaining time and the
+   *  % shown, instead of the % continuing to climb at a stale rate. */
+  plotElapsedSec: Record<string, number>;
   level: number;
   xp: number;
   lastSaved: number;
@@ -323,6 +332,7 @@ export const makeInitialState = (): GameState => ({
   storage: Object.fromEntries(SECTIONS.map(cfg => [cfg.id, 0])),
   specialStorage: Object.fromEntries(SPECIAL_ITEMS.map(item => [item.id, 0])),
   plotFill: Object.fromEntries(SECTIONS.map(cfg => [cfg.id, 0])),
+  plotElapsedSec: Object.fromEntries(SECTIONS.map(cfg => [cfg.id, 0])),
   level: 1,
   xp: 0,
   lastSaved: Date.now(),
@@ -406,6 +416,22 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
         const level = parsed.level ?? 1;
         const xp = parsed.xp ?? 0;
 
+        // Migrate from saves written before plotElapsedSec existed: back-fill
+        // it from the old fraction so in-progress cycles don't reset to 0%,
+        // approximating the elapsed seconds under today's effective cycle
+        // length for that section's current unit count.
+        const plotElapsedSec: Record<string, number> = Object.fromEntries(
+          SECTIONS.map(cfg => {
+            if (parsed.plotElapsedSec && cfg.id in parsed.plotElapsedSec) {
+              return [cfg.id, parsed.plotElapsedSec[cfg.id]];
+            }
+            const count = sections[cfg.id]?.count ?? 0;
+            const fraction = plotFill[cfg.id] ?? 0;
+            const effectiveMinutes = getEffectiveHarvestMinutes(cfg, count);
+            return [cfg.id, fraction * effectiveMinutes * 60];
+          }),
+        );
+
         return {
           balance: parsed.balance ?? 0,
           coins: parsed.coins ?? 0,
@@ -413,6 +439,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
           storage,
           specialStorage,
           plotFill,
+          plotElapsedSec,
           level,
           xp,
           lastSaved: Date.now(),
@@ -453,6 +480,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
       const lMult = levelMultiplier(current.level);
 
       let hasChange = false;
+      const elapsedUpdates: Record<string, number> = {};
       const fillUpdates: Record<string, number> = {};
 
       SECTIONS.forEach(cfg => {
@@ -460,12 +488,22 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
         if (!s?.unlocked || s.count === 0) return;
         if (s.needsReplant) return;
         const fill = current.plotFill[cfg.id] ?? 0;
-        if (fill >= 1.0) return; // already full, wait for harvest tap
-        // Growth time scales with unit count — see getEffectiveHarvestMinutes.
+        if (fill >= 1.0) return; // already full, wait for harvest tap — never keeps ticking past 100%
+        // Elapsed seconds is the source of truth; fill is *derived* from it
+        // using the CURRENT unit count every tick, so a mid-cycle buy
+        // instantly recalculates both % and remaining time against the new
+        // (slower) effective cycle length — no stale-rate drift, no stuck %.
+        const prevElapsed = current.plotElapsedSec?.[cfg.id] ?? 0;
+        const elapsed = prevElapsed + lMult * deltaSec;
         const effectiveMinutes = getEffectiveHarvestMinutes(cfg, s.count);
-        const fillRatePerSec = lMult / (effectiveMinutes * 60);
-        const newFill = Math.min(fill + fillRatePerSec * deltaSec, 1.0);
-        if (Math.abs(newFill - fill) > 0.000001) {
+        const totalSec = effectiveMinutes * 60;
+        const newFill = Math.min(elapsed / totalSec, 1.0);
+        // Once a plot reaches 100%, stop accumulating elapsed time beyond
+        // what was needed — prevents a huge elapsed backlog from carrying
+        // over and instantly re-filling the *next* cycle after harvest.
+        const cappedElapsed = newFill >= 1.0 ? totalSec : elapsed;
+        if (Math.abs(newFill - fill) > 0.000001 || cappedElapsed !== prevElapsed) {
+          elapsedUpdates[cfg.id] = cappedElapsed;
           fillUpdates[cfg.id] = newFill;
           hasChange = true;
         }
@@ -474,6 +512,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
       if (hasChange) {
         setState(prev => ({
           ...prev,
+          plotElapsedSec: { ...prev.plotElapsedSec, ...elapsedUpdates },
           plotFill: { ...prev.plotFill, ...fillUpdates },
         }));
       }
@@ -589,6 +628,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
         storage: { ...prev.storage, [id]: (prev.storage[id] ?? 0) + yieldItems },
         specialStorage,
         plotFill: { ...prev.plotFill, [id]: 0 },
+        plotElapsedSec: { ...prev.plotElapsedSec, [id]: 0 },
         sections: { ...prev.sections, [id]: { ...sec, needsReplant: true } },
         xp: newXp,
         level: newLevel,
@@ -611,6 +651,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
         // growCount already mirrors the live count (kept in sync on buy).
         sections: { ...prev.sections, [id]: { ...sec, needsReplant: false, growCount: sec.count } },
         plotFill: { ...prev.plotFill, [id]: 0 },
+        plotElapsedSec: { ...prev.plotElapsedSec, [id]: 0 },
       };
     });
   }, []);
