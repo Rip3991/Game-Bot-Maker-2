@@ -502,13 +502,26 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
       if (!sec?.unlocked) return prev;
       if (sec.count >= cfg.maxUnits) return prev;
       if (prev.coins < cfg.unitCost) return prev;
+      const newCount = sec.count + 1;
+      // Fill time scales with count (fillRatePerSec ∝ 1/count), so adding a
+      // unit mid-growth must rescale the in-progress fill fraction down by
+      // oldCount/newCount to preserve the real elapsed effort. Without this,
+      // a player could buy 1 unit, let it nearly finish (fast, since count=1),
+      // then top up to max count right before harvest and reap a full-size
+      // harvest almost instantly — the per-count time slowdown would never
+      // actually apply to that harvest.
+      const oldFill = prev.plotFill[id] ?? 0;
+      const rescaledFill = sec.count > 0
+        ? Math.min(1, Math.max(0, (oldFill * sec.count) / newCount))
+        : oldFill;
       return {
         ...prev,
         coins: prev.coins - cfg.unitCost,
         sections: {
           ...prev.sections,
-          [id]: { ...sec, count: sec.count + 1 },
+          [id]: { ...sec, count: newCount },
         },
+        plotFill: { ...prev.plotFill, [id]: rescaledFill },
       };
     });
   }, []);
