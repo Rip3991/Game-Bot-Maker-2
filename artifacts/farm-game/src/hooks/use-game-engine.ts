@@ -436,11 +436,14 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
         if (s.needsReplant) return;
         const fill = current.plotFill[cfg.id] ?? 0;
         if (fill >= 1.0) return; // already full, wait for harvest tap
-        // Growth time depends only on harvestMinutes (and level), never on unit
-        // count — buying more units raises the harvest yield (yieldItems = count),
-        // not the wait time. Dividing by count here used to make plots with many
-        // units take so long to fill that growth looked completely frozen.
-        const fillRatePerSec = lMult / (cfg.harvestMinutes * 60);
+        // Growth time scales with unit count (operator request, 2026-07-10:
+        // fields were finishing far too fast). More units planted on a plot
+        // take longer to tend, so the cycle time grows with sqrt(count) —
+        // buying units still raises total yield/min (yieldItems = count) by
+        // more than the extra wait costs, just not 1:1. Base harvestMinutes
+        // values were also doubled to slow the overall pace.
+        const effectiveMinutes = cfg.harvestMinutes * 2 * Math.sqrt(Math.max(1, s.count));
+        const fillRatePerSec = lMult / (effectiveMinutes * 60);
         const newFill = Math.min(fill + fillRatePerSec * deltaSec, 1.0);
         if (Math.abs(newFill - fill) > 0.000001) {
           fillUpdates[cfg.id] = newFill;
@@ -629,9 +632,12 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
 
   const incomePerMin = SECTIONS.reduce((sum, cfg) => {
     const s = state.sections[cfg.id];
-    // Income now scales with planted units: each cycle (harvestMinutes,
-    // count-independent) yields growCount items at sellPrice each.
-    if (s?.unlocked && s.count > 0 && !s.needsReplant) return sum + Math.round(s.growCount * cfg.sellPrice / cfg.harvestMinutes * levelMultiplier(state.level));
+    // Cycle time scales with sqrt(count) (see plot-fill tick effect above),
+    // so the per-minute estimate must use the same effective minutes.
+    if (s?.unlocked && s.count > 0 && !s.needsReplant) {
+      const effectiveMinutes = cfg.harvestMinutes * 2 * Math.sqrt(Math.max(1, s.count));
+      return sum + Math.round(s.growCount * cfg.sellPrice / effectiveMinutes * levelMultiplier(state.level));
+    }
     return sum;
   }, 0);
 
