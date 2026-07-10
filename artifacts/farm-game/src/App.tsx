@@ -168,13 +168,15 @@ function RightNav({ onAchievementsOpen, musicOn, onMusicToggle }: { onAchievemen
       )}
 
       {/* Decorative filler — a little vine of farm life so the strip never
-          trails off into flat empty space below the last button */}
-      <div className="flex-1 w-full flex flex-col items-center justify-end gap-2.5 pb-1 min-h-[12px] pointer-events-none select-none">
+          trails off into flat empty space below the last button. The
+          ladybug climbs the vine from the bottom up to just under the
+          Music button, then resets and climbs again. */}
+      <div className="relative flex-1 w-full flex flex-col items-center justify-end pb-1 min-h-[12px] pointer-events-none select-none">
         <div className="w-px flex-1 min-h-[6px]" style={{ background: 'linear-gradient(180deg, rgba(134,239,172,0.35), rgba(134,239,172,0.05))' }} />
-        <span style={{ fontSize: 13, opacity: 0.55, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}>🌻</span>
-        <div className="w-px h-3" style={{ background: 'rgba(134,239,172,0.25)' }} />
-        <span style={{ fontSize: 12, opacity: 0.4 }}>🐞</span>
-        <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'rgba(134,239,172,0.3)' }} />
+        <span className="mt-2.5" style={{ fontSize: 13, opacity: 0.55, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}>🌻</span>
+        <div className="w-px h-3 mt-2.5" style={{ background: 'rgba(134,239,172,0.25)' }} />
+        <div className="w-1.5 h-1.5 rounded-full mt-2.5" style={{ background: 'rgba(134,239,172,0.3)' }} />
+        <span className="ladybug-climb" style={{ fontSize: 12 }}>🐞</span>
       </div>
     </div>
   );
