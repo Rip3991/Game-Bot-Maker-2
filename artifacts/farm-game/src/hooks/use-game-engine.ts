@@ -266,6 +266,25 @@ const defaultSection = (cfg: SectionConfig): SectionState => ({
   needsReplant: false,
 });
 
+/** The section (if any) that must be unlocked before `id` can be unlocked —
+ *  the previous entry in SECTIONS within the same category. Farms and
+ *  animals each have their own independent unlock order. */
+export function prevSectionInOrder(id: string): SectionConfig | null {
+  const cfg = SECTIONS.find(s => s.id === id);
+  if (!cfg) return null;
+  const sameCategory = SECTIONS.filter(s => s.category === cfg.category);
+  const idx = sameCategory.findIndex(s => s.id === id);
+  return idx > 0 ? sameCategory[idx - 1] : null;
+}
+
+/** Whether `id` is unlockable right now given unlock order — true if it has
+ *  no predecessor in its category, or its predecessor is already unlocked. */
+export function isNextInUnlockOrder(sections: Record<string, SectionState>, id: string): boolean {
+  const prev = prevSectionInOrder(id);
+  if (!prev) return true;
+  return sections[prev.id]?.unlocked ?? false;
+}
+
 export const makeInitialState = (): GameState => ({
   balance: 0,
   coins: 0,
@@ -460,6 +479,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
     setState(prev => {
       if (prev.balance < cfg.unlockCost) return prev;
       if (prev.sections[id]?.unlocked) return prev;
+      if (!isNextInUnlockOrder(prev.sections, id)) return prev; // must unlock in order
       return {
         ...prev,
         balance: prev.balance - cfg.unlockCost,

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useGameEngine, SECTIONS, WELCOME_BONUS, SectionConfig, replantCost, xpToNextLevel, levelMultiplier } from '../hooks/use-game-engine';
+import { useGameEngine, SECTIONS, WELCOME_BONUS, SectionConfig, replantCost, xpToNextLevel, levelMultiplier, isNextInUnlockOrder, prevSectionInOrder } from '../hooks/use-game-engine';
 import { MarketPanel } from '../components/MarketPanel';
 import { useUser } from '../hooks/use-user';
 import { useSaveFarmState, useGetOnlineStats, getGetOnlineStatsQueryKey } from '@workspace/api-client-react';
@@ -140,6 +140,7 @@ function FarmPlot({
   plotFill,
   needsReplant,
   level,
+  canUnlockNow,
   onTap,
   onHarvest,
   onReplant,
@@ -151,6 +152,7 @@ function FarmPlot({
   plotFill: number;
   needsReplant: boolean;
   level: number;
+  canUnlockNow: boolean;
   onTap: () => void;
   onHarvest: () => void;
   onReplant: () => void;
@@ -161,6 +163,7 @@ function FarmPlot({
   const [fxParticles, setFxParticles] = React.useState<{ id: number; x: number }[]>([]);
   const canAffordUnlock = balance >= config.unlockCost;
   const isFarm = config.category === 'farm';
+  const prevRequired = !unlocked && !canUnlockNow ? prevSectionInOrder(config.id) : null;
   const isHarvestReady = unlocked && count > 0 && !needsReplant && plotFill >= 1.0;
   const replantNeeded = unlocked && count > 0 && needsReplant;
   const rcost = replantNeeded ? replantCost(config, count) : 0;
@@ -246,6 +249,10 @@ function FarmPlot({
                     </span>
                   )}
                 </div>
+              ) : prevRequired ? (
+                <span className="font-bold leading-none" style={{ fontSize: 9, color: 'rgba(255,150,150,0.55)' }}>
+                  🔒 Önce {prevRequired.name}
+                </span>
               ) : (
                 <span className="font-bold leading-none" style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>
                   🔒 {formatNum(config.unlockCost)} TL gerekli
@@ -487,11 +494,17 @@ function FarmPlot({
                 </div>
                 <div className="text-center">
                   <div className="font-black text-white text-sm">{config.name}</div>
-                  <div className={`text-xs font-bold mt-0.5 ${canAffordUnlock ? 'text-yellow-300' : 'text-gray-500'}`}>
-                    🔒 {formatNum(config.unlockCost)} TL
-                  </div>
+                  {prevRequired ? (
+                    <div className="text-xs font-bold mt-0.5 text-red-300">
+                      🔒 Önce {prevRequired.name}
+                    </div>
+                  ) : (
+                    <div className={`text-xs font-bold mt-0.5 ${canAffordUnlock ? 'text-yellow-300' : 'text-gray-500'}`}>
+                      🔒 {formatNum(config.unlockCost)} TL
+                    </div>
+                  )}
                 </div>
-                {canAffordUnlock && (
+                {canAffordUnlock && canUnlockNow && (
                   <motion.div
                     className="text-[9px] font-black text-yellow-300 bg-yellow-400/15 border border-yellow-400/30 rounded-full px-2 py-0.5"
                     animate={{ scale: [1, 1.05, 1] }}
@@ -547,6 +560,7 @@ function PurchaseSheet({
   config,
   sectionState,
   balance,
+  canUnlockNow,
   onUnlock,
   onBuy,
   onClose,
@@ -554,6 +568,7 @@ function PurchaseSheet({
   config: SectionConfig;
   sectionState: { unlocked: boolean; count: number; needsReplant?: boolean };
   balance: number;
+  canUnlockNow: boolean;
   onUnlock: () => void;
   onBuy: () => void;
   onClose: () => void;
@@ -562,6 +577,8 @@ function PurchaseSheet({
   const isMaxed = sectionState.count >= config.maxUnits;
   const cost = isLocked ? config.unlockCost : config.unitCost;
   const canAfford = balance >= cost;
+  const blockedByOrder = isLocked && !canUnlockNow;
+  const prevRequired = blockedByOrder ? prevSectionInOrder(config.id) : null;
   const action = isLocked ? onUnlock : onBuy;
   const income = config.baseRate;
   const tip = MASCOT_TIPS[config.id];
@@ -665,6 +682,8 @@ function PurchaseSheet({
           <div className="text-right flex-shrink-0">
             {isMaxed ? (
               <div className="text-yellow-300 font-black text-sm">🏆 DOLU</div>
+            ) : blockedByOrder ? (
+              <div className="text-red-300 font-black text-xs">🔒 Sırada değil</div>
             ) : (
               <>
                 <div className="font-black text-white text-lg">{formatNum(cost)}</div>
@@ -674,19 +693,33 @@ function PurchaseSheet({
           </div>
         </div>
 
+        {blockedByOrder && prevRequired && (
+          <div className="px-4 pb-2 -mt-1">
+            <div className="text-red-200 text-[11px] font-bold bg-red-900/40 border border-red-500/40 rounded-lg px-2.5 py-1.5">
+              🔒 Önce "{prevRequired.name}"nı açman gerekiyor — tarlalar ve hayvanlar sırayla açılır.
+            </div>
+          </div>
+        )}
+
         {!isMaxed && (
           <button
-            onClick={() => { if (canAfford) { action(); onClose(); } }}
+            onClick={() => { if (canAfford && !blockedByOrder) { action(); onClose(); } }}
             className="w-full py-3.5 rounded-b-xl font-black text-lg transition-all active:brightness-90"
+            disabled={blockedByOrder}
             style={{
-              background: canAfford
+              background: blockedByOrder
+                ? 'linear-gradient(180deg, #444, #222)'
+                : canAfford
                 ? 'linear-gradient(180deg, #4dabf7, #1c7ed6)'
                 : 'linear-gradient(180deg, #555, #333)',
-              color: 'white',
+              color: blockedByOrder ? 'rgba(255,255,255,0.5)' : 'white',
               textShadow: '0 1px 2px rgba(0,0,0,0.4)',
+              cursor: blockedByOrder ? 'not-allowed' : 'pointer',
             }}
           >
-            {isLocked
+            {blockedByOrder
+              ? `🔒 Önce ${prevRequired?.name ?? 'öncekini'} aç`
+              : isLocked
               ? canAfford ? '🔓 Kilidi Aç!' : `💸 Eksik: ${formatNum(cost - balance)} TL`
               : canAfford ? `🛒 Satın Al (${formatNum(balance - cost)} TL kalır)` : `💸 Eksik: ${formatNum(cost - balance)} TL`}
           </button>
@@ -1227,6 +1260,7 @@ export default function GameView() {
                   plotFill={state.plotFill[cfg.id] ?? 0}
                   needsReplant={state.sections[cfg.id]?.needsReplant ?? false}
                   level={state.level}
+                  canUnlockNow={isNextInUnlockOrder(state.sections, cfg.id)}
                   onTap={() => setSelectedId(s => s === cfg.id ? null : cfg.id)}
                   onHarvest={() => harvestPlot(cfg.id)}
                   onReplant={() => replantPlot(cfg.id)}
@@ -1246,6 +1280,7 @@ export default function GameView() {
             config={selectedConfig}
             sectionState={selectedState}
             balance={state.balance}
+            canUnlockNow={isNextInUnlockOrder(state.sections, selectedConfig.id)}
             onUnlock={() => {
               unlockSection(selectedConfig.id);
               playUnlockSound();
