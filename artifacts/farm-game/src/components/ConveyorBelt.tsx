@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { GameState, SECTIONS } from '../hooks/use-game-engine';
 import { formatNum } from '../utils/format';
 
@@ -137,11 +138,45 @@ export const ConveyorBelt: React.FC<ConveyorBeltProps> = ({ state }) => {
 
       {/* Satış bottom label */}
       <div
-        className="h-10 flex flex-col items-center justify-center border-t-2 border-white/10 flex-shrink-0 gap-0.5"
-        style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.5), rgba(0,0,0,0.2))' }}
+        className="h-[52px] flex flex-col items-center justify-center border-t-[3px] border-white/20 flex-shrink-0 gap-0.5 relative overflow-hidden"
+        style={{ background: 'linear-gradient(0deg, #163d1e, #0a2008)' }}
       >
-        <span className="text-xl">🏪</span>
-        <span className="text-[7px] font-black text-green-400/80 uppercase tracking-wide">Satış</span>
+        <motion.div 
+          className="absolute inset-0 opacity-40 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoNzQsMjIyLDEyOCwwLjgpIi8+PC9zdmc+')] pointer-events-none"
+          animate={{ y: [0, -20] }}
+          transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+        />
+        
+        <motion.div
+          className="absolute inset-0 bg-green-500/20"
+          animate={{ opacity: [0.1, 0.4, 0.1] }}
+          transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+        />
+
+        <motion.div
+          animate={{ scale: [1, 1.15, 1], y: [0, -2, 0] }}
+          transition={{ repeat: Infinity, duration: 1.5 }}
+          className="relative z-10 filter drop-shadow-[0_0_8px_rgba(74,222,128,0.8)] flex items-center justify-center"
+        >
+          <span className="text-2xl">🏪</span>
+        </motion.div>
+        
+        <span className="relative z-10 text-[8px] font-black text-green-300 uppercase tracking-wider drop-shadow-md">
+          SATIŞ
+        </span>
+        
+        {/* Floating coins */}
+        {[0, 1, 2].map((i) => (
+           <motion.span
+             key={i}
+             className="absolute text-[8px] z-0"
+             initial={{ opacity: 0, y: 15, x: (i - 1) * 10 }}
+             animate={{ opacity: [0, 1, 0], y: -25, x: (i - 1) * 15 }}
+             transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.4 }}
+           >
+             💵
+           </motion.span>
+        ))}
       </div>
 
       <style>{`

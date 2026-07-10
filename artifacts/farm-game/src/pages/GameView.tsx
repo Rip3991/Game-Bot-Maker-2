@@ -170,7 +170,19 @@ function FarmPlot({
   const effectiveMinutes = getEffectiveHarvestMinutes(config, count);
   const income = growCount > 0 ? Math.round(growCount * config.sellPrice / effectiveMinutes * lMult) : 0;
   const harvestEmoji = HARVEST_EMOJI[config.id] ?? config.emoji;
-  const [fxParticles, setFxParticles] = React.useState<{ id: number; x: number }[]>([]);
+  const [fxParticles, setFxParticles] = React.useState<{ id: number; x: number; isReplant?: boolean }[]>([]);
+  // Track the fx-particle clear timeout so a fast unmount (e.g. section
+  // re-render/removal right after a tap) can't set state on an unmounted
+  // component.
+  const fxClearTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  React.useEffect(() => () => {
+    if (fxClearTimeoutRef.current) clearTimeout(fxClearTimeoutRef.current);
+  }, []);
+  const spawnFxParticles = React.useCallback((particles: { id: number; x: number; isReplant?: boolean }[]) => {
+    if (fxClearTimeoutRef.current) clearTimeout(fxClearTimeoutRef.current);
+    setFxParticles(particles);
+    fxClearTimeoutRef.current = setTimeout(() => setFxParticles([]), 1100);
+  }, []);
   const canAffordUnlock = coins >= config.unlockCost;
   const isFarm = config.category === 'farm';
   const prevRequired = !unlocked && !canUnlockNow ? prevSectionInOrder(config.id) : null;
@@ -377,11 +389,10 @@ function FarmPlot({
                       onClick={(e) => {
                         e.stopPropagation();
                         const now = Date.now();
-                        setFxParticles(Array.from({ length: 6 }, (_, i) => ({
+                        spawnFxParticles(Array.from({ length: 6 }, (_, i) => ({
                           id: now + i,
                           x: 10 + Math.floor(Math.random() * 80),
                         })));
-                        setTimeout(() => setFxParticles([]), 1100);
                         onHarvest();
                       }}
                     >
@@ -394,30 +405,62 @@ function FarmPlot({
                 {/* Replant overlay */}
                 {replantNeeded && (
                   <motion.div
-                    className="absolute inset-0 flex items-center justify-center"
-                    style={{ background: 'rgba(0,0,0,0.6)' }}
+                    className="absolute inset-0 flex items-center justify-center z-20"
+                    style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
                     <motion.button
-                      className="flex flex-col items-center gap-1 px-4 py-2.5 rounded-2xl font-black"
+                      className="flex flex-col items-center gap-1.5 px-5 py-3 rounded-2xl font-black relative overflow-hidden"
                       style={{
                         background: canAffordReplant
                           ? 'linear-gradient(135deg, #22c55e, #15803d)'
                           : 'linear-gradient(135deg, #374151, #1f2937)',
                         border: `2px solid ${canAffordReplant ? '#4ade80' : '#6b7280'}`,
-                        boxShadow: canAffordReplant ? '0 0 16px rgba(74,222,128,0.5)' : 'none',
+                        boxShadow: canAffordReplant ? '0 8px 25px rgba(34,197,94,0.6)' : 'none',
                         color: 'white',
                       }}
-                      animate={canAffordReplant ? { scale: [1, 1.04, 1] } : {}}
-                      transition={{ repeat: Infinity, duration: 1.5 }}
-                      onClick={(e) => { e.stopPropagation(); if (canAffordReplant) onReplant(); }}
+                      initial={{ scale: 0.8, y: 10 }}
+                      animate={canAffordReplant ? { scale: [1, 1.05, 1], y: 0 } : { scale: 1, y: 0 }}
+                      transition={{ 
+                        scale: { repeat: Infinity, duration: 1.5, ease: "easeInOut" },
+                        y: { type: "spring", stiffness: 300, damping: 20 }
+                      }}
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        if (canAffordReplant) {
+                          const now = Date.now();
+                          spawnFxParticles(Array.from({ length: 8 }, (_, i) => ({
+                            id: now + 100 + i,
+                            x: 10 + Math.floor(Math.random() * 80),
+                            isReplant: true
+                          })));
+                          onReplant(); 
+                        }
+                      }}
+                      whileTap={canAffordReplant ? { scale: 0.9 } : {}}
                     >
-                      <span style={{ fontSize: 20 }}>{isFarm ? '🌱' : '🐣'}</span>
-                      <span style={{ fontSize: 11 }}>
+                      {/* Shine effect */}
+                      {canAffordReplant && (
+                        <motion.div 
+                          className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-20deg]"
+                          animate={{ x: ['-200%', '200%'] }}
+                          transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                        />
+                      )}
+                      
+                      <motion.div 
+                        animate={canAffordReplant ? { y: [0, -4, 0] } : {}}
+                        transition={{ repeat: Infinity, duration: 1, ease: "easeInOut" }}
+                        className="relative z-10"
+                      >
+                        <span style={{ fontSize: 24, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }}>{isFarm ? '🌱' : '🐣'}</span>
+                      </motion.div>
+                      
+                      <span className="relative z-10 text-[12px] uppercase tracking-wider drop-shadow-md">
                         {canAffordReplant
                           ? (isFarm ? `Ek! (${formatNum(rcost)} TL)` : `Büyüt! (${formatNum(rcost)} TL)`)
-                          : `Yetersiz bakiye: ${formatNum(rcost)} TL`}
+                          : `Yetersiz: ${formatNum(rcost)} TL`}
                       </span>
                     </motion.button>
                   </motion.div>
@@ -531,16 +574,22 @@ function FarmPlot({
                 position: 'absolute',
                 bottom: '40%',
                 left: `${p.x}%`,
-                fontSize: 20,
+                fontSize: p.isReplant ? 24 : 20,
                 pointerEvents: 'none',
                 zIndex: 60,
                 userSelect: 'none',
+                filter: p.isReplant ? 'drop-shadow(0 0 8px rgba(74,222,128,0.8))' : 'none',
               }}
-              initial={{ y: 0, opacity: 1, scale: 0.9 }}
-              animate={{ y: -70, opacity: 0, scale: 1.4 }}
-              transition={{ duration: 0.9, ease: 'easeOut' }}
+              initial={{ y: 0, opacity: 1, scale: 0.5 }}
+              animate={{ 
+                y: p.isReplant ? -90 : -70, 
+                opacity: [1, 1, 0], 
+                scale: p.isReplant ? [0.5, 1.5, 1.2] : 1.4,
+                rotate: p.isReplant ? [0, 15, -15, 0] : 0
+              }}
+              transition={{ duration: p.isReplant ? 1.1 : 0.9, ease: 'easeOut' }}
             >
-              {harvestEmoji}
+              {p.isReplant ? (isFarm ? '🌱' : '✨') : harvestEmoji}
             </motion.span>
           ))}
         </div>
