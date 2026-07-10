@@ -474,15 +474,19 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
 
   // ── Actions ──────────────────────────────────────────────────────────────
 
+  // Farm/animal progression (unlock, buy, replant) is paid entirely in Coins —
+  // Coins are the in-game currency. Balance (TL) is the real-money currency:
+  // it only comes from tasks, referrals, streaks, the welcome bonus, and the
+  // explicit Coin→TL converter, and is never spent on gameplay purchases.
   const unlockSection = useCallback((id: string) => {
     const cfg = SECTIONS.find(s => s.id === id)!;
     setState(prev => {
-      if (prev.balance < cfg.unlockCost) return prev;
+      if (prev.coins < cfg.unlockCost) return prev;
       if (prev.sections[id]?.unlocked) return prev;
       if (!isNextInUnlockOrder(prev.sections, id)) return prev; // must unlock in order
       return {
         ...prev,
-        balance: prev.balance - cfg.unlockCost,
+        coins: prev.coins - cfg.unlockCost,
         sections: {
           ...prev.sections,
           [id]: { unlocked: true, count: 1, needsReplant: false },
@@ -497,10 +501,10 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
       const sec = prev.sections[id];
       if (!sec?.unlocked) return prev;
       if (sec.count >= cfg.maxUnits) return prev;
-      if (prev.balance < cfg.unitCost) return prev;
+      if (prev.coins < cfg.unitCost) return prev;
       return {
         ...prev,
-        balance: prev.balance - cfg.unitCost,
+        coins: prev.coins - cfg.unitCost,
         sections: {
           ...prev.sections,
           [id]: { ...sec, count: sec.count + 1 },
@@ -551,10 +555,10 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
       const sec = prev.sections[id];
       if (!sec?.unlocked || !sec.needsReplant) return prev;
       const cost = replantCost(cfg, sec.count);
-      if (prev.balance < cost) return prev;
+      if (prev.coins < cost) return prev;
       return {
         ...prev,
-        balance: prev.balance - cost,
+        coins: prev.coins - cost,
         sections: { ...prev.sections, [id]: { ...sec, needsReplant: false } },
         plotFill: { ...prev.plotFill, [id]: 0 },
       };

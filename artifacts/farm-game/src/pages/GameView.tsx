@@ -136,7 +136,7 @@ function FarmPlot({
   config,
   count,
   unlocked,
-  balance,
+  coins,
   plotFill,
   needsReplant,
   level,
@@ -148,7 +148,8 @@ function FarmPlot({
   config: SectionConfig;
   count: number;
   unlocked: boolean;
-  balance: number;
+  /** Coin balance — all farm/animal purchases and replants are paid in Coins, never TL. */
+  coins: number;
   plotFill: number;
   needsReplant: boolean;
   level: number;
@@ -161,13 +162,13 @@ function FarmPlot({
   const income = count > 0 ? Math.round(config.sellPrice / config.harvestMinutes * lMult) : 0;
   const harvestEmoji = HARVEST_EMOJI[config.id] ?? config.emoji;
   const [fxParticles, setFxParticles] = React.useState<{ id: number; x: number }[]>([]);
-  const canAffordUnlock = balance >= config.unlockCost;
+  const canAffordUnlock = coins >= config.unlockCost;
   const isFarm = config.category === 'farm';
   const prevRequired = !unlocked && !canUnlockNow ? prevSectionInOrder(config.id) : null;
   const isHarvestReady = unlocked && count > 0 && !needsReplant && plotFill >= 1.0;
   const replantNeeded = unlocked && count > 0 && needsReplant;
   const rcost = replantNeeded ? replantCost(config, count) : 0;
-  const canAffordReplant = balance >= rcost;
+  const canAffordReplant = coins >= rcost;
   const fillPct = Math.min(count / config.maxUnits, 1);
 
   // Category-specific palette
@@ -255,7 +256,7 @@ function FarmPlot({
                 </span>
               ) : (
                 <span className="font-bold leading-none" style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>
-                  🔒 {formatNum(config.unlockCost)} TL gerekli
+                  🔒 {formatNum(config.unlockCost)} 🪙 gerekli
                 </span>
               )}
             </div>
@@ -406,8 +407,8 @@ function FarmPlot({
                       <span style={{ fontSize: 20 }}>{isFarm ? '🌱' : '🐣'}</span>
                       <span style={{ fontSize: 11 }}>
                         {canAffordReplant
-                          ? (isFarm ? `Ek! (${formatNum(rcost)} TL)` : `Büyüt! (${formatNum(rcost)} TL)`)
-                          : `Yetersiz: ${formatNum(rcost)} TL`}
+                          ? (isFarm ? `Ek! (${formatNum(rcost)} 🪙)` : `Büyüt! (${formatNum(rcost)} 🪙)`)
+                          : `Yetersiz: ${formatNum(rcost)} 🪙`}
                       </span>
                     </motion.button>
                   </motion.div>
@@ -500,7 +501,7 @@ function FarmPlot({
                     </div>
                   ) : (
                     <div className={`text-xs font-bold mt-0.5 ${canAffordUnlock ? 'text-yellow-300' : 'text-gray-500'}`}>
-                      🔒 {formatNum(config.unlockCost)} TL
+                      🔒 {formatNum(config.unlockCost)} 🪙
                     </div>
                   )}
                 </div>
@@ -559,7 +560,7 @@ const MASCOT_TIPS: Record<string, string> = {
 function PurchaseSheet({
   config,
   sectionState,
-  balance,
+  coins,
   canUnlockNow,
   onUnlock,
   onBuy,
@@ -567,7 +568,8 @@ function PurchaseSheet({
 }: {
   config: SectionConfig;
   sectionState: { unlocked: boolean; count: number; needsReplant?: boolean };
-  balance: number;
+  /** Coin balance — unlocks/purchases are paid in Coins, never TL. */
+  coins: number;
   canUnlockNow: boolean;
   onUnlock: () => void;
   onBuy: () => void;
@@ -576,7 +578,7 @@ function PurchaseSheet({
   const isLocked = !sectionState.unlocked;
   const isMaxed = sectionState.count >= config.maxUnits;
   const cost = isLocked ? config.unlockCost : config.unitCost;
-  const canAfford = balance >= cost;
+  const canAfford = coins >= cost;
   const blockedByOrder = isLocked && !canUnlockNow;
   const prevRequired = blockedByOrder ? prevSectionInOrder(config.id) : null;
   const action = isLocked ? onUnlock : onBuy;
@@ -687,7 +689,7 @@ function PurchaseSheet({
             ) : (
               <>
                 <div className="font-black text-white text-lg">{formatNum(cost)}</div>
-                <div className="text-yellow-300 text-xs font-bold">TL</div>
+                <div className="text-yellow-300 text-xs font-bold">🪙</div>
               </>
             )}
           </div>
@@ -720,8 +722,8 @@ function PurchaseSheet({
             {blockedByOrder
               ? `🔒 Önce ${prevRequired?.name ?? 'öncekini'} aç`
               : isLocked
-              ? canAfford ? '🔓 Kilidi Aç!' : `💸 Eksik: ${formatNum(cost - balance)} TL`
-              : canAfford ? `🛒 Satın Al (${formatNum(balance - cost)} TL kalır)` : `💸 Eksik: ${formatNum(cost - balance)} TL`}
+              ? canAfford ? '🔓 Kilidi Aç!' : `💸 Eksik: ${formatNum(cost - coins)} 🪙`
+              : canAfford ? `🛒 Satın Al (${formatNum(coins - cost)} 🪙 kalır)` : `💸 Eksik: ${formatNum(cost - coins)} 🪙`}
           </button>
         )}
       </div>
@@ -1256,7 +1258,7 @@ export default function GameView() {
                   config={cfg}
                   count={state.sections[cfg.id]?.count ?? 0}
                   unlocked={state.sections[cfg.id]?.unlocked ?? false}
-                  balance={state.balance}
+                  coins={state.coins}
                   plotFill={state.plotFill[cfg.id] ?? 0}
                   needsReplant={state.sections[cfg.id]?.needsReplant ?? false}
                   level={state.level}
@@ -1279,7 +1281,7 @@ export default function GameView() {
             key={selectedId}
             config={selectedConfig}
             sectionState={selectedState}
-            balance={state.balance}
+            coins={state.coins}
             canUnlockNow={isNextInUnlockOrder(state.sections, selectedConfig.id)}
             onUnlock={() => {
               unlockSection(selectedConfig.id);
