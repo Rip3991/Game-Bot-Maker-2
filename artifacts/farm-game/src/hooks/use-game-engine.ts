@@ -165,6 +165,44 @@ export const SECTIONS: SectionConfig[] = [
 
 export type SectionId = typeof SECTIONS[number]['id'];
 
+// ── Special items (rare harvest drops, tradeable) ─────────────────────────────
+
+export type SpecialRarity = 'uncommon' | 'rare' | 'epic';
+
+export interface SpecialItemConfig {
+  id: string;
+  emoji: string;
+  name: string;
+  rarity: SpecialRarity;
+  sellPrice: number;
+}
+
+export const SPECIAL_ITEMS: SpecialItemConfig[] = [
+  { id: 'goldenEgg', emoji: '🥚', name: 'Altın Yumurta', rarity: 'uncommon', sellPrice: 500 },
+  { id: 'luckyClover', emoji: '🍀', name: 'Şanslı Yonca', rarity: 'uncommon', sellPrice: 650 },
+  { id: 'silverHorseshoe', emoji: '🧲', name: 'Gümüş Nal', rarity: 'rare', sellPrice: 2200 },
+  { id: 'crystalHoney', emoji: '💎', name: 'Kristal Bal', rarity: 'rare', sellPrice: 3000 },
+  { id: 'dragonFruit', emoji: '🐉', name: 'Ejder Meyvesi', rarity: 'epic', sellPrice: 12000 },
+  { id: 'phoenixFeather', emoji: '🪶', name: 'Anka Tüyü', rarity: 'epic', sellPrice: 18000 },
+];
+
+/** Chance (0-1) that a harvest drops a special item. */
+export const SPECIAL_DROP_CHANCE = 0.08;
+
+function rollSpecialDrop(): SpecialItemConfig | null {
+  if (Math.random() >= SPECIAL_DROP_CHANCE) return null;
+  const weights = SPECIAL_ITEMS.map(item =>
+    item.rarity === 'uncommon' ? 60 : item.rarity === 'rare' ? 30 : 10
+  );
+  const total = weights.reduce((a, b) => a + b, 0);
+  let roll = Math.random() * total;
+  for (let i = 0; i < SPECIAL_ITEMS.length; i++) {
+    roll -= weights[i];
+    if (roll <= 0) return SPECIAL_ITEMS[i];
+  }
+  return SPECIAL_ITEMS[SPECIAL_ITEMS.length - 1];
+}
+
 export interface SectionState {
   unlocked: boolean;
   count: number;
@@ -214,6 +252,7 @@ export interface GameState {
   coins: number;
   sections: Record<string, SectionState>;
   storage: Record<string, number>;
+  specialStorage: Record<string, number>;
   plotFill: Record<string, number>; // 0.0 → 1.0 fill progress per section
   level: number;
   xp: number;
@@ -232,6 +271,7 @@ export const makeInitialState = (): GameState => ({
   coins: 0,
   sections: Object.fromEntries(SECTIONS.map(cfg => [cfg.id, defaultSection(cfg)])),
   storage: Object.fromEntries(SECTIONS.map(cfg => [cfg.id, 0])),
+  specialStorage: Object.fromEntries(SPECIAL_ITEMS.map(item => [item.id, 0])),
   plotFill: Object.fromEntries(SECTIONS.map(cfg => [cfg.id, 0])),
   level: 1,
   xp: 0,
@@ -293,6 +333,11 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
           ...(parsed.storage ?? {}),
         };
 
+        const specialStorage: Record<string, number> = {
+          ...Object.fromEntries(SPECIAL_ITEMS.map(item => [item.id, 0])),
+          ...(parsed.specialStorage ?? {}),
+        };
+
         const plotFill: Record<string, number> = {
           ...Object.fromEntries(SECTIONS.map(cfg => [cfg.id, 0])),
           ...(parsed.plotFill ?? {}),
@@ -306,6 +351,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
           coins: parsed.coins ?? 0,
           sections,
           storage,
+          specialStorage,
           plotFill,
           level,
           xp,
@@ -461,9 +507,15 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
       const newXp = prev.xp + xpGain;
       const newLevel = computeLevel(newXp);
 
+      const drop = rollSpecialDrop();
+      const specialStorage = drop
+        ? { ...prev.specialStorage, [drop.id]: (prev.specialStorage[drop.id] ?? 0) + 1 }
+        : prev.specialStorage;
+
       return {
         ...prev,
         storage: { ...prev.storage, [id]: (prev.storage[id] ?? 0) + yieldItems },
+        specialStorage,
         plotFill: { ...prev.plotFill, [id]: 0 },
         sections: { ...prev.sections, [id]: { ...sec, needsReplant: true } },
         xp: newXp,
