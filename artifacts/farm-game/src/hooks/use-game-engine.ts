@@ -437,12 +437,16 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
         const fill = current.plotFill[cfg.id] ?? 0;
         if (fill >= 1.0) return; // already full, wait for harvest tap
         // Growth time scales with unit count (operator request, 2026-07-10:
-        // fields were finishing far too fast). More units planted on a plot
-        // take longer to tend, so the cycle time grows with sqrt(count) —
-        // buying units still raises total yield/min (yieldItems = count) by
-        // more than the extra wait costs, just not 1:1. Base harvestMinutes
-        // values were also doubled to slow the overall pace.
-        const effectiveMinutes = cfg.harvestMinutes * 2 * Math.sqrt(Math.max(1, s.count));
+        // fields were finishing far too fast even at count=1, and income was
+        // too high for how little wait was involved). More units planted on
+        // a plot take longer to tend, so the cycle time grows with
+        // sqrt(count) — buying units still raises total yield/min
+        // (yieldItems = count) but by less than the extra wait costs at low
+        // counts, so income stays modest. Base harvestMinutes values were
+        // quadrupled (was 2x) to slow the overall pace — wheat at count=1 now
+        // takes 2 minutes instead of 30 seconds.
+        const HARVEST_TIME_MULTIPLIER = 4;
+        const effectiveMinutes = cfg.harvestMinutes * HARVEST_TIME_MULTIPLIER * Math.sqrt(Math.max(1, s.count));
         const fillRatePerSec = lMult / (effectiveMinutes * 60);
         const newFill = Math.min(fill + fillRatePerSec * deltaSec, 1.0);
         if (Math.abs(newFill - fill) > 0.000001) {
@@ -635,7 +639,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
     // Cycle time scales with sqrt(count) (see plot-fill tick effect above),
     // so the per-minute estimate must use the same effective minutes.
     if (s?.unlocked && s.count > 0 && !s.needsReplant) {
-      const effectiveMinutes = cfg.harvestMinutes * 2 * Math.sqrt(Math.max(1, s.count));
+      const effectiveMinutes = cfg.harvestMinutes * 4 * Math.sqrt(Math.max(1, s.count));
       return sum + Math.round(s.growCount * cfg.sellPrice / effectiveMinutes * levelMultiplier(state.level));
     }
     return sum;
