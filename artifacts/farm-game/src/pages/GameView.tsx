@@ -33,87 +33,24 @@ function OnlineCounterPill() {
   );
 }
 
-/* ── Coin → TL converter teaser: sits where the old platform stats banner
-   was, keeping the "earn Coins, convert to TL" goal front-and-center. ── */
-function CoinConverterTeaser({ coins, onOpen }: { coins: number; onOpen: () => void }) {
-  const [rate, setRate] = useState<{ rate: number; minCoins: number } | null>(null);
-  useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}api/stars/coin-convert-rate`).then(r => r.json()).then(setRate).catch(() => {});
-  }, []);
-  const tlEquivalent = rate ? Math.floor(coins) * rate.rate : 0;
-  const canConvert = rate ? coins >= rate.minCoins : false;
-
-  return (
-    <motion.button
-      onClick={onOpen}
-      className="relative mx-3 mt-2 mb-3 w-[calc(100%-1.5rem)] rounded-2xl overflow-hidden text-left"
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileTap={{ scale: 0.98 }}
-      style={{
-        background: 'linear-gradient(120deg, #1a2e1a 0%, #163d1e 45%, #1a3320 100%)',
-        border: '1.5px solid rgba(74,222,128,0.35)',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.35), 0 0 22px rgba(74,222,128,0.12)',
-      }}
-    >
-      {/* Drifting coin particles */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-60">
-        {[...Array(6)].map((_, i) => (
-          <motion.span
-            key={i}
-            className="absolute text-xs"
-            style={{ left: `${(i * 17 + 6) % 100}%`, top: '110%' }}
-            animate={{ top: ['110%', '-15%'], opacity: [0, 0.9, 0], rotate: [0, 45] }}
-            transition={{ repeat: Infinity, duration: 4 + (i % 3), delay: i * 0.6, ease: 'linear' }}
-          >🪙</motion.span>
-        ))}
-      </div>
-
-      <div className="relative z-10 flex items-center gap-3 px-3.5 py-3">
-        {/* Icon badge with pulsing glow */}
-        <motion.div
-          className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg, #22c55e, #15803d)', border: '1.5px solid #4ade80' }}
-          animate={{ boxShadow: ['0 0 6px rgba(74,222,128,0.3)', '0 0 18px rgba(74,222,128,0.6)', '0 0 6px rgba(74,222,128,0.3)'] }}
-          transition={{ repeat: Infinity, duration: 2.2 }}
-        >
-          <span style={{ fontSize: 20 }}>💵</span>
-        </motion.div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="font-black text-white text-[12px]">Coin'i TL'ye Çevir</span>
-            <motion.span animate={{ x: [0, 3, 0] }} transition={{ repeat: Infinity, duration: 1.2 }} className="text-green-400 text-[11px]">→</motion.span>
-          </div>
-          <div className="text-white/50 text-[10px] font-bold mt-0.5">
-            🪙 {formatNum(Math.floor(coins))} Coin biriktin
-            {rate && (
-              <span className="text-green-400"> · ≈ {tlEquivalent.toFixed(2)} TL değerinde</span>
-            )}
-          </div>
-        </div>
-
-        <div
-          className="flex-shrink-0 px-3 py-1.5 rounded-xl font-black text-[11px]"
-          style={canConvert
-            ? { background: 'linear-gradient(135deg, #4ade80, #16a34a)', color: '#052e0f' }
-            : { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }}
-        >
-          {canConvert ? 'Çevir' : rate ? `Min. ${rate.minCoins}` : '...'}
-        </div>
-      </div>
-    </motion.button>
-  );
-}
-
-/* ── Animated Cloud ── */
-function Cloud({ top, size, delay, duration }: { top: string; size: number; delay: number; duration: number }) {
+/* ── Animated Cloud ──
+   Tinted per time-of-day so it reads as lit by the same sky underneath it
+   instead of a flat white cutout — warm/pink at sunrise & sunset, bright
+   and cool at midday. */
+const CLOUD_FILTERS: Record<DayPeriod, string> = {
+  sabah:  'sepia(0.45) saturate(1.6) hue-rotate(-15deg) brightness(1.05) opacity(0.85)',
+  gunduz: 'saturate(1.05) brightness(1.08) opacity(0.75)',
+  aksam:  'sepia(0.6) saturate(1.8) hue-rotate(-25deg) brightness(0.92) opacity(0.85)',
+  gece:   'opacity(0)',
+};
+function Cloud({ top, size, delay, duration, period }: { top: string; size: number; delay: number; duration: number; period: DayPeriod }) {
   return (
     <div
-      className="absolute pointer-events-none select-none opacity-70"
+      className="absolute pointer-events-none select-none transition-[filter] duration-1000"
       style={{
         top,
         fontSize: size,
+        filter: CLOUD_FILTERS[period],
         animation: `cloudDrift ${duration}s linear ${delay}s infinite`,
       }}
     >
@@ -893,9 +830,9 @@ function FarmScene({ state }: { state: any }) {
       {/* Clouds (hidden at night for a clear starry sky) */}
       {!isNight && (
         <div className="absolute top-0 left-0 right-0 h-20 overflow-hidden pointer-events-none">
-          <Cloud top="6px"  size={16} delay={0}   duration={24} />
-          <Cloud top="14px" size={12} delay={-9}  duration={32} />
-          <Cloud top="3px"  size={14} delay={-17} duration={28} />
+          <Cloud top="6px"  size={16} delay={0}   duration={24} period={period} />
+          <Cloud top="14px" size={12} delay={-9}  duration={32} period={period} />
+          <Cloud top="3px"  size={14} delay={-17} duration={28} period={period} />
         </div>
       )}
 
@@ -1355,9 +1292,6 @@ export default function GameView() {
 
           {/* Scrollable plots */}
           <div className="flex-1 overflow-y-auto custom-scrollbar py-1 pb-4">
-            {/* Coin → TL converter teaser — replaces the old platform stats banner and
-                keeps the core loop (harvest → coins → TL) visible at all times */}
-            <CoinConverterTeaser coins={state.coins} onOpen={() => navigate('/stars')} />
             <AnimatePresence mode="popLayout">
               {shownSections.map(cfg => (
                 <FarmPlot

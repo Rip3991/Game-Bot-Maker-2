@@ -6,6 +6,81 @@ import { toast } from 'sonner';
 import { Star, ShoppingBag, Zap, RefreshCw, Lock } from 'lucide-react';
 import { AUTO_SELL_PURCHASED_KEY } from '../hooks/use-game-engine';
 import { useLocation } from 'wouter';
+import { formatNum } from '../utils/format';
+
+/* ── Coin → TL converter teaser — moved here from the farm view (was
+   cluttering Çiftlik); this is the natural home since Coin→TL conversion
+   itself lives in the "Coin Harca" tab below. Tapping jumps straight to it. ── */
+function CoinConverterTeaser({ coins, onOpen }: { coins: number; onOpen: () => void }) {
+  const [rate, setRate] = useState<{ rate: number; minCoins: number } | null>(null);
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}api/stars/coin-convert-rate`).then(r => r.json()).then(setRate).catch(() => {});
+  }, []);
+  const tlEquivalent = rate ? Math.floor(coins) * rate.rate : 0;
+  const canConvert = rate ? coins >= rate.minCoins : false;
+
+  return (
+    <motion.button
+      onClick={onOpen}
+      className="relative mx-4 mt-3 w-[calc(100%-2rem)] rounded-2xl overflow-hidden text-left"
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileTap={{ scale: 0.98 }}
+      style={{
+        background: 'linear-gradient(120deg, #1a2e1a 0%, #163d1e 45%, #1a3320 100%)',
+        border: '1.5px solid rgba(74,222,128,0.35)',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.35), 0 0 22px rgba(74,222,128,0.12)',
+      }}
+    >
+      {/* Drifting coin particles */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-60">
+        {[...Array(6)].map((_, i) => (
+          <motion.span
+            key={i}
+            className="absolute text-xs"
+            style={{ left: `${(i * 17 + 6) % 100}%`, top: '110%' }}
+            animate={{ top: ['110%', '-15%'], opacity: [0, 0.9, 0], rotate: [0, 45] }}
+            transition={{ repeat: Infinity, duration: 4 + (i % 3), delay: i * 0.6, ease: 'linear' }}
+          >🪙</motion.span>
+        ))}
+      </div>
+
+      <div className="relative z-10 flex items-center gap-3 px-3.5 py-3">
+        {/* Icon badge with pulsing glow */}
+        <motion.div
+          className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg, #22c55e, #15803d)', border: '1.5px solid #4ade80' }}
+          animate={{ boxShadow: ['0 0 6px rgba(74,222,128,0.3)', '0 0 18px rgba(74,222,128,0.6)', '0 0 6px rgba(74,222,128,0.3)'] }}
+          transition={{ repeat: Infinity, duration: 2.2 }}
+        >
+          <span style={{ fontSize: 20 }}>💵</span>
+        </motion.div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="font-black text-white text-[12px]">Coin'i TL'ye Çevir</span>
+            <motion.span animate={{ x: [0, 3, 0] }} transition={{ repeat: Infinity, duration: 1.2 }} className="text-green-400 text-[11px]">→</motion.span>
+          </div>
+          <div className="text-white/50 text-[10px] font-bold mt-0.5">
+            🪙 {formatNum(Math.floor(coins))} Coin biriktin
+            {rate && (
+              <span className="text-green-400"> · ≈ {tlEquivalent.toFixed(2)} TL değerinde</span>
+            )}
+          </div>
+        </div>
+
+        <div
+          className="flex-shrink-0 px-3 py-1.5 rounded-xl font-black text-[11px]"
+          style={canConvert
+            ? { background: 'linear-gradient(135deg, #4ade80, #16a34a)', color: '#052e0f' }
+            : { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }}
+        >
+          {canConvert ? 'Çevir' : rate ? `Min. ${rate.minCoins}` : '...'}
+        </div>
+      </div>
+    </motion.button>
+  );
+}
 
 function readLocalCoins(): number {
   try {
@@ -259,6 +334,10 @@ export default function StarsShopPage() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto" style={{ background: '#0f0f1a' }}>
+        {/* Coin → TL teaser — moved here from the farm screen; jumps straight
+            to the full converter below (in the "Coin Harca" tab). */}
+        <CoinConverterTeaser coins={coins} onOpen={() => setTab('spend')} />
+
         <AnimatePresence mode="wait">
 
           {/* ── Tab: Buy Coins with Stars ──────────────────────────────── */}
