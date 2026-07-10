@@ -6,7 +6,7 @@ import { useSaveFarmState, useGetOnlineStats, getGetOnlineStatsQueryKey } from '
 import { motion, AnimatePresence, useIsPresent } from 'framer-motion';
 import { Plus, Lock, Volume2, VolumeX, Settings } from 'lucide-react';
 import { useLocation } from 'wouter';
-import { formatNum } from '../utils/format';
+import { formatNum, formatCycleDuration } from '../utils/format';
 import { playCoinSound, playAnimalSound, playUnlockSound, isSoundEnabled, setSoundEnabled, isMusicEnabled, setMusicEnabled, getMusicVolume, setMusicVolume } from '../lib/sound';
 import MascotTutorial, { useMascotTutorial } from '../components/MascotTutorial';
 import mascotAvatar from '../assets/mascot-avatar.png';
@@ -439,9 +439,7 @@ function FarmPlot({
                       })()}
                     </span>
                     <span className="text-[8px] font-bold text-white/40">
-                      ⏱ {config.harvestMinutes >= 60
-                        ? `${Math.floor(config.harvestMinutes / 60)}sa${config.harvestMinutes % 60 > 0 ? ` ${config.harvestMinutes % 60}dk` : ''}`
-                        : `${config.harvestMinutes}dk`}
+                      ⏱ {formatCycleDuration(config.harvestMinutes / lMult)}
                     </span>
                   </div>
                   <div className="h-2 rounded-full bg-black/40 overflow-hidden">
@@ -472,9 +470,7 @@ function FarmPlot({
                   <div className="rounded-full px-1.5 py-0.5"
                     style={{ background: 'rgba(0,0,0,0.5)', border: `1px solid ${palette.accentColor}30` }}>
                     <span className="font-black text-[8px]" style={{ color: palette.accentColor }}>
-                      ⏱ {config.harvestMinutes >= 60
-                        ? `${Math.floor(config.harvestMinutes / 60)}sa${config.harvestMinutes % 60 > 0 ? ` ${config.harvestMinutes % 60}dk` : ''}`
-                        : `${config.harvestMinutes}dk`}
+                      ⏱ {formatCycleDuration(config.harvestMinutes / lMult)}
                     </span>
                   </div>
                 )}

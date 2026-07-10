@@ -19,145 +19,147 @@ export interface SectionConfig {
 
 export const SECTIONS: SectionConfig[] = [
   // ——— TARLALAR (FARMS) ———
-  // harvestMinutes is PER-UNIT: fill time = harvestMinutes × count ÷ lMult (minutes)
-  // income/min per section (any count) = sellPrice / harvestMinutes × lMult
+  // harvestMinutes is PER-UNIT at level=1 (fill rate no longer depends on count).
+  // income/min per section = growCount × sellPrice / harvestMinutes × lMult
+  // unitCost doubled from the original balance (2026-07-10, operator request:
+  // tighten the economy so unit purchases aren't too cheap).
   {
     id: 'wheat', emoji: '🌾', name: 'Buğday Tarlası', category: 'farm',
-    unlockCost: 0, unitCost: 20, baseRate: 10, sellPrice: 2, maxUnits: 20,
+    unlockCost: 0, unitCost: 40, baseRate: 10, sellPrice: 2, maxUnits: 20,
     description: 'Başlangıç çiftliğin', scene: ['🌳', '🌲'],
     harvestMinutes: 0.5,
   },
   {
     id: 'onion', emoji: '🧅', name: 'Soğan Tarlası', category: 'farm',
-    unlockCost: 130, unitCost: 50, baseRate: 12, sellPrice: 3, maxUnits: 20,
+    unlockCost: 130, unitCost: 100, baseRate: 12, sellPrice: 3, maxUnits: 20,
     description: 'Tatlı soğan tarlası', scene: ['🌿', '🌱'],
     harvestMinutes: 0.5,
   },
   {
     id: 'corn', emoji: '🌽', name: 'Mısır Tarlası', category: 'farm',
-    unlockCost: 500, unitCost: 130, baseRate: 19, sellPrice: 7, maxUnits: 20,
+    unlockCost: 500, unitCost: 260, baseRate: 19, sellPrice: 7, maxUnits: 20,
     description: 'Altın mısır başakları', scene: ['🌻', '🌿'],
     harvestMinutes: 0.75,
   },
   {
     id: 'carrot', emoji: '🥕', name: 'Havuç Tarlası', category: 'farm',
-    unlockCost: 2000, unitCost: 450, baseRate: 20, sellPrice: 10, maxUnits: 20,
+    unlockCost: 2000, unitCost: 900, baseRate: 20, sellPrice: 10, maxUnits: 20,
     description: 'Taze turuncu havuçlar', scene: ['🌿', '🌱'],
     harvestMinutes: 1,
   },
   {
     id: 'tomato', emoji: '🍅', name: 'Domates Bahçesi', category: 'farm',
-    unlockCost: 8000, unitCost: 1600, baseRate: 33, sellPrice: 25, maxUnits: 15,
+    unlockCost: 8000, unitCost: 3200, baseRate: 33, sellPrice: 25, maxUnits: 15,
     description: 'Taze kırmızı domatesler', scene: ['🌿', '🪴'],
     harvestMinutes: 1.5,
   },
   {
     id: 'strawberry', emoji: '🍓', name: 'Çilek Bahçesi', category: 'farm',
-    unlockCost: 45000, unitCost: 8000, baseRate: 65, sellPrice: 65, maxUnits: 15,
+    unlockCost: 45000, unitCost: 16000, baseRate: 65, sellPrice: 65, maxUnits: 15,
     description: 'Tatlı kırmızı çilekler', scene: ['🌸', '🌿'],
     harvestMinutes: 2,
   },
   {
     id: 'sunflower', emoji: '🌻', name: 'Ayçiçeği Tarlası', category: 'farm',
-    unlockCost: 130000, unitCost: 25000, baseRate: 100, sellPrice: 125, maxUnits: 12,
+    unlockCost: 130000, unitCost: 50000, baseRate: 100, sellPrice: 125, maxUnits: 12,
     description: 'Yağlık ayçiçeği tarlası', scene: ['☀️', '🌿'],
     harvestMinutes: 2.5,
   },
   {
     id: 'grape', emoji: '🍇', name: 'Üzüm Bağı', category: 'farm',
-    unlockCost: 420000, unitCost: 80000, baseRate: 163, sellPrice: 325, maxUnits: 12,
+    unlockCost: 420000, unitCost: 160000, baseRate: 163, sellPrice: 325, maxUnits: 12,
     description: 'Verimli üzüm asmaları', scene: ['🍂', '🌿'],
     harvestMinutes: 4,
   },
   {
     id: 'apple', emoji: '🍎', name: 'Elma Bahçesi', category: 'farm',
-    unlockCost: 1600000, unitCost: 280000, baseRate: 250, sellPrice: 750, maxUnits: 10,
+    unlockCost: 1600000, unitCost: 560000, baseRate: 250, sellPrice: 750, maxUnits: 10,
     description: 'Taze kırmızı elmalar', scene: ['🌳', '🌿'],
     harvestMinutes: 6,
   },
   {
     id: 'blueberry', emoji: '🫐', name: 'Yaban Mersini', category: 'farm',
-    unlockCost: 6500000, unitCost: 1000000, baseRate: 400, sellPrice: 2000, maxUnits: 8,
+    unlockCost: 6500000, unitCost: 2000000, baseRate: 400, sellPrice: 2000, maxUnits: 8,
     description: 'Antioksidan yaban mersini', scene: ['🌿', '🌳'],
     harvestMinutes: 10,
   },
   // ——— HAYVANLAR (ANIMALS) ———
   {
     id: 'chicken', emoji: '🐔', name: 'Tavuk Kümesi', category: 'animal',
-    unlockCost: 350, unitCost: 60, baseRate: 13, sellPrice: 4, maxUnits: 20,
+    unlockCost: 350, unitCost: 120, baseRate: 13, sellPrice: 4, maxUnits: 20,
     description: 'Yumurta ve et üretimi', scene: ['🏚️', '🌾'],
     harvestMinutes: 0.6,
   },
   {
     id: 'cow', emoji: '🐄', name: 'İnek Ahırı', category: 'animal',
-    unlockCost: 2500, unitCost: 600, baseRate: 23, sellPrice: 14, maxUnits: 15,
+    unlockCost: 2500, unitCost: 1200, baseRate: 23, sellPrice: 14, maxUnits: 15,
     description: 'Süt ve et üretimi', scene: ['🏠', '🌿'],
     harvestMinutes: 1.2,
   },
   {
     id: 'sheep', emoji: '🐑', name: 'Koyun Ağılı', category: 'animal',
-    unlockCost: 14000, unitCost: 3000, baseRate: 40, sellPrice: 40, maxUnits: 15,
+    unlockCost: 14000, unitCost: 6000, baseRate: 40, sellPrice: 40, maxUnits: 15,
     description: 'Yün ve süt üretimi', scene: ['⛰️', '🌿'],
     harvestMinutes: 2,
   },
   {
     id: 'pig', emoji: '🐷', name: 'Domuz Çiftliği', category: 'animal',
-    unlockCost: 55000, unitCost: 12000, baseRate: 66, sellPrice: 82, maxUnits: 12,
+    unlockCost: 55000, unitCost: 24000, baseRate: 66, sellPrice: 82, maxUnits: 12,
     description: 'Et ve şarküteri ürünleri', scene: ['🏡', '🌱'],
     harvestMinutes: 2.5,
   },
   {
     id: 'horse', emoji: '🐴', name: 'At Ahırı', category: 'animal',
-    unlockCost: 200000, unitCost: 40000, baseRate: 110, sellPrice: 275, maxUnits: 10,
+    unlockCost: 200000, unitCost: 80000, baseRate: 110, sellPrice: 275, maxUnits: 10,
     description: 'Prestijli at yetiştiriciliği', scene: ['🏟️', '🌿'],
     harvestMinutes: 5,
   },
   {
     id: 'rabbit', emoji: '🐰', name: 'Tavşan Çiftliği', category: 'animal',
-    unlockCost: 700000, unitCost: 130000, baseRate: 200, sellPrice: 300, maxUnits: 20,
+    unlockCost: 700000, unitCost: 260000, baseRate: 200, sellPrice: 300, maxUnits: 20,
     description: 'Hızlı üreyen tavşanlar', scene: ['🌸', '🌿'],
     harvestMinutes: 3,
   },
   {
     id: 'duck', emoji: '🦆', name: 'Ördek Göleti', category: 'animal',
-    unlockCost: 2500000, unitCost: 450000, baseRate: 350, sellPrice: 1050, maxUnits: 15,
+    unlockCost: 2500000, unitCost: 900000, baseRate: 350, sellPrice: 1050, maxUnits: 15,
     description: 'Gölet kenarında ördekler', scene: ['💧', '🌊'],
     harvestMinutes: 6,
   },
   {
     id: 'goat', emoji: '🐐', name: 'Keçi Çiftliği', category: 'animal',
-    unlockCost: 9000000, unitCost: 1500000, baseRate: 600, sellPrice: 3000, maxUnits: 12,
+    unlockCost: 9000000, unitCost: 3000000, baseRate: 600, sellPrice: 3000, maxUnits: 12,
     description: 'Peynir ve süt üretimi', scene: ['⛰️', '🌿'],
     harvestMinutes: 10,
   },
   {
     id: 'turkey', emoji: '🦃', name: 'Hindi Çiftliği', category: 'animal',
-    unlockCost: 30000000, unitCost: 5000000, baseRate: 1000, sellPrice: 9000, maxUnits: 10,
+    unlockCost: 30000000, unitCost: 10000000, baseRate: 1000, sellPrice: 9000, maxUnits: 10,
     description: 'Premium hindi yetiştiriciliği', scene: ['🌳', '🍂'],
     harvestMinutes: 18,
   },
   {
     id: 'bee', emoji: '🐝', name: 'Arı Kovanı', category: 'animal',
-    unlockCost: 100000000, unitCost: 15000000, baseRate: 1833, sellPrice: 11000, maxUnits: 20,
+    unlockCost: 100000000, unitCost: 30000000, baseRate: 1833, sellPrice: 11000, maxUnits: 20,
     description: 'Organik bal üretimi', scene: ['🌸', '🌼'],
     harvestMinutes: 12,
   },
   // ——— ÜST TİER HAYVANLAR ———
   {
     id: 'alpaca', emoji: '🦙', name: 'Alpaka Çiftliği', category: 'animal',
-    unlockCost: 350000000, unitCost: 50000000, baseRate: 3200, sellPrice: 24000, maxUnits: 10,
+    unlockCost: 350000000, unitCost: 100000000, baseRate: 3200, sellPrice: 24000, maxUnits: 10,
     description: 'Lüks alpaka yünü üretimi', scene: ['⛰️', '🌿'],
     harvestMinutes: 15,
   },
   {
     id: 'deer', emoji: '🦌', name: 'Geyik Rezervi', category: 'animal',
-    unlockCost: 1200000000, unitCost: 180000000, baseRate: 5833, sellPrice: 87500, maxUnits: 8,
+    unlockCost: 1200000000, unitCost: 360000000, baseRate: 5833, sellPrice: 87500, maxUnits: 8,
     description: 'Nadir geyik yetiştiriciliği', scene: ['🌲', '🌿'],
     harvestMinutes: 30,
   },
   {
     id: 'peacock', emoji: '🦚', name: 'Tavus Kuşu Bahçesi', category: 'animal',
-    unlockCost: 4000000000, unitCost: 600000000, baseRate: 10500, sellPrice: 315000, maxUnits: 6,
+    unlockCost: 4000000000, unitCost: 1200000000, baseRate: 10500, sellPrice: 315000, maxUnits: 6,
     description: 'Efsanevi tavus kuşları', scene: ['🌸', '🌺'],
     harvestMinutes: 60,
   },

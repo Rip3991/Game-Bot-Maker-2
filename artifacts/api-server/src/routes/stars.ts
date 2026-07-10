@@ -32,18 +32,19 @@ export type CoinShopItemId = (typeof COIN_SHOP_ITEMS)[number]["id"];
 
 // ── Coin → TL conversion (the safe, margin-aware alternative to fixed TL items) ─
 //
-// Rate set per operator request (aggressive tightening pass): 1.000 Coin ≈ 25 TL.
+// Rate set per operator request (2026-07-10 tightening pass, quartered from the
+// previous 0.025): 1.000 Coin ≈ 6,25 TL.
 //
 // ⚠️ ECONOMICS WARNING: at this rate, a user who buys the cheapest Coin package
 // (Efsane: 250 Stars → 3.750 Coins, 15 Coins/Star) and immediately converts gets
-// 3.750 × 0.025 = 93,75 TL for 250 Stars — i.e. you need to net at least ~0,375 TL
-// per Star just to break even on that path (and more than that to keep any
-// margin). If your real net TL-per-Star (after Telegram's cut) is lower than
-// that, the house loses money on every purchase→convert cycle, same as the old
-// tl_ultra item. Please confirm your real net-per-Star figure and adjust
+// 3.750 × 0.00625 = 23,4375 TL for 250 Stars — i.e. you need to net at least
+// ~0,094 TL per Star just to break even on that path (and more than that to
+// keep any margin). If your real net TL-per-Star (after Telegram's cut) is
+// lower than that, the house still loses money on every purchase→convert
+// cycle. Please confirm your real net-per-Star figure and adjust
 // COIN_TO_TL_RATE below if needed — it's the single number driving this feature.
-export const COIN_TO_TL_RATE = 0.025; // TL per Coin (1.000 Coin = 25 TL) — halved for a tighter economy
-export const MIN_COIN_CONVERT = 1000; // smallest amount convertible in one go — raised alongside the lower rate
+export const COIN_TO_TL_RATE = 0.00625; // TL per Coin (1.000 Coin = 6,25 TL) — quartered for a much tighter economy
+export const MIN_COIN_CONVERT = 4000; // smallest amount convertible in one go — raised so the minimum payout (~25 TL) doesn't shrink alongside the lower rate
 
 // ── GET /stars/coin-convert-rate ────────────────────────────────────────────
 router.get("/stars/coin-convert-rate", (_req, res) => {

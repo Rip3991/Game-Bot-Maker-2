@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Banknote, AlertCircle, CheckCircle2, Clock, RefreshCw, ArrowRight } from 'lucide-react';
 import { useUser } from '../hooks/use-user';
@@ -42,9 +42,16 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const coins = user?.coins ?? 0;
   const canWithdraw = balance >= amount;
 
-  // Rate: 1000 coins = 25 TL (0.025 TL per coin), min 1000 coins
-  const COIN_RATE = 0.025;
-  const MIN_COINS = 1000;
+  // Rate/minimum come from the server (single source of truth — see
+  // COIN_TO_TL_RATE/MIN_COIN_CONVERT in artifacts/api-server/src/routes/stars.ts)
+  // so this modal never advertises a stale hardcoded rate after a server-side
+  // economy tuning pass.
+  const [convertRate, setConvertRate] = useState<{ rate: number; minCoins: number } | null>(null);
+  useEffect(() => {
+    fetch(`${API}/stars/coin-convert-rate`).then(r => r.json()).then(setConvertRate).catch(() => {});
+  }, []);
+  const COIN_RATE = convertRate?.rate ?? 0.00625;
+  const MIN_COINS = convertRate?.minCoins ?? 4000;
   // Parse strictly — only accept positive integers (no decimals, no scientific notation)
   const parsedCoinAmount = /^\d+$/.test(coinConvertAmount.trim()) ? parseInt(coinConvertAmount.trim(), 10) : NaN;
   const coinInputEmpty = coinConvertAmount.trim() === '';
@@ -159,7 +166,7 @@ export function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         <span className="text-base">🪙</span>
                         <span className="font-black text-green-300 text-sm">Coin → TL Çevir</span>
                         <span className="ml-auto text-[9px] font-bold bg-green-800/60 border border-green-600/40 text-green-300 px-2 py-0.5 rounded-full">
-                          1.000 Coin = 25 TL
+                          1.000 Coin = {(COIN_RATE * 1000).toFixed(2)} TL
                         </span>
                       </div>
                       <p className="text-white/40 text-[10px] font-bold">Min. {MIN_COINS} Coin · Anında TL bakiyene yüklenir</p>
