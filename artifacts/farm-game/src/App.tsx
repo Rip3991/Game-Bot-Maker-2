@@ -166,6 +166,16 @@ function RightNav({ onAchievementsOpen, musicOn, onMusicToggle }: { onAchievemen
           </span>
         </button>
       )}
+
+      {/* Decorative filler — a little vine of farm life so the strip never
+          trails off into flat empty space below the last button */}
+      <div className="flex-1 w-full flex flex-col items-center justify-end gap-2.5 pb-1 min-h-[12px] pointer-events-none select-none">
+        <div className="w-px flex-1 min-h-[6px]" style={{ background: 'linear-gradient(180deg, rgba(134,239,172,0.35), rgba(134,239,172,0.05))' }} />
+        <span style={{ fontSize: 13, opacity: 0.55, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}>🌻</span>
+        <div className="w-px h-3" style={{ background: 'rgba(134,239,172,0.25)' }} />
+        <span style={{ fontSize: 12, opacity: 0.4 }}>🐞</span>
+        <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'rgba(134,239,172,0.3)' }} />
+      </div>
     </div>
   );
 }
