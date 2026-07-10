@@ -252,7 +252,8 @@ export const CASE_DEFS = {
     currency: "tl" as const,
     description: "Temel çiftlik NFT'leri",
     bgGradient: "linear-gradient(135deg, #2d5a1b, #4a8c2a)",
-    // Beklenen değer ~1.1x fiyat — bkz. RARITY_SELL_PRICE_DIVISOR notu.
+    // Beklenen değer ~0.90x fiyat (2026-07-10 audit, common divisor 2.0) —
+    // bkz. RARITY_SELL_PRICE_DIVISOR notu.
     drops: { common: 0.965, rare: 0.025, special: 0.007, epic: 0.002, legendary: 0.001 },
   },
   crystal_case: {
@@ -308,7 +309,11 @@ export const CASE_DEFS = {
 // Bölücüleri değiştirirsen CASE_DEFS.drops oranlarını da EV/fiyat oranına
 // göre yeniden kontrol et.
 const RARITY_SELL_PRICE_DIVISOR: Record<"common" | "rare" | "epic" | "special" | "legendary", number> = {
-  common: 1.6,
+  // common was 1.6 — farm_case's expected drop value came out to ~1.10x its
+  // price (82 TL EV vs 75 TL price, 2026-07-10 audit). Raised to 2.0 so every
+  // case's EV/price ratio is safely below 1 (farm_case ≈0.90x); see EV audit
+  // in this comment block's sibling note above CASE_DEFS.
+  common: 2.0,
   rare: 20,
   epic: 150,
   special: 50,
