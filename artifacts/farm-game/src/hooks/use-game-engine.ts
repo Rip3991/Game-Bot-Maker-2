@@ -23,31 +23,31 @@ export const SECTIONS: SectionConfig[] = [
   // income/min per section (any count) = sellPrice / harvestMinutes × lMult
   {
     id: 'wheat', emoji: '🌾', name: 'Buğday Tarlası', category: 'farm',
-    unlockCost: 0, unitCost: 30, baseRate: 10, sellPrice: 2, maxUnits: 20,
+    unlockCost: 0, unitCost: 20, baseRate: 10, sellPrice: 2, maxUnits: 20,
     description: 'Başlangıç çiftliğin', scene: ['🌳', '🌲'],
     harvestMinutes: 0.5,
   },
   {
     id: 'onion', emoji: '🧅', name: 'Soğan Tarlası', category: 'farm',
-    unlockCost: 200, unitCost: 80, baseRate: 12, sellPrice: 3, maxUnits: 20,
+    unlockCost: 130, unitCost: 50, baseRate: 12, sellPrice: 3, maxUnits: 20,
     description: 'Tatlı soğan tarlası', scene: ['🌿', '🌱'],
     harvestMinutes: 0.5,
   },
   {
     id: 'corn', emoji: '🌽', name: 'Mısır Tarlası', category: 'farm',
-    unlockCost: 800, unitCost: 200, baseRate: 19, sellPrice: 7, maxUnits: 20,
+    unlockCost: 500, unitCost: 130, baseRate: 19, sellPrice: 7, maxUnits: 20,
     description: 'Altın mısır başakları', scene: ['🌻', '🌿'],
     harvestMinutes: 0.75,
   },
   {
     id: 'carrot', emoji: '🥕', name: 'Havuç Tarlası', category: 'farm',
-    unlockCost: 3000, unitCost: 700, baseRate: 20, sellPrice: 10, maxUnits: 20,
+    unlockCost: 2000, unitCost: 450, baseRate: 20, sellPrice: 10, maxUnits: 20,
     description: 'Taze turuncu havuçlar', scene: ['🌿', '🌱'],
     harvestMinutes: 1,
   },
   {
     id: 'tomato', emoji: '🍅', name: 'Domates Bahçesi', category: 'farm',
-    unlockCost: 12000, unitCost: 2500, baseRate: 33, sellPrice: 25, maxUnits: 15,
+    unlockCost: 8000, unitCost: 1600, baseRate: 33, sellPrice: 25, maxUnits: 15,
     description: 'Taze kırmızı domatesler', scene: ['🌿', '🪴'],
     harvestMinutes: 1.5,
   },
