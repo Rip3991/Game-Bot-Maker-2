@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useGameEngine, SECTIONS, WELCOME_BONUS, SectionConfig, replantCost, xpToNextLevel, levelMultiplier, isNextInUnlockOrder, prevSectionInOrder } from '../hooks/use-game-engine';
+import { useGameEngine, SECTIONS, WELCOME_BONUS, SectionConfig, replantCost, xpToNextLevel, levelMultiplier, isNextInUnlockOrder, prevSectionInOrder, getEffectiveHarvestMinutes } from '../hooks/use-game-engine';
 import { MarketPanel } from '../components/MarketPanel';
 import { useUser } from '../hooks/use-user';
 import { useSaveFarmState, useGetOnlineStats, getGetOnlineStatsQueryKey } from '@workspace/api-client-react';
@@ -164,7 +164,8 @@ function FarmPlot({
   const lMult = levelMultiplier(level);
   // Income projection uses growCount (this cycle's yield), not the live
   // count — matches what harvestPlot will actually pay out right now.
-  const income = growCount > 0 ? Math.round(growCount * config.sellPrice / config.harvestMinutes * lMult) : 0;
+  const effectiveMinutes = getEffectiveHarvestMinutes(config, count);
+  const income = growCount > 0 ? Math.round(growCount * config.sellPrice / effectiveMinutes * lMult) : 0;
   const harvestEmoji = HARVEST_EMOJI[config.id] ?? config.emoji;
   const [fxParticles, setFxParticles] = React.useState<{ id: number; x: number }[]>([]);
   const canAffordUnlock = coins >= config.unlockCost;
@@ -427,7 +428,7 @@ function FarmPlot({
                     <span className="text-[8px] font-bold text-white/40">
                       {isFarm ? 'Büyüyor' : 'Üretiyor'} {Math.round(plotFill * 100)}%
                       {(() => {
-                        const remSec = Math.ceil((1 - plotFill) * config.harvestMinutes * 60 / lMult);
+                        const remSec = Math.ceil((1 - plotFill) * effectiveMinutes * 60 / lMult);
                         if (remSec <= 0) return null;
                         const m = Math.floor(remSec / 60);
                         const s = remSec % 60;
@@ -439,7 +440,7 @@ function FarmPlot({
                       })()}
                     </span>
                     <span className="text-[8px] font-bold text-white/40">
-                      ⏱ {formatCycleDuration(config.harvestMinutes / lMult)}
+                      ⏱ {formatCycleDuration(effectiveMinutes / lMult)}
                     </span>
                   </div>
                   <div className="h-2 rounded-full bg-black/40 overflow-hidden">
@@ -470,7 +471,7 @@ function FarmPlot({
                   <div className="rounded-full px-1.5 py-0.5"
                     style={{ background: 'rgba(0,0,0,0.5)', border: `1px solid ${palette.accentColor}30` }}>
                     <span className="font-black text-[8px]" style={{ color: palette.accentColor }}>
-                      ⏱ {formatCycleDuration(config.harvestMinutes / lMult)}
+                      ⏱ {formatCycleDuration(effectiveMinutes / lMult)}
                     </span>
                   </div>
                 )}
@@ -592,7 +593,7 @@ function PurchaseSheet({
   const prevRequired = blockedByOrder ? prevSectionInOrder(config.id) : null;
   const action = isLocked ? onUnlock : onBuy;
   const lMult = levelMultiplier(level);
-  const perUnitPerMin = config.sellPrice / config.harvestMinutes * lMult;
+  const perUnitPerMin = config.sellPrice / getEffectiveHarvestMinutes(config, 1) * lMult;
   const income = perUnitPerMin;
   const tip = MASCOT_TIPS[config.id];
   // Show mascot tip when: not maxed, section is wheat OR count is 0
@@ -782,8 +783,8 @@ function FarmScene({ state }: { state: any }) {
     const sec = state.sections[s.id];
     if (!sec?.unlocked || sec.count === 0) return sum;
     // Matches actual harvest payout: growCount units × sellPrice per
-    // harvestMinutes cycle, not the old flat baseRate × count.
-    return sum + (sec.growCount ?? sec.count) * s.sellPrice / s.harvestMinutes * lMult;
+    // effective (count-scaled) harvestMinutes cycle.
+    return sum + (sec.growCount ?? sec.count) * s.sellPrice / getEffectiveHarvestMinutes(s, sec.count) * lMult;
   }, 0);
 
   // Re-check the Türkiye saati every minute so the scene transitions live

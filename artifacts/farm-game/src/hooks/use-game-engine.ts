@@ -254,6 +254,18 @@ export function replantCost(cfg: SectionConfig, count: number): number {
   return Math.max(1, Math.round(count * cfg.sellPrice * 0.20));
 }
 
+/** How many units' cycle time counts toward slowing down a plot. Base
+ *  harvestMinutes values assume this multiplier is applied on top, and the
+ *  cycle further scales with sqrt(unit count) — more units planted take
+ *  longer to tend. Any UI displaying cycle time or income/min MUST use this
+ *  helper instead of raw `cfg.harvestMinutes`, or the numbers shown will
+ *  disagree with the actual fill rate in the tick effect below. */
+export const HARVEST_TIME_MULTIPLIER = 4;
+
+export function getEffectiveHarvestMinutes(cfg: SectionConfig, count: number): number {
+  return cfg.harvestMinutes * HARVEST_TIME_MULTIPLIER * Math.sqrt(Math.max(1, count));
+}
+
 export interface GameState {
   balance: number;
   coins: number;
@@ -436,17 +448,8 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
         if (s.needsReplant) return;
         const fill = current.plotFill[cfg.id] ?? 0;
         if (fill >= 1.0) return; // already full, wait for harvest tap
-        // Growth time scales with unit count (operator request, 2026-07-10:
-        // fields were finishing far too fast even at count=1, and income was
-        // too high for how little wait was involved). More units planted on
-        // a plot take longer to tend, so the cycle time grows with
-        // sqrt(count) — buying units still raises total yield/min
-        // (yieldItems = count) but by less than the extra wait costs at low
-        // counts, so income stays modest. Base harvestMinutes values were
-        // quadrupled (was 2x) to slow the overall pace — wheat at count=1 now
-        // takes 2 minutes instead of 30 seconds.
-        const HARVEST_TIME_MULTIPLIER = 4;
-        const effectiveMinutes = cfg.harvestMinutes * HARVEST_TIME_MULTIPLIER * Math.sqrt(Math.max(1, s.count));
+        // Growth time scales with unit count — see getEffectiveHarvestMinutes.
+        const effectiveMinutes = getEffectiveHarvestMinutes(cfg, s.count);
         const fillRatePerSec = lMult / (effectiveMinutes * 60);
         const newFill = Math.min(fill + fillRatePerSec * deltaSec, 1.0);
         if (Math.abs(newFill - fill) > 0.000001) {
@@ -639,7 +642,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
     // Cycle time scales with sqrt(count) (see plot-fill tick effect above),
     // so the per-minute estimate must use the same effective minutes.
     if (s?.unlocked && s.count > 0 && !s.needsReplant) {
-      const effectiveMinutes = cfg.harvestMinutes * 4 * Math.sqrt(Math.max(1, s.count));
+      const effectiveMinutes = getEffectiveHarvestMinutes(cfg, s.count);
       return sum + Math.round(s.growCount * cfg.sellPrice / effectiveMinutes * levelMultiplier(state.level));
     }
     return sum;
