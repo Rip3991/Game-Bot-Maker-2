@@ -1272,17 +1272,9 @@ export default function GameView() {
         </div>
       </div>
 
-      {/* ══ MARKET PANEL ══ */}
+      {/* ══ FARM SCENE (road animation) ══ */}
       <div className="relative flex-shrink-0">
-        <MarketPanel
-          storage={state.storage}
-          gameState={state}
-          onSell={sellProducts}
-          autoSell={autoSell}
-          autoSellPurchased={autoSellPurchased}
-          onToggleAutoSell={toggleAutoSell}
-        />
-        {!autoSell && <SellHintMascot hasProducts={Object.values(state.storage).some(v => Math.floor(v) > 0)} />}
+        <FarmScene state={state} />
       </div>
 
       {/* ══ MAIN SCENE ══ */}
@@ -1291,8 +1283,18 @@ export default function GameView() {
         {/* ── Left: Scrollable farm area ── */}
         <div className="flex-1 flex flex-col overflow-hidden">
 
-          {/* Rich farm scene header */}
-          <FarmScene state={state} />
+          {/* Market panel */}
+          <div className="relative flex-shrink-0">
+            <MarketPanel
+              storage={state.storage}
+              gameState={state}
+              onSell={sellProducts}
+              autoSell={autoSell}
+              autoSellPurchased={autoSellPurchased}
+              onToggleAutoSell={toggleAutoSell}
+            />
+            {!autoSell && <SellHintMascot hasProducts={Object.values(state.storage).some(v => Math.floor(v) > 0)} />}
+          </div>
 
           {/* Farm / Animal tab bar — glass panel with animated coin-drip accent */}
           <div
