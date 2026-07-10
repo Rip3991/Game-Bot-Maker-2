@@ -135,6 +135,7 @@ const HARVEST_EMOJI: Record<string, string> = {
 function FarmPlot({
   config,
   count,
+  growCount,
   unlocked,
   coins,
   plotFill,
@@ -147,6 +148,8 @@ function FarmPlot({
 }: {
   config: SectionConfig;
   count: number;
+  /** Units contributing to the harvest currently in progress (see growCount in the engine). */
+  growCount: number;
   unlocked: boolean;
   /** Coin balance — all farm/animal purchases and replants are paid in Coins, never TL. */
   coins: number;
@@ -159,7 +162,9 @@ function FarmPlot({
   onReplant: () => void;
 }) {
   const lMult = levelMultiplier(level);
-  const income = count > 0 ? Math.round(config.sellPrice / config.harvestMinutes * lMult) : 0;
+  // Income projection uses growCount (this cycle's yield), not the live
+  // count — matches what harvestPlot will actually pay out right now.
+  const income = growCount > 0 ? Math.round(growCount * config.sellPrice / config.harvestMinutes * lMult) : 0;
   const harvestEmoji = HARVEST_EMOJI[config.id] ?? config.emoji;
   const [fxParticles, setFxParticles] = React.useState<{ id: number; x: number }[]>([]);
   const canAffordUnlock = coins >= config.unlockCost;
@@ -561,15 +566,17 @@ function PurchaseSheet({
   config,
   sectionState,
   coins,
+  level,
   canUnlockNow,
   onUnlock,
   onBuy,
   onClose,
 }: {
   config: SectionConfig;
-  sectionState: { unlocked: boolean; count: number; needsReplant?: boolean };
+  sectionState: { unlocked: boolean; count: number; growCount?: number; needsReplant?: boolean };
   /** Coin balance — unlocks/purchases are paid in Coins, never TL. */
   coins: number;
+  level: number;
   canUnlockNow: boolean;
   onUnlock: () => void;
   onBuy: () => void;
@@ -588,14 +595,18 @@ function PurchaseSheet({
   const blockedByOrder = isLocked && !canUnlockNow;
   const prevRequired = blockedByOrder ? prevSectionInOrder(config.id) : null;
   const action = isLocked ? onUnlock : onBuy;
-  const income = config.baseRate;
+  const lMult = levelMultiplier(level);
+  const perUnitPerMin = config.sellPrice / config.harvestMinutes * lMult;
+  const income = perUnitPerMin;
   const tip = MASCOT_TIPS[config.id];
   // Show mascot tip when: not maxed, section is wheat OR count is 0
   const showTip = !isMaxed && (config.id === 'wheat' || sectionState.count === 0);
 
-  // Earned per additional unit projection
-  const currentIncome = sectionState.count * config.baseRate;
-  const nextIncome = (sectionState.count + 1) * config.baseRate;
+  // Earned per additional unit projection — based on growCount (units that
+  // actually count for the harvest in progress), matching real payout.
+  // Buying now only raises `nextIncome`, realized after the next replant.
+  const currentIncome = (sectionState.growCount ?? sectionState.count) * perUnitPerMin;
+  const nextIncome = (sectionState.count + 1) * perUnitPerMin;
 
   return (
     <motion.div
@@ -770,10 +781,13 @@ const SKY_PALETTES: Record<DayPeriod, { scene: string; sky: string; grass: strin
 /* ── Scene Header: Farm buildings & sky ── */
 function FarmScene({ state }: { state: any }) {
   const totalUnlocked = SECTIONS.filter(s => state.sections[s.id]?.unlocked).length;
+  const lMult = levelMultiplier(state.level);
   const totalIncome = SECTIONS.reduce((sum, s) => {
     const sec = state.sections[s.id];
     if (!sec?.unlocked || sec.count === 0) return sum;
-    return sum + sec.count * s.baseRate;
+    // Matches actual harvest payout: growCount units × sellPrice per
+    // harvestMinutes cycle, not the old flat baseRate × count.
+    return sum + (sec.growCount ?? sec.count) * s.sellPrice / s.harvestMinutes * lMult;
   }, 0);
 
   // Re-check the Türkiye saati every minute so the scene transitions live
@@ -1281,6 +1295,7 @@ export default function GameView() {
                   key={cfg.id}
                   config={cfg}
                   count={state.sections[cfg.id]?.count ?? 0}
+                  growCount={state.sections[cfg.id]?.growCount ?? 0}
                   unlocked={state.sections[cfg.id]?.unlocked ?? false}
                   coins={state.coins}
                   plotFill={state.plotFill[cfg.id] ?? 0}
@@ -1306,6 +1321,7 @@ export default function GameView() {
             config={selectedConfig}
             sectionState={selectedState}
             coins={state.coins}
+            level={state.level}
             canUnlockNow={isNextInUnlockOrder(state.sections, selectedConfig.id)}
             onUnlock={() => {
               unlockSection(selectedConfig.id);

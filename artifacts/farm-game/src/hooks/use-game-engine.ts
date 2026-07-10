@@ -207,6 +207,11 @@ export interface SectionState {
   unlocked: boolean;
   count: number;
   needsReplant: boolean;
+  /** Unit count snapshotted at the start of the current growth cycle (on
+   *  unlock/replant). Harvest yield and XP use this, not the live `count`,
+   *  so buying units mid-cycle can't grant a bonus on the harvest already
+   *  in progress — the extra units only count starting next cycle. */
+  growCount: number;
 }
 
 export interface SaleRecord {
@@ -264,6 +269,7 @@ const defaultSection = (cfg: SectionConfig): SectionState => ({
   unlocked: cfg.unlockCost === 0,
   count: cfg.unlockCost === 0 ? 1 : 0,
   needsReplant: false,
+  growCount: cfg.unlockCost === 0 ? 1 : 0,
 });
 
 /** The section (if any) that must be unlocked before `id` can be unlocked —
@@ -346,6 +352,14 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
             sections[cfg.id] = { ...sections[cfg.id], needsReplant: false };
           }
         });
+        // Ensure growCount exists (migration from pre-growCount saves) —
+        // default to the live count so existing in-progress harvests keep
+        // their current expected yield instead of resetting to 0.
+        SECTIONS.forEach(cfg => {
+          if (typeof (sections[cfg.id] as any).growCount !== 'number') {
+            sections[cfg.id] = { ...sections[cfg.id], growCount: sections[cfg.id].count };
+          }
+        });
 
         const storage: Record<string, number> = {
           ...Object.fromEntries(SECTIONS.map(cfg => [cfg.id, 0])),
@@ -420,7 +434,11 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
         if (s.needsReplant) return;
         const fill = current.plotFill[cfg.id] ?? 0;
         if (fill >= 1.0) return; // already full, wait for harvest tap
-        const fillRatePerSec = lMult / (cfg.harvestMinutes * s.count * 60);
+        // Growth time depends only on harvestMinutes (and level), never on unit
+        // count — buying more units raises the harvest yield (yieldItems = count),
+        // not the wait time. Dividing by count here used to make plots with many
+        // units take so long to fill that growth looked completely frozen.
+        const fillRatePerSec = lMult / (cfg.harvestMinutes * 60);
         const newFill = Math.min(fill + fillRatePerSec * deltaSec, 1.0);
         if (Math.abs(newFill - fill) > 0.000001) {
           fillUpdates[cfg.id] = newFill;
@@ -489,7 +507,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
         coins: prev.coins - cfg.unlockCost,
         sections: {
           ...prev.sections,
-          [id]: { unlocked: true, count: 1, needsReplant: false },
+          [id]: { unlocked: true, count: 1, needsReplant: false, growCount: 1 },
         },
       };
     });
@@ -503,17 +521,13 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
       if (sec.count >= cfg.maxUnits) return prev;
       if (prev.coins < cfg.unitCost) return prev;
       const newCount = sec.count + 1;
-      // Fill time scales with count (fillRatePerSec ∝ 1/count), so adding a
-      // unit mid-growth must rescale the in-progress fill fraction down by
-      // oldCount/newCount to preserve the real elapsed effort. Without this,
-      // a player could buy 1 unit, let it nearly finish (fast, since count=1),
-      // then top up to max count right before harvest and reap a full-size
-      // harvest almost instantly — the per-count time slowdown would never
-      // actually apply to that harvest.
-      const oldFill = prev.plotFill[id] ?? 0;
-      const rescaledFill = sec.count > 0
-        ? Math.min(1, Math.max(0, (oldFill * sec.count) / newCount))
-        : oldFill;
+      // Growth time is independent of unit count (see fillRatePerSec in the
+      // tick effect), so in-progress fill doesn't need to be rescaled here.
+      // `growCount` (the yield snapshot for the harvest already in progress)
+      // is intentionally left untouched — the extra unit only starts
+      // contributing to yield once the current cycle is harvested and
+      // replanted, so buying right before a harvest completes can't grant
+      // an instant bonus-sized payout.
       return {
         ...prev,
         coins: prev.coins - cfg.unitCost,
@@ -521,7 +535,6 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
           ...prev.sections,
           [id]: { ...sec, count: newCount },
         },
-        plotFill: { ...prev.plotFill, [id]: rescaledFill },
       };
     });
   }, []);
@@ -536,11 +549,12 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
       const fill = prev.plotFill[id] ?? 0;
       if (fill < 1.0) return prev;
 
-      // Yield = exactly how many units the player planted (count).
-      // Selling count items at sellPrice each gives total = count × sellPrice coins.
-      // This is intentionally simpler and more conservative than the old formula.
-      const yieldItems = sec.count;
-      const xpGain = Math.ceil(sec.count * cfg.harvestMinutes);
+      // Yield = units that were planted at the start of THIS growth cycle
+      // (growCount), not the live count — any units bought mid-cycle only
+      // pay off starting next cycle. Selling count items at sellPrice each
+      // gives total = growCount × sellPrice coins.
+      const yieldItems = sec.growCount;
+      const xpGain = Math.ceil(yieldItems * cfg.harvestMinutes);
       const newXp = prev.xp + xpGain;
       const newLevel = computeLevel(newXp);
 
@@ -572,7 +586,9 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
       return {
         ...prev,
         coins: prev.coins - cost,
-        sections: { ...prev.sections, [id]: { ...sec, needsReplant: false } },
+        // Snapshot the live count as the new cycle's growCount — any units
+        // bought since the last harvest now start counting toward yield.
+        sections: { ...prev.sections, [id]: { ...sec, needsReplant: false, growCount: sec.count } },
         plotFill: { ...prev.plotFill, [id]: 0 },
       };
     });
@@ -611,7 +627,9 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
 
   const incomePerMin = SECTIONS.reduce((sum, cfg) => {
     const s = state.sections[cfg.id];
-    if (s?.unlocked && s.count > 0 && !s.needsReplant) return sum + Math.round(cfg.sellPrice / cfg.harvestMinutes * levelMultiplier(state.level));
+    // Income now scales with planted units: each cycle (harvestMinutes,
+    // count-independent) yields growCount items at sellPrice each.
+    if (s?.unlocked && s.count > 0 && !s.needsReplant) return sum + Math.round(s.growCount * cfg.sellPrice / cfg.harvestMinutes * levelMultiplier(state.level));
     return sum;
   }, 0);
 
