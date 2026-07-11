@@ -9,6 +9,7 @@ import {
   GetAchievementsParams,
 } from "@workspace/api-zod";
 import { notifyUser, getBotUsername, getGameUrl } from "../lib/telegram";
+import { ACHIEVEMENT_DEFINITIONS, grantAchievement } from "../lib/achievements";
 
 const router = Router();
 
@@ -23,17 +24,6 @@ const STREAK_TL_MILESTONES = [
   { day: 14, tl: 5,  key: "streak_tl_14" },
   { day: 30, tl: 15, key: "streak_tl_30" },
   { day: 60, tl: 30, key: "streak_tl_60" },
-];
-
-const ACHIEVEMENT_DEFINITIONS = [
-  { key: "first_upgrade", title: "İlk Mahsul", description: "İlk çiftlik yükseltmeni yap", icon: "🌾" },
-  { key: "coin_collector", title: "Para Basmak", description: "1000 coin kazan", icon: "🪙" },
-  { key: "social_farmer_1", title: "Sosyal Çiftçi", description: "1 arkadaş davet et", icon: "👥" },
-  { key: "social_farmer_5", title: "Lider Çiftçi", description: "5 arkadaş davet et", icon: "👑" },
-  { key: "social_farmer_10", title: "Efsane Çiftçi", description: "10 arkadaş davet et", icon: "🏆" },
-  { key: "weekly_streak", title: "Haftalık Seri", description: "7 gün üst üste giriş yap", icon: "🔥" },
-  { key: "jackpot", title: "Büyük Kazanan", description: "Çarkta jackpot çevir", icon: "🎰" },
-  { key: "first_withdraw", title: "İlk Çekim", description: "İlk para çekimini yap", icon: "💸" },
 ];
 
 // POST /users/init
@@ -359,6 +349,7 @@ router.get("/users/:telegramId/achievements", async (req, res): Promise<void> =>
       title: def.title,
       description: def.description,
       icon: def.icon,
+      coins: def.coins,
       earnedAt: record ? record.earnedAt.toISOString() : "",
       unlocked: earnedKeys.has(def.key),
     };
@@ -451,16 +442,6 @@ function formatUser(user: typeof usersTable.$inferSelect) {
     // isNewUser is always false here; the init route overrides it to true for new accounts
     isNewUser: false,
   };
-}
-
-async function grantAchievement(telegramId: string, key: string) {
-  const existing = await db.query.achievementsTable.findFirst({
-    where: (t, { and }) =>
-      and(eq(t.userTelegramId, telegramId), eq(t.achievementKey, key)),
-  });
-  if (!existing) {
-    await db.insert(achievementsTable).values({ userTelegramId: telegramId, achievementKey: key });
-  }
 }
 
 async function checkAndGrantReferralAchievements(telegramId: string, count: number) {

@@ -907,45 +907,138 @@ function FarmScene({ state }: { state: any }) {
           </div>
         </div>
 
-        {/* ── TRUCK — a small layered CSS body (cab + trailer + wheels) instead
-            of a flat emoji, enters right, brakes near market, pauses, exits ── */}
-        <span className="absolute" style={{ top: '6%', animation: 'truckStop 9s ease-in-out infinite' }}>
-          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.32s ease-in-out infinite' }}>
-            <span className="absolute" style={{ right: -9, top: 2, fontSize: 7, animation: 'dustPuff 0.9s ease-out infinite' }}>💨</span>
-            <span className="absolute" style={{ right: -5, top: 5, fontSize: 6, animation: 'dustPuff 0.9s ease-out 0.3s infinite' }}>💨</span>
-            <div className="relative flex items-end" style={{ filter: 'drop-shadow(0 3px 3px rgba(0,0,0,0.6))' }}>
-              {/* Cab — leads at the front (left) since the truck travels right → left */}
-              <div className="relative rounded-t-[2px]" style={{ width: 9, height: 13, background: 'linear-gradient(180deg, #ef4444, #b91c1c)', border: '1px solid #7f1d1d' }}>
-                <div className="absolute rounded-[1px]" style={{ top: 1.5, left: 1, right: 1, height: 4, background: isNight ? '#fef08a' : '#7dd3fc', boxShadow: isNight ? '0 0 4px #fde047' : undefined }} />
-                {isNight && <span className="absolute" style={{ left: -3, bottom: 2, fontSize: 5, filter: 'brightness(2.4)' }}>🔆</span>}
-              </div>
-              {/* Trailer follows behind (right/back) */}
-              <div className="relative rounded-[2px] -ml-px" style={{ width: 15, height: 11, background: 'linear-gradient(180deg, #e5e7eb, #9ca3af)', border: '1px solid #4b5563' }}>
-                <div className="absolute inset-x-0.5 top-0.5 h-[3px] rounded-[1px]" style={{ background: 'rgba(255,255,255,0.5)' }} />
-              </div>
+        {/* ── WEATHER OVERLAY (rain / fog) ── */}
+        {period === 'gece' && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
+            {Array.from({ length: 18 }).map((_, i) => (
+              <div
+                key={i}
+                className="absolute"
+                style={{
+                  left: `${(i * 6.2 + 2) % 100}%`,
+                  top: '-10%',
+                  width: 1,
+                  height: 8 + (i % 4) * 3,
+                  background: 'linear-gradient(180deg, rgba(147,197,253,0.0), rgba(147,197,253,0.55))',
+                  borderRadius: 1,
+                  animation: `rainFall ${0.6 + (i % 5) * 0.12}s linear ${-( i * 0.07)}s infinite`,
+                  transform: 'rotate(15deg)',
+                }}
+              />
+            ))}
+          </div>
+        )}
+        {period === 'aksam' && (
+          <div className="absolute inset-0 pointer-events-none z-20"
+            style={{ background: 'linear-gradient(180deg, rgba(180,120,60,0.12) 0%, rgba(80,40,20,0.25) 100%)' }} />
+        )}
+
+        {/* ── TRUCK SVG — stops near market then drives off ── */}
+        <span className="absolute" style={{ top: '3%', animation: 'truckStop 9s ease-in-out infinite', willChange: 'transform' }}>
+          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.34s ease-in-out infinite' }}>
+            {/* Exhaust smoke */}
+            <span className="absolute" style={{ right: -8, top: 1, fontSize: 7, opacity: 0.7, animation: 'dustPuff 1s ease-out infinite' }}>💨</span>
+            <svg width="48" height="22" viewBox="0 0 48 22" style={{ filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.6))' }} xmlns="http://www.w3.org/2000/svg">
+              {/* Trailer body */}
+              <rect x="16" y="4" width="32" height="13" rx="2" fill="#d1d5db" stroke="#6b7280" strokeWidth="0.8"/>
+              <rect x="17" y="5" width="30" height="3" rx="1" fill="rgba(255,255,255,0.5)"/>
+              <line x1="30" y1="5" x2="30" y2="17" stroke="#9ca3af" strokeWidth="0.8"/>
+              <line x1="40" y1="5" x2="40" y2="17" stroke="#9ca3af" strokeWidth="0.8"/>
+              {/* Red taillight strip */}
+              <rect x="46" y="7" width="2" height="4" rx="1" fill={isNight ? '#ef4444' : '#f87171'} style={isNight ? { filter: 'drop-shadow(0 0 3px #ef4444)' } : {}}/>
+              {/* Cab */}
+              <rect x="2" y="6" width="16" height="11" rx="2" fill="#dc2626" stroke="#991b1b" strokeWidth="0.8"/>
+              {/* Windshield */}
+              <rect x="3" y="7" width="9" height="6" rx="1" fill={isNight ? '#fef9c3' : '#bae6fd'} style={isNight ? { filter: 'drop-shadow(0 0 4px #fde047)' } : {}}/>
+              {/* Cab roof */}
+              <rect x="4" y="3" width="10" height="4" rx="1.5" fill="#b91c1c"/>
+              {/* Front headlights */}
+              <rect x="0" y="9" width="3" height="3" rx="1" fill={isNight ? '#fef08a' : '#fde68a'} style={isNight ? { filter: 'drop-shadow(0 0 6px #fde047)' } : {}}/>
               {/* Wheels */}
-              <div className="absolute rounded-full" style={{ width: 4, height: 4, left: 2, bottom: -2, background: '#1c1c1c', border: '1px solid #444' }} />
-              <div className="absolute rounded-full" style={{ width: 4, height: 4, left: 10, bottom: -2, background: '#1c1c1c', border: '1px solid #444' }} />
-              <div className="absolute rounded-full" style={{ width: 4, height: 4, left: 19, bottom: -2, background: '#1c1c1c', border: '1px solid #444' }} />
-            </div>
+              <circle cx="7" cy="19" r="4" fill="#1c1917" stroke="#44403c" strokeWidth="0.8"/>
+              <circle cx="7" cy="19" r="1.5" fill="#78716c"/>
+              <circle cx="22" cy="19" r="4" fill="#1c1917" stroke="#44403c" strokeWidth="0.8"/>
+              <circle cx="22" cy="19" r="1.5" fill="#78716c"/>
+              <circle cx="34" cy="19" r="4" fill="#1c1917" stroke="#44403c" strokeWidth="0.8"/>
+              <circle cx="34" cy="19" r="1.5" fill="#78716c"/>
+              <circle cx="43" cy="19" r="4" fill="#1c1917" stroke="#44403c" strokeWidth="0.8"/>
+              <circle cx="43" cy="19" r="1.5" fill="#78716c"/>
+              {/* Exhaust pipe */}
+              <rect x="14" y="2" width="2" height="5" rx="1" fill="#374151"/>
+            </svg>
           </span>
         </span>
 
-        {/* ── TRACTOR — layered CSS body, same stop behaviour, slower, phase offset ── */}
-        <span className="absolute" style={{ top: '34%', animation: 'tractorStop 13s ease-in-out -5s infinite' }}>
-          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.44s ease-in-out infinite' }}>
-            <span className="absolute" style={{ right: -6, top: 2, fontSize: 6, animation: 'dustPuff 1.1s ease-out 0.2s infinite' }}>💨</span>
-            <div className="relative flex items-end" style={{ filter: 'drop-shadow(0 3px 3px rgba(0,0,0,0.55))' }}>
-              {/* Cab — leads at the front (left) since the tractor travels right → left */}
-              <div className="relative rounded-t-[3px]" style={{ width: 8, height: 11, background: 'linear-gradient(180deg, #fbbf24, #d97706)', border: '1px solid #92400e' }}>
-                <div className="absolute rounded-[1px]" style={{ top: 1, left: 1, right: 1, height: 3.5, background: isNight ? '#fef08a' : '#bae6fd' }} />
-              </div>
-              {/* Body follows behind (right/back) */}
-              <div className="relative rounded-[2px] -ml-0.5" style={{ width: 13, height: 8, background: 'linear-gradient(180deg, #86efac, #16a34a)', border: '1px solid #14532d' }} />
-              {/* Small front wheel (under cab) + big rear wheel (under body) */}
-              <div className="absolute rounded-full" style={{ width: 4, height: 4, left: -1, bottom: -1.5, background: '#2a2a2a', border: '1px solid #444' }} />
-              <div className="absolute rounded-full" style={{ width: 8, height: 8, left: 13, bottom: -3, background: '#1c1c1c', border: '1.5px solid #444' }} />
-            </div>
+        {/* ── SEDAN CAR — fast zip, opposite direction (left → right) ── */}
+        <span className="absolute" style={{ top: '18%', animation: 'carLeftRight 7s ease-in-out -2s infinite', willChange: 'transform', transform: 'scaleX(-1)' }}>
+          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.28s ease-in-out infinite' }}>
+            <svg width="38" height="18" viewBox="0 0 38 18" style={{ filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.55))' }} xmlns="http://www.w3.org/2000/svg">
+              {/* Car body lower */}
+              <rect x="2" y="9" width="34" height="7" rx="3" fill="#3b82f6" stroke="#1d4ed8" strokeWidth="0.8"/>
+              {/* Car body upper (cabin) */}
+              <path d="M8 9 Q10 3 16 2 L26 2 Q32 3 33 9 Z" fill="#2563eb" stroke="#1d4ed8" strokeWidth="0.8"/>
+              {/* Windshield */}
+              <path d="M12 9 Q14 4 16 3 L22 3 Q26 4 27 9 Z" fill={isNight ? '#fef9c3' : '#bae6fd'} opacity="0.9" style={isNight ? { filter: 'drop-shadow(0 0 3px #fde047)' } : {}}/>
+              {/* Side window */}
+              <path d="M8 9 L10 5 L12 4 L12 9 Z" fill={isNight ? '#fef9c3' : '#93c5fd'} opacity="0.8"/>
+              <path d="M28 9 L26 5 L30 4 L32 9 Z" fill={isNight ? '#fef9c3' : '#93c5fd'} opacity="0.8"/>
+              {/* Headlights */}
+              <rect x="0" y="10" width="3" height="2.5" rx="1" fill={isNight ? '#fef08a' : '#fde68a'} style={isNight ? { filter: 'drop-shadow(0 0 5px #fde047)' } : {}}/>
+              {/* Taillights */}
+              <rect x="35" y="10" width="3" height="2.5" rx="1" fill={isNight ? '#ef4444' : '#f87171'} style={isNight ? { filter: 'drop-shadow(0 0 3px #ef4444)' } : {}}/>
+              {/* Door line */}
+              <line x1="19" y1="9" x2="19" y2="15" stroke="#1d4ed8" strokeWidth="0.6" opacity="0.5"/>
+              {/* Wheels */}
+              <circle cx="8" cy="16" r="3.5" fill="#1c1917" stroke="#44403c" strokeWidth="0.8"/>
+              <circle cx="8" cy="16" r="1.4" fill="#6b7280"/>
+              <circle cx="29" cy="16" r="3.5" fill="#1c1917" stroke="#44403c" strokeWidth="0.8"/>
+              <circle cx="29" cy="16" r="1.4" fill="#6b7280"/>
+            </svg>
+          </span>
+        </span>
+
+        {/* ── TRACTOR SVG — layered, slower, phase offset ── */}
+        <span className="absolute" style={{ top: '32%', animation: 'tractorStop 13s ease-in-out -5s infinite', willChange: 'transform' }}>
+          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.46s ease-in-out infinite' }}>
+            <span className="absolute" style={{ right: -5, top: 0, fontSize: 6, opacity: 0.7, animation: 'dustPuff 1.1s ease-out 0.2s infinite' }}>💨</span>
+            <svg width="36" height="22" viewBox="0 0 36 22" style={{ filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.55))' }} xmlns="http://www.w3.org/2000/svg">
+              {/* Chassis */}
+              <rect x="2" y="9" width="26" height="8" rx="2" fill="#16a34a" stroke="#14532d" strokeWidth="0.8"/>
+              {/* Cab */}
+              <rect x="2" y="4" width="12" height="9" rx="2" fill="#fbbf24" stroke="#92400e" strokeWidth="0.8"/>
+              {/* Cab window */}
+              <rect x="3" y="5" width="7" height="4" rx="1" fill={isNight ? '#fef9c3' : '#bae6fd'} style={isNight ? { filter: 'drop-shadow(0 0 4px #fde047)' } : {}}/>
+              {/* Cab roof */}
+              <rect x="3" y="2" width="9" height="3" rx="1.5" fill="#d97706"/>
+              {/* Exhaust pipe with smoke */}
+              <rect x="7" y="0" width="2" height="4" rx="1" fill="#374151"/>
+              {/* Headlight */}
+              <rect x="0" y="7" width="3" height="2.5" rx="1" fill={isNight ? '#fef08a' : '#fde68a'} style={isNight ? { filter: 'drop-shadow(0 0 5px #fde047)' } : {}}/>
+              {/* Small front wheel */}
+              <circle cx="8" cy="19" r="4" fill="#1c1917" stroke="#44403c" strokeWidth="1"/>
+              <circle cx="8" cy="19" r="1.5" fill="#78716c"/>
+              {/* Big rear wheel */}
+              <circle cx="26" cy="18" r="6" fill="#1c1917" stroke="#44403c" strokeWidth="1.2"/>
+              <circle cx="26" cy="18" r="2.5" fill="#78716c"/>
+              {/* Wheel tread details */}
+              {[0,60,120,180,240,300].map((a, i) => {
+                const rad = (a * Math.PI) / 180;
+                return (
+                  <line
+                    key={i}
+                    x1={26 + Math.cos(rad) * 3.5}
+                    y1={18 + Math.sin(rad) * 3.5}
+                    x2={26 + Math.cos(rad) * 5.5}
+                    y2={18 + Math.sin(rad) * 5.5}
+                    stroke="#4b5563"
+                    strokeWidth="1"
+                    strokeLinecap="round"
+                  />
+                );
+              })}
+              {/* Hitch */}
+              <rect x="28" y="12" width="7" height="3" rx="1" fill="#6b7280"/>
+            </svg>
           </span>
         </span>
       </div>
@@ -1051,27 +1144,49 @@ function FarmScene({ state }: { state: any }) {
           from { transform: translateX(0); }
           to   { transform: translateX(-30px); }
         }
-        /* Truck: rolls in from right → brakes near market (~78px from left) →
-           idles 2.3 s → drives off left */
+
+        /* ── Vehicle bounce (subtle suspension) ── */
+        @keyframes vehicleBounce {
+          0%, 100% { transform: translateY(0px); }
+          50%       { transform: translateY(-1px); }
+        }
+
+        /* ── Exhaust dust puff ── */
+        @keyframes dustPuff {
+          0%   { opacity: 0.8; transform: scale(0.7) translateX(0px); }
+          60%  { opacity: 0.4; transform: scale(1.4) translateX(-6px); }
+          100% { opacity: 0;   transform: scale(2)   translateX(-12px); }
+        }
+
+        /* ── Rain drops ── */
+        @keyframes rainFall {
+          0%   { transform: rotate(15deg) translateY(0px);   opacity: 0; }
+          10%  { opacity: 1; }
+          90%  { opacity: 0.7; }
+          100% { transform: rotate(15deg) translateY(140px); opacity: 0; }
+        }
+
+        /* ── Truck: rolls in from right → brakes near market (~78px from left) →
+           idles 2 s → drives off left ── */
         @keyframes truckStop {
           0%   { transform: translateX(95vw); }
-          44%  { transform: translateX(78px); }
-          70%  { transform: translateX(78px); }
-          100% { transform: translateX(-160px); }
+          42%  { transform: translateX(78px); }
+          68%  { transform: translateX(78px); }
+          100% { transform: translateX(-220px); }
         }
-        /* Tractor: same concept, slower, longer pause */
+
+        /* ── Sedan: zips left → right (opposite lane) ── */
+        @keyframes carLeftRight {
+          0%   { transform: scaleX(-1) translateX(95vw); }
+          100% { transform: scaleX(-1) translateX(-200px); }
+        }
+
+        /* ── Tractor: slower, longer pause ── */
         @keyframes tractorStop {
           0%   { transform: translateX(95vw); }
-          40%  { transform: translateX(82px); }
-          66%  { transform: translateX(82px); }
-          100% { transform: translateX(-160px); }
-        }
-        /* Car: quick zip, short stop */
-        @keyframes carStop {
-          0%   { transform: translateX(95vw); }
-          46%  { transform: translateX(74px); }
-          60%  { transform: translateX(74px); }
-          100% { transform: translateX(-160px); }
+          38%  { transform: translateX(82px); }
+          65%  { transform: translateX(82px); }
+          100% { transform: translateX(-180px); }
         }
       `}</style>
     </div>

@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { eq, sql, and, or, lt, isNull } from "drizzle-orm";
-import { db, usersTable, achievementsTable } from "@workspace/db";
+import { db, usersTable } from "@workspace/db";
 import { DailySpinBody } from "@workspace/api-zod";
+import { grantAchievement } from "../lib/achievements";
 
 const router = Router();
 
@@ -110,18 +111,5 @@ router.post("/spin", async (req, res): Promise<void> => {
     streakBonus: streakBonus > 0 ? streakBonus : null,
   });
 });
-
-async function grantAchievement(telegramId: string, key: string) {
-  const existing = await db.query.achievementsTable.findFirst({
-    where: (t, { and }) =>
-      and(eq(t.userTelegramId, telegramId), eq(t.achievementKey, key)),
-  });
-  if (!existing) {
-    await db
-      .insert(achievementsTable)
-      .values({ userTelegramId: telegramId, achievementKey: key })
-      .onConflictDoNothing();
-  }
-}
 
 export default router;
