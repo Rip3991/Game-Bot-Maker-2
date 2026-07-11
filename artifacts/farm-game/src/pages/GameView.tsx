@@ -174,16 +174,16 @@ function FarmPlot({
 
         {/* ── HEADER BAR ── */}
         <div
-          className="flex items-center justify-between px-3 py-2"
+          className="flex items-center justify-between px-3 py-2.5"
           style={{ background: palette.headerBg }}
         >
           <div className="flex items-center gap-2 min-w-0 flex-1">
             {/* Illustration badge */}
             <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-inner overflow-hidden"
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-inner overflow-hidden"
               style={{ background: palette.badgeBg, border: `1.5px solid ${palette.badgeBorder}` }}
             >
-              <FarmIllustrationBadge id={config.id} size={30} />
+              <FarmIllustrationBadge id={config.id} size={34} />
             </div>
 
             <div className="flex flex-col min-w-0 flex-1">
@@ -243,7 +243,7 @@ function FarmPlot({
         <div
           className="relative overflow-hidden"
           onClick={onTap}
-          style={{ cursor: 'pointer', minHeight: 100 }}
+          style={{ cursor: 'pointer', minHeight: 122 }}
         >
           {unlocked ? (
             <>
@@ -295,14 +295,14 @@ function FarmPlot({
               )}
 
               {/* Illustrated units + harvest overlay */}
-              <div className="relative z-10 flex items-center justify-center py-3 px-3 min-h-[80px]">
+              <div className="relative z-10 flex items-center justify-center py-3 px-3 min-h-[96px]">
                 {count === 0 ? (
                   <div className="flex flex-col items-center gap-1 opacity-35">
-                    <span className="text-2xl">{isFarm ? '🌱' : '🌿'}</span>
+                    <span className="text-3xl">{isFarm ? '🌱' : '🌿'}</span>
                     <span className="text-white text-[10px] italic font-bold">{isFarm ? 'Boş tarla' : 'Boş mera'}</span>
                   </div>
                 ) : (
-                  <FarmIllustration id={config.id} count={count} maxUnits={config.maxUnits} size={62} />
+                  <FarmIllustration id={config.id} count={count} maxUnits={config.maxUnits} size={76} />
                 )}
 
                 {/* Animal product cue (egg/milk/wool/etc.) — bobs above the pasture
@@ -808,127 +808,119 @@ function FarmScene({ state }: { state: any }) {
   return (
     <div
       className="relative flex-shrink-0 overflow-hidden transition-colors duration-1000"
-      style={{ height: 158, background: palette.scene }}
+      style={{ height: 108, background: palette.scene }}
     >
       {/* Sky gradient */}
-      <div className="absolute inset-x-0 top-0 transition-colors duration-1000" style={{ height: 78, background: palette.sky }} />
+      <div className="absolute inset-x-0 top-0 transition-colors duration-1000" style={{ height: 52, background: palette.sky }} />
 
       {/* Stars (night only) */}
       {isNight && (
-        <div className="absolute inset-x-0 top-0 h-16 overflow-hidden pointer-events-none">
-          {[...Array(10)].map((_, i) => (
-            <span key={i} className="absolute text-[6px]" style={{ left: `${(i * 11 + 4) % 100}%`, top: `${(i * 17 + 3) % 60}%`, animation: `sunGlow ${3 + (i % 3)}s ease-in-out ${i * 0.3}s infinite` }}>✨</span>
+        <div className="absolute inset-x-0 top-0 h-11 overflow-hidden pointer-events-none">
+          {[...Array(8)].map((_, i) => (
+            <span key={i} className="absolute text-[5px]" style={{ left: `${(i * 13 + 4) % 100}%`, top: `${(i * 15 + 3) % 55}%`, animation: `sunGlow ${3 + (i % 3)}s ease-in-out ${i * 0.3}s infinite` }}>✨</span>
           ))}
         </div>
       )}
 
       {/* Sun / Moon */}
-      <div className="absolute select-none" style={{ top: 6, right: 12, fontSize: 26, animation: 'sunGlow 4s ease-in-out infinite' }}>
+      <div className="absolute select-none" style={{ top: 3, right: 10, fontSize: 18, animation: 'sunGlow 4s ease-in-out infinite' }}>
         {period === 'sabah' ? '🌅' : period === 'gunduz' ? '☀️' : period === 'aksam' ? '🌇' : '🌙'}
       </div>
 
       {/* Clouds (hidden at night for a clear starry sky) */}
       {!isNight && (
-        <div className="absolute top-0 left-0 right-0 h-20 overflow-hidden pointer-events-none">
-          <Cloud top="6px"  size={16} delay={0}   duration={24} period={period} />
-          <Cloud top="14px" size={12} delay={-9}  duration={32} period={period} />
-          <Cloud top="3px"  size={14} delay={-17} duration={28} period={period} />
+        <div className="absolute top-0 left-0 right-0 h-14 overflow-hidden pointer-events-none">
+          <Cloud top="4px"  size={12} delay={0}   duration={24} period={period} />
+          <Cloud top="10px" size={9}  delay={-9}  duration={32} period={period} />
+          <Cloud top="2px"  size={10} delay={-17} duration={28} period={period} />
         </div>
       )}
 
       {/* Birds by day, owl by night */}
-      <div className="absolute left-0 right-0 overflow-hidden pointer-events-none" style={{ top: 16 }}>
+      <div className="absolute left-0 right-0 overflow-hidden pointer-events-none" style={{ top: 10 }}>
         {isNight ? (
-          <div style={{ animation: 'birdFly 20s linear -5s infinite', position: 'absolute', fontSize: 10 }}>🦉</div>
+          <div style={{ animation: 'birdFly 20s linear -5s infinite', position: 'absolute', fontSize: 8 }}>🦉</div>
         ) : (
           <>
-            <div style={{ animation: 'birdFly 16s linear -5s infinite', position: 'absolute', fontSize: 10 }}>🐦</div>
-            <div style={{ animation: 'birdFly 22s linear -12s infinite', position: 'absolute', top: 8, fontSize: 9 }}>🐦</div>
+            <div style={{ animation: 'birdFly 16s linear -5s infinite', position: 'absolute', fontSize: 8 }}>🐦</div>
+            <div style={{ animation: 'birdFly 22s linear -12s infinite', position: 'absolute', top: 5, fontSize: 7 }}>🐦</div>
           </>
         )}
       </div>
 
       {/* Tree line */}
-      <div className="absolute" style={{ top: 44, left: 0, right: 0, filter: isNight ? 'brightness(0.55)' : 'none' }}>
-        <span className="absolute text-4xl" style={{ top: 0, left: 2, animation: 'sway 5s ease-in-out infinite', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>🌳</span>
-        <span className="absolute text-3xl opacity-80" style={{ top: 8, left: 38, animation: 'sway 6.5s ease-in-out 1s infinite' }}>🌲</span>
-        <span className="absolute text-3xl opacity-80" style={{ top: 6, right: 38, animation: 'sway 5.5s ease-in-out 2s infinite' }}>🌲</span>
-        <span className="absolute text-4xl" style={{ top: 0, right: 2, animation: 'sway 4.5s ease-in-out 0.5s infinite', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>🌳</span>
+      <div className="absolute" style={{ top: 28, left: 0, right: 0, filter: isNight ? 'brightness(0.55)' : 'none' }}>
+        <span className="absolute text-2xl" style={{ top: 0, left: 2, animation: 'sway 5s ease-in-out infinite', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>🌳</span>
+        <span className="absolute text-xl opacity-80" style={{ top: 5, left: 30, animation: 'sway 6.5s ease-in-out 1s infinite' }}>🌲</span>
+        <span className="absolute text-xl opacity-80" style={{ top: 4, right: 30, animation: 'sway 5.5s ease-in-out 2s infinite' }}>🌲</span>
+        <span className="absolute text-2xl" style={{ top: 0, right: 2, animation: 'sway 4.5s ease-in-out 0.5s infinite', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>🌳</span>
       </div>
 
       {/* Grass base */}
-      <div className="absolute inset-x-0 transition-colors duration-1000" style={{ top: 76, height: 22, background: palette.grass }} />
+      <div className="absolute inset-x-0 transition-colors duration-1000" style={{ top: 50, height: 14, background: palette.grass }} />
 
-      {/* Road — narrower single lane */}
+      {/* Road — narrower single lane, shrunk */}
       <div
         className="absolute inset-x-0 overflow-hidden transition-colors duration-1000"
-        style={{ top: 93, height: 36, background: 'linear-gradient(180deg, #3d3d3d 0%, #2c2c2c 55%, #232323 100%)' }}
+        style={{ top: 62, height: 24, background: 'linear-gradient(180deg, #3d3d3d 0%, #2c2c2c 55%, #232323 100%)' }}
       >
         {/* Top / bottom kerb */}
         <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: 'rgba(255,255,255,0.14)' }} />
         <div className="absolute inset-x-0 bottom-0 h-[2px]" style={{ background: 'rgba(0,0,0,0.4)' }} />
 
         {/* Animated centre dashes */}
-        <div className="absolute inset-x-0 overflow-hidden" style={{ top: '50%', transform: 'translateY(-50%)', height: 3 }}>
-          <div style={{ display: 'flex', gap: 12, animation: 'roadDash 1.2s linear infinite', width: 'max-content' }}>
+        <div className="absolute inset-x-0 overflow-hidden" style={{ top: '50%', transform: 'translateY(-50%)', height: 2 }}>
+          <div style={{ display: 'flex', gap: 10, animation: 'roadDash 1.2s linear infinite', width: 'max-content' }}>
             {Array.from({ length: 32 }).map((_, i) => (
-              <div key={i} style={{ width: 18, height: 3, borderRadius: 2, background: 'rgba(255,220,60,0.65)', flexShrink: 0 }} />
+              <div key={i} style={{ width: 14, height: 2, borderRadius: 2, background: 'rgba(255,220,60,0.65)', flexShrink: 0 }} />
             ))}
           </div>
         </div>
 
         {/* ── TRUCK — enters right, brakes near market (~80px from left), pauses, exits ── */}
-        <span className="absolute" style={{ top: '8%', animation: 'truckStop 9s ease-in-out infinite' }}>
+        <span className="absolute" style={{ top: '10%', animation: 'truckStop 9s ease-in-out infinite' }}>
           <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.32s ease-in-out infinite' }}>
-            <span className="absolute" style={{ right: -11, top: 1, fontSize: 10, animation: 'dustPuff 0.9s ease-out infinite' }}>💨</span>
-            <span className="absolute" style={{ right: -6,  top: 5, fontSize: 8,  animation: 'dustPuff 0.9s ease-out 0.3s infinite' }}>💨</span>
-            {isNight && <span className="absolute" style={{ left: -5, top: 6, fontSize: 7, filter: 'brightness(2)' }}>🔆</span>}
-            <span style={{ fontSize: 30, filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.6))' }}>🚛</span>
+            <span className="absolute" style={{ right: -8, top: 1, fontSize: 7, animation: 'dustPuff 0.9s ease-out infinite' }}>💨</span>
+            <span className="absolute" style={{ right: -4,  top: 4, fontSize: 6,  animation: 'dustPuff 0.9s ease-out 0.3s infinite' }}>💨</span>
+            {isNight && <span className="absolute" style={{ left: -4, top: 4, fontSize: 6, filter: 'brightness(2)' }}>🔆</span>}
+            <span style={{ fontSize: 20, filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.6))' }}>🚛</span>
           </span>
         </span>
 
         {/* ── TRACTOR — same stop behaviour, slower, phase offset ── */}
-        <span className="absolute" style={{ top: '20%', animation: 'tractorStop 13s ease-in-out -5s infinite' }}>
+        <span className="absolute" style={{ top: '38%', animation: 'tractorStop 13s ease-in-out -5s infinite' }}>
           <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.44s ease-in-out infinite' }}>
-            <span className="absolute" style={{ right: -9, top: 3, fontSize: 9, animation: 'dustPuff 1.1s ease-out 0.2s infinite' }}>💨</span>
-            <span style={{ fontSize: 26, filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.55))' }}>🚜</span>
-          </span>
-        </span>
-
-        {/* ── CAR — quick pass, shorter pause ── */}
-        <span className="absolute" style={{ top: '30%', animation: 'carStop 6s ease-in-out -2s infinite' }}>
-          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.28s ease-in-out infinite' }}>
-            <span className="absolute" style={{ right: -7, top: 2, fontSize: 7, animation: 'dustPuff 0.7s ease-out 0.12s infinite' }}>💨</span>
-            <span style={{ fontSize: 22, filter: 'drop-shadow(0 3px 3px rgba(0,0,0,0.5))' }}>🚗</span>
+            <span className="absolute" style={{ right: -6, top: 2, fontSize: 6, animation: 'dustPuff 1.1s ease-out 0.2s infinite' }}>💨</span>
+            <span style={{ fontSize: 17, filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.55))' }}>🚜</span>
           </span>
         </span>
       </div>
 
       {/* Fence strip */}
-      <div className="absolute inset-x-0" style={{ top: 129, height: 7, background: 'linear-gradient(90deg, #7a4e1a, #a06235, #7a4e1a)', opacity: 0.88, filter: isNight ? 'brightness(0.55)' : 'none' }} />
+      <div className="absolute inset-x-0" style={{ top: 86, height: 5, background: 'linear-gradient(90deg, #7a4e1a, #a06235, #7a4e1a)', opacity: 0.88, filter: isNight ? 'brightness(0.55)' : 'none' }} />
 
       {/* ── LEFT: Market shop ── */}
-      <div className="absolute flex flex-col items-end transition-opacity duration-1000" style={{ bottom: 6, left: 5, filter: isNight ? 'brightness(0.6)' : 'none' }}>
+      <div className="absolute flex flex-col items-end transition-opacity duration-1000" style={{ bottom: 4, left: 4, filter: isNight ? 'brightness(0.6)' : 'none' }}>
         <div className="flex flex-col items-center">
           {/* Striped awning */}
-          <div className="rounded-t-sm overflow-hidden flex shadow" style={{ width: 62, height: 14 }}>
+          <div className="rounded-t-sm overflow-hidden flex shadow" style={{ width: 42, height: 9 }}>
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex-1" style={{ background: i % 2 === 0 ? '#15803d' : '#166534' }} />
             ))}
           </div>
           {/* Building */}
-          <div className="flex items-center justify-center gap-1 rounded-b border border-white/20 shadow-md" style={{ width: 62, height: 38, background: 'linear-gradient(180deg, #f0fdf4 0%, #d1fae5 100%)' }}>
-            <span style={{ fontSize: 18 }}>🏪</span>
+          <div className="flex items-center justify-center gap-1 rounded-b border border-white/20 shadow-md" style={{ width: 42, height: 24, background: 'linear-gradient(180deg, #f0fdf4 0%, #d1fae5 100%)' }}>
+            <span style={{ fontSize: 12 }}>🏪</span>
           </div>
         </div>
       </div>
 
       {/* ── CENTER: Farm name plate ── */}
-      <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ bottom: 12 }}>
-        <div className="rounded-xl px-3 py-1 shadow-lg flex flex-col items-center gap-0.5"
-          style={{ background: 'linear-gradient(135deg, #8b5c1e, #c4832e)', border: '2px solid #f5c842', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
-          <div className="text-[8px] font-black text-yellow-200 tracking-widest uppercase leading-none">🌾 ÇİFTLİĞİM</div>
-          <div className="font-black text-white leading-none" style={{ fontSize: 10 }}>
+      <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ bottom: 7 }}>
+        <div className="rounded-lg px-2 py-0.5 shadow-lg flex flex-col items-center gap-0.5"
+          style={{ background: 'linear-gradient(135deg, #8b5c1e, #c4832e)', border: '1.5px solid #f5c842', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
+          <div className="text-[6.5px] font-black text-yellow-200 tracking-widest uppercase leading-none">🌾 ÇİFTLİĞİM</div>
+          <div className="font-black text-white leading-none" style={{ fontSize: 9 }}>
             📈 {formatNum(Math.round(totalIncome))}/dk
           </div>
         </div>

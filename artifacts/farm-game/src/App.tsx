@@ -38,27 +38,13 @@ const queryClient = new QueryClient();
    Every button carries its own idle + active color pair so the rail reads
    as a row of little painted farm signposts rather than one flat block. */
 const RIGHT_NAV = [
-  { label: 'Çiftlik', Icon: FarmIcon,       path: '/',            accentColor: '#4ade80', shadowColor: 'rgba(74,222,128,0.35)',
-    idleBg: 'linear-gradient(180deg, #2f6b16 0%, #1c4409 100%)', idleBorder: 'rgba(134,239,172,0.4)',
-    activeBg: 'linear-gradient(180deg, #4ade80 0%, #2a6010 100%)', activeBorder: '#86efac' },
-  { label: 'Çark',    Icon: SpinIcon,       path: '/spin',        accentColor: '#fde68a', shadowColor: 'rgba(253,230,138,0.35)',
-    idleBg: 'linear-gradient(180deg, #a8621c 0%, #6b3a0e 100%)', idleBorder: 'rgba(253,230,138,0.4)',
-    activeBg: 'linear-gradient(180deg, #f5c842 0%, #c4832e 100%)', activeBorder: '#fde68a' },
-  { label: 'İlanlar', Icon: NftIcon,        path: '/nfts',        accentColor: '#c084fc', shadowColor: 'rgba(192,132,252,0.35)',
-    idleBg: 'linear-gradient(180deg, #6d28d9 0%, #3f1a80 100%)', idleBorder: 'rgba(216,180,254,0.4)',
-    activeBg: 'linear-gradient(180deg, #c084fc 0%, #7c3aed 100%)', activeBorder: '#e9d5ff' },
-  { label: 'Görev',   Icon: TaskIcon,       path: '/tasks',       accentColor: '#fbbf24', shadowColor: 'rgba(251,191,36,0.35)',
-    idleBg: 'linear-gradient(180deg, #b45309 0%, #78350f 100%)', idleBorder: 'rgba(253,224,71,0.4)',
-    activeBg: 'linear-gradient(180deg, #fbbf24 0%, #d97706 100%)', activeBorder: '#fde68a' },
-  { label: 'Davet',   Icon: InviteIcon,     path: '/invite',      accentColor: '#7dd3fc', shadowColor: 'rgba(56,189,248,0.35)',
-    idleBg: 'linear-gradient(180deg, #0e7490 0%, #0c4a5e 100%)', idleBorder: 'rgba(125,211,252,0.4)',
-    activeBg: 'linear-gradient(180deg, #38bdf8 0%, #0284c7 100%)', activeBorder: '#bae6fd' },
-  { label: 'Liste',   Icon: LeaderboardIcon, path: '/leaderboard', accentColor: '#fb923c', shadowColor: 'rgba(251,146,60,0.35)',
-    idleBg: 'linear-gradient(180deg, #c2410c 0%, #7c2d12 100%)', idleBorder: 'rgba(253,186,116,0.4)',
-    activeBg: 'linear-gradient(180deg, #fb923c 0%, #ea580c 100%)', activeBorder: '#fed7aa' },
-  { label: 'Mağaza',  Icon: ShopIcon,       path: '/stars',       accentColor: '#fde68a', shadowColor: 'rgba(253,230,138,0.35)',
-    idleBg: 'linear-gradient(180deg, #a16207 0%, #713f12 100%)', idleBorder: 'rgba(253,230,138,0.4)',
-    activeBg: 'linear-gradient(180deg, #f5c842 0%, #e6a800 100%)', activeBorder: '#fef3c7' },
+  { label: 'Çiftlik', Icon: FarmIcon,       path: '/',            accentColor: '#86efac' },
+  { label: 'Çark',    Icon: SpinIcon,       path: '/spin',        accentColor: '#fde68a' },
+  { label: 'İlanlar', Icon: NftIcon,        path: '/nfts',        accentColor: '#e9d5ff' },
+  { label: 'Görev',   Icon: TaskIcon,       path: '/tasks',       accentColor: '#fde68a' },
+  { label: 'Davet',   Icon: InviteIcon,     path: '/invite',      accentColor: '#bae6fd' },
+  { label: 'Liste',   Icon: LeaderboardIcon, path: '/leaderboard', accentColor: '#fed7aa' },
+  { label: 'Mağaza',  Icon: ShopIcon,       path: '/stars',       accentColor: '#fef3c7' },
 ] as const;
 
 const ADMIN_IDS = ['8652151076'];
@@ -84,19 +70,12 @@ function RightNav({ onAchievementsOpen, musicOn, onMusicToggle }: { onAchievemen
           <button
             key={item.path}
             onClick={() => navigate(item.path)}
-            className="right-nav-btn flex-shrink-0"
-            style={{
-              background: isActive ? item.activeBg : item.idleBg,
-              borderColor: isActive ? item.activeBorder : item.idleBorder,
-              boxShadow: isActive
-                ? `0 3px 0 #1a4008, 0 0 10px ${item.shadowColor}`
-                : `0 3px 0 rgba(0,0,0,0.45), 0 0 6px ${item.shadowColor}`,
-            }}
+            className={`right-nav-btn flex-shrink-0${isActive ? ' active' : ''}`}
           >
             <item.Icon size={20} active={isActive} />
             <span
               className="font-black leading-tight text-center"
-              style={{ fontSize: 7.5, color: isActive ? item.activeBorder : 'rgba(255,255,255,0.85)', textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}
+              style={{ fontSize: 7.5, color: isActive ? '#4a2508' : 'rgba(255,255,255,0.9)', textShadow: isActive ? 'none' : '0 1px 2px rgba(0,0,0,0.6)' }}
             >
               {item.label}
             </span>
@@ -111,14 +90,9 @@ function RightNav({ onAchievementsOpen, musicOn, onMusicToggle }: { onAchievemen
       <button
         onClick={onAchievementsOpen}
         className="right-nav-btn flex-shrink-0 relative"
-        style={{
-          background: 'linear-gradient(180deg, #2d1060 0%, #1a0840 100%)',
-          borderColor: 'rgba(167,139,250,0.5)',
-          boxShadow: '0 3px 0 #0a0420, 0 0 10px rgba(167,139,250,0.3)',
-        }}
       >
         <AchievementIcon size={20} active />
-        <span className="font-black leading-tight text-center" style={{ fontSize: 7.5, color: '#c084fc' }}>
+        <span className="font-black leading-tight text-center" style={{ fontSize: 7.5, color: 'rgba(255,255,255,0.9)', textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
           Ödül
         </span>
         {achievementCount > 0 && (
@@ -131,18 +105,10 @@ function RightNav({ onAchievementsOpen, musicOn, onMusicToggle }: { onAchievemen
       {/* Music toggle button */}
       <button
         onClick={onMusicToggle}
-        className="right-nav-btn flex-shrink-0"
-        style={musicOn ? {
-          background: 'linear-gradient(180deg, #5c3a08 0%, #3a2004 100%)',
-          borderColor: 'rgba(245,200,66,0.5)',
-          boxShadow: '0 3px 0 #1a1000, 0 0 10px rgba(245,200,66,0.3)',
-        } : {
-          background: 'linear-gradient(180deg, #1a1a1a 0%, #111 100%)',
-          borderColor: 'rgba(255,255,255,0.1)',
-        }}
+        className={`right-nav-btn flex-shrink-0${musicOn ? ' active' : ''}`}
       >
         <MusicIcon size={20} active={musicOn} on={musicOn} />
-        <span className="font-black leading-tight text-center" style={{ fontSize: 7.5, color: musicOn ? '#fde68a' : 'rgba(255,255,255,0.3)' }}>
+        <span className="font-black leading-tight text-center" style={{ fontSize: 7.5, color: musicOn ? '#4a2508' : 'rgba(255,255,255,0.55)', textShadow: musicOn ? 'none' : '0 1px 2px rgba(0,0,0,0.6)' }}>
           {musicOn ? 'Müzik' : 'Sessiz'}
         </span>
       </button>
@@ -153,15 +119,15 @@ function RightNav({ onAchievementsOpen, musicOn, onMusicToggle }: { onAchievemen
           onClick={() => navigate('/admin')}
           className="right-nav-btn flex-shrink-0"
           style={{
-            background: location === '/admin'
-              ? 'linear-gradient(180deg, #5a0808 0%, #3a0404 100%)'
-              : 'linear-gradient(180deg, #2a0404 0%, #1a0202 100%)',
-            borderColor: location === '/admin' ? 'rgba(252,165,165,0.5)' : 'rgba(200,50,50,0.3)',
-            boxShadow: location === '/admin' ? '0 3px 0 #0a0000, 0 0 10px rgba(220,38,38,0.4)' : '0 3px 0 rgba(0,0,0,0.4)',
+            filter: location === '/admin' ? 'none' : 'grayscale(0.15)',
+            boxShadow: location === '/admin'
+              ? '0 3px 0 #3d2410, 0 0 12px rgba(220,38,38,0.55), 0 1px 0 rgba(255,255,255,0.25) inset'
+              : undefined,
+            borderColor: location === '/admin' ? 'rgba(252,165,165,0.7)' : undefined,
           }}
         >
           <AdminIcon size={20} active={location === '/admin'} />
-          <span className="font-black leading-tight text-center" style={{ fontSize: 7.5, color: '#fca5a5' }}>
+          <span className="font-black leading-tight text-center" style={{ fontSize: 7.5, color: '#fca5a5', textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
             Admin
           </span>
         </button>

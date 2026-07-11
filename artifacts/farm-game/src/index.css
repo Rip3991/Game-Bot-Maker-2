@@ -123,7 +123,8 @@ body {
   );
 }
 
-/* ── Right nav buttons ── */
+/* ── Right nav buttons — carved wooden plank style, matching BottomNav's
+   rustic wood aesthetic (#a06235 / #5c3a21) instead of flat colored tiles. ── */
 .right-nav-btn {
   display: flex;
   flex-direction: column;
@@ -131,10 +132,17 @@ body {
   justify-content: center;
   width: 46px;
   min-height: 50px;
-  background: linear-gradient(180deg, #1e3a08 0%, #142806 100%);
-  border: 1.5px solid rgba(74,122,47,0.35);
-  border-radius: 12px;
-  box-shadow: 0 3px 0 rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.06) inset;
+  position: relative;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(100deg, rgba(0,0,0,0.10) 0px, rgba(0,0,0,0.10) 2px, transparent 2px, transparent 7px),
+    linear-gradient(180deg, #c17d3f 0%, #a06235 45%, #6b431f 100%);
+  border: 1.5px solid rgba(255, 214, 150, 0.35);
+  border-radius: 13px;
+  box-shadow:
+    0 3px 0 #3d2410,
+    0 1px 0 rgba(255,255,255,0.25) inset,
+    0 3px 6px rgba(0,0,0,0.35);
   cursor: pointer;
   transition: transform 0.1s, box-shadow 0.1s;
   gap: 3px;
@@ -142,13 +150,18 @@ body {
 
 .right-nav-btn:active {
   transform: scale(0.93);
-  box-shadow: 0 1px 0 rgba(0,0,0,0.4);
+  box-shadow: 0 1px 0 #3d2410, 0 1px 0 rgba(255,255,255,0.15) inset;
 }
 
 .right-nav-btn.active {
-  background: linear-gradient(180deg, #3d8b1c 0%, #2a6010 100%);
-  border-color: #6abf30;
-  box-shadow: 0 3px 0 #1a4008, 0 0 10px rgba(74,222,128,0.3), 0 1px 0 rgba(255,255,255,0.12) inset;
+  background:
+    repeating-linear-gradient(100deg, rgba(0,0,0,0.08) 0px, rgba(0,0,0,0.08) 2px, transparent 2px, transparent 7px),
+    linear-gradient(180deg, #ffdd8a 0%, #f0b429 45%, #b8791f 100%);
+  border-color: #fff3cf;
+  box-shadow:
+    0 3px 0 #6b4410,
+    0 0 12px rgba(245,200,66,0.55),
+    0 1px 0 rgba(255,255,255,0.45) inset;
 }
 
 /* ── NFT Artwork Animations ── */

@@ -115,11 +115,11 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
       </AnimatePresence>
 
       {/* ── TOP ROW: Header + price chips + auto-sell — all in one compact bar ── */}
-      <div className="flex items-center gap-1.5 px-2.5 pt-1.5 pb-1">
+      <div className="flex items-center gap-1.5 px-2 pt-1 pb-0.5">
         {/* Icon + label */}
-        <ShoppingBag size={11} className="text-green-400/70 flex-shrink-0" />
-        <span className="font-black text-white text-[10px] leading-none tracking-wider uppercase flex-shrink-0">Pazar</span>
-        <span className="text-green-400/40 text-[8px] font-bold flex-shrink-0">{unlockedSections.length} ürün</span>
+        <ShoppingBag size={9} className="text-green-400/70 flex-shrink-0" />
+        <span className="font-black text-white text-[9px] leading-none tracking-wider uppercase flex-shrink-0">Pazar</span>
+        <span className="text-green-400/40 text-[7px] font-bold flex-shrink-0">{unlockedSections.length} ürün</span>
 
         {/* Scrollable price chips */}
         <div className="flex items-center gap-0.5 overflow-x-auto no-scrollbar flex-1 min-w-0">
@@ -172,25 +172,25 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
       </div>
 
       {/* ── DEPO AREA ── */}
-      <div className="px-2 pb-2.5">
+      <div className="px-2 pb-1.5">
         <div
-          className="rounded-xl overflow-hidden"
+          className="rounded-lg overflow-hidden"
           style={{
             background: 'rgba(0,0,0,0.28)',
             border: isFull ? '1px solid rgba(239,68,68,0.35)' : '1px solid rgba(255,255,255,0.07)',
           }}
         >
           {/* ── Header row: icon + level + capacity bar + upgrade btn ── */}
-          <div className="flex items-center gap-2 px-2.5 py-1.5 border-b border-white/5">
-            <Package size={11} className="text-white/40 flex-shrink-0" />
-            <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Depo</span>
+          <div className="flex items-center gap-1.5 px-2 py-1 border-b border-white/5">
+            <Package size={9} className="text-white/40 flex-shrink-0" />
+            <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Depo</span>
 
             {/* Level badge */}
             <div
               className="flex items-center gap-0.5 rounded-full px-1.5 py-0.5"
               style={{ background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.3)' }}
             >
-              <span className="text-[8px] font-black text-purple-300">Sv.{depotLevel}</span>
+              <span className="text-[7px] font-black text-purple-300">Sv.{depotLevel}</span>
             </div>
 
             {/* Capacity fill dots */}
@@ -204,18 +204,18 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
               ))}
             </div>
 
-            <span className="text-[8px] font-bold" style={{ color: isFull ? '#f87171' : 'rgba(255,255,255,0.25)' }}>
+            <span className="text-[7px] font-bold" style={{ color: isFull ? '#f87171' : 'rgba(255,255,255,0.25)' }}>
               {distinctCount}/{capacity}
             </span>
           </div>
 
-          {/* ── Slot grid: always 4 per row, fixed 2-row max height + scroll ── */}
+          {/* ── Slot grid: always 4 per row, fixed 1-row max height + scroll ── */}
           <div
             className="overflow-y-auto"
-            style={{ maxHeight: 86 }}
+            style={{ maxHeight: 54 }}
           >
             <div
-              className="grid gap-1.5 p-2"
+              className="grid gap-1 p-1.5"
               style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}
             >
               {allSlots.map((cfg, i) => cfg ? (
@@ -224,7 +224,7 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
                   layout
                   initial={{ scale: 0.7, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5"
+                  className="flex flex-col items-center justify-center gap-0 rounded-lg py-1"
                   style={{
                     background: cfg.category === 'farm'
                       ? (autoSell ? 'rgba(74,222,128,0.12)' : 'rgba(34,197,94,0.08)')
@@ -234,12 +234,12 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
                       : '1px solid rgba(251,191,36,0.22)',
                   }}
                 >
-                  <span className="text-base leading-none">{cfg.emoji}</span>
-                  <span className="text-white font-black text-[10px] leading-none tabular-nums">
+                  <span className="text-sm leading-none">{cfg.emoji}</span>
+                  <span className="text-white font-black text-[9px] leading-none tabular-nums">
                     {formatNum(Math.floor(storage[cfg.id] ?? 0))}
                   </span>
                   <span
-                    className="font-bold text-[7px] leading-none"
+                    className="font-bold text-[6.5px] leading-none"
                     style={{ color: cfg.category === 'farm' ? '#4ade80' : '#fbbf24' }}
                   >
                     ×{formatNum(cfg.sellPrice)}🪙
@@ -248,16 +248,16 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
               ) : (
                 <div
                   key={`empty-${i}`}
-                  className="flex items-center justify-center rounded-xl"
+                  className="flex items-center justify-center rounded-lg"
                   style={{
                     background: 'rgba(255,255,255,0.02)',
                     border: '1px dashed rgba(255,255,255,0.07)',
-                    minHeight: 46,
+                    minHeight: 34,
                   }}
                 >
                   {autoSell
-                    ? <Zap size={10} className="text-green-400/20" />
-                    : <span className="text-[9px] text-white/10">—</span>
+                    ? <Zap size={8} className="text-green-400/20" />
+                    : <span className="text-[8px] text-white/10">—</span>
                   }
                 </div>
               ))}
@@ -265,7 +265,7 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
           </div>
 
           {/* ── Bottom row: value + sell btn + upgrade btn ── */}
-          <div className="flex items-center gap-2 px-2 pb-2 pt-1">
+          <div className="flex items-center gap-1.5 px-1.5 pb-1.5 pt-1">
 
             {/* Grand total */}
             <div className="flex flex-col leading-none flex-shrink-0">
@@ -285,7 +285,7 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
             <div className="relative flex-1">
               {hasAnything && !autoSell && (
                 <motion.div
-                  className="absolute inset-0 rounded-xl pointer-events-none"
+                  className="absolute inset-0 rounded-lg pointer-events-none"
                   animate={{ opacity: [0.4, 0, 0.4], scale: [1, 1.12, 1] }}
                   transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
                   style={{ background: 'radial-gradient(ellipse, rgba(34,197,94,0.55) 0%, transparent 70%)' }}
@@ -293,7 +293,7 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
               )}
               {autoSell ? (
                 <div
-                  className="relative w-full py-2 rounded-xl font-black text-[10px] border text-center"
+                  className="relative w-full py-1.5 rounded-lg font-black text-[9px] border text-center"
                   style={{
                     background: 'linear-gradient(180deg, #16a34a, #15803d)',
                     borderColor: '#4ade80',
@@ -301,13 +301,13 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
                     boxShadow: '0 2px 0 #14532d, 0 0 8px rgba(74,222,128,0.3)',
                   }}
                 >
-                  <Zap size={9} className="inline mr-0.5" />OTO-SAT
+                  <Zap size={8} className="inline mr-0.5" />OTO-SAT
                 </div>
               ) : (
                 <button
                   onClick={handleSell}
                   disabled={!hasAnything}
-                  className={`relative w-full py-2 rounded-xl font-black text-sm border transition-colors ${hasAnything ? 'sell-btn-pulse' : ''}`}
+                  className={`relative w-full py-1.5 rounded-lg font-black text-xs border transition-colors ${hasAnything ? 'sell-btn-pulse' : ''}`}
                   style={hasAnything ? {
                     background: 'linear-gradient(180deg, #4ade80, #16a34a)',
                     borderColor: '#86efac',
@@ -330,7 +330,7 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
               <button
                 onClick={onUpgradeDepot}
                 disabled={!canAffordUpgrade}
-                className="flex-shrink-0 flex flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 transition-all active:scale-90"
+                className="flex-shrink-0 flex flex-col items-center justify-center gap-0 rounded-lg px-1.5 py-1 transition-all active:scale-90"
                 style={canAffordUpgrade ? {
                   background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
                   border: '1px solid #a78bfa',
@@ -340,11 +340,11 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
                   border: '1px solid rgba(124,58,237,0.2)',
                 }}
               >
-                <ArrowUpCircle size={12} style={{ color: canAffordUpgrade ? '#ddd6fe' : 'rgba(167,139,250,0.35)' }} />
-                <span className="text-[7px] font-black leading-none" style={{ color: canAffordUpgrade ? '#ddd6fe' : 'rgba(167,139,250,0.3)' }}>
+                <ArrowUpCircle size={10} style={{ color: canAffordUpgrade ? '#ddd6fe' : 'rgba(167,139,250,0.35)' }} />
+                <span className="text-[6.5px] font-black leading-none" style={{ color: canAffordUpgrade ? '#ddd6fe' : 'rgba(167,139,250,0.3)' }}>
                   Sv.{nextLevel.level}
                 </span>
-                <span className="text-[7px] font-bold leading-none" style={{ color: canAffordUpgrade ? '#c4b5fd' : 'rgba(167,139,250,0.25)' }}>
+                <span className="text-[6.5px] font-bold leading-none" style={{ color: canAffordUpgrade ? '#c4b5fd' : 'rgba(167,139,250,0.25)' }}>
                   {formatNum(nextLevel.upgradeCost)}🪙
                 </span>
               </button>
