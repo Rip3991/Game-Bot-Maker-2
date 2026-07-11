@@ -373,7 +373,7 @@ export const makeInitialState = (): GameState => ({
 const SAVE_KEY = 'farmGameState_v8';
 const AUTO_SELL_KEY = 'farmAutoSell_v1';
 export const AUTO_SELL_PURCHASED_KEY = 'farmAutoSellPurchased_v1';
-export const WELCOME_BONUS = 75;
+export const WELCOME_BONUS = 50;
 
 export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {}) {
   const [autoSellPurchased, setAutoSellPurchased] = useState<boolean>(() => {
