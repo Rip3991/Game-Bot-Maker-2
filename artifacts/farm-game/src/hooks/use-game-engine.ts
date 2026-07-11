@@ -277,6 +277,35 @@ export function getEffectiveHarvestMinutes(cfg: SectionConfig, count: number): n
   return cfg.harvestMinutes * HARVEST_TIME_MULTIPLIER * Math.pow(Math.max(1, count), HARVEST_COUNT_EXPONENT);
 }
 
+/** Depot capacity = how many *distinct* product types (SECTIONS ids with
+ *  qty > 0) can sit in storage at once. Level 1 starts at 4 slots, laid out
+ *  4-per-row in the UI; each upgrade adds another row of 4 and costs coins.
+ *  Capped at 24 (covers every SECTIONS id) so a maxed depot never blocks a
+ *  harvest. Upgrading is paid in Coins (in-game currency), not real TL. */
+export interface DepotLevelConfig {
+  level: number;
+  capacity: number;
+  upgradeCost: number; // cost in Coins to reach THIS level from the previous one
+}
+
+export const DEPOT_LEVELS: DepotLevelConfig[] = [
+  { level: 1, capacity: 4, upgradeCost: 0 },
+  { level: 2, capacity: 8, upgradeCost: 4000 },
+  { level: 3, capacity: 12, upgradeCost: 18000 },
+  { level: 4, capacity: 16, upgradeCost: 65000 },
+  { level: 5, capacity: 20, upgradeCost: 220000 },
+  { level: 6, capacity: 24, upgradeCost: 700000 },
+];
+
+export function getDepotCapacity(depotLevel: number): number {
+  const cfg = DEPOT_LEVELS.find(d => d.level === depotLevel);
+  return cfg ? cfg.capacity : DEPOT_LEVELS[DEPOT_LEVELS.length - 1].capacity;
+}
+
+export function getNextDepotLevel(depotLevel: number): DepotLevelConfig | null {
+  return DEPOT_LEVELS.find(d => d.level === depotLevel + 1) ?? null;
+}
+
 export interface GameState {
   balance: number;
   coins: number;
@@ -297,6 +326,7 @@ export interface GameState {
   xp: number;
   lastSaved: number;
   welcomeBonusClaimed: boolean;
+  depotLevel: number;
 }
 
 const defaultSection = (cfg: SectionConfig): SectionState => ({
@@ -337,6 +367,7 @@ export const makeInitialState = (): GameState => ({
   xp: 0,
   lastSaved: Date.now(),
   welcomeBonusClaimed: false,
+  depotLevel: 1,
 });
 
 const SAVE_KEY = 'farmGameState_v8';
@@ -444,6 +475,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
           xp,
           lastSaved: Date.now(),
           welcomeBonusClaimed: parsed.welcomeBonusClaimed ?? false,
+          depotLevel: parsed.depotLevel ?? 1,
         };
       }
     } catch (e) {
@@ -609,6 +641,18 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
       const fill = prev.plotFill[id] ?? 0;
       if (fill < 1.0) return prev;
 
+      // Depot capacity check: if this product isn't already sitting in
+      // storage (a fresh slot would be needed) and the depot is already at
+      // its distinct-product-type limit, block the harvest — the crop stays
+      // on the plot at 100% (fully grown, not lost) until the player sells
+      // something or upgrades the depot.
+      const isNewSlot = Math.floor(prev.storage[id] ?? 0) === 0;
+      if (isNewSlot) {
+        const distinctCount = SECTIONS.filter(s => Math.floor(prev.storage[s.id] ?? 0) > 0).length;
+        const capacity = getDepotCapacity(prev.depotLevel ?? 1);
+        if (distinctCount >= capacity) return prev;
+      }
+
       // Yield = units that were planted at the start of THIS growth cycle
       // (growCount), not the live count — any units bought mid-cycle only
       // pay off starting next cycle. Selling count items at sellPrice each
@@ -706,6 +750,16 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
     setState(prev => ({ ...prev, coins: amount }));
   }, []);
 
+  /** Pay Coins to raise depot capacity by one tier (see DEPOT_LEVELS). */
+  const upgradeDepot = useCallback(() => {
+    setState(prev => {
+      const next = getNextDepotLevel(prev.depotLevel ?? 1);
+      if (!next) return prev;
+      if (prev.coins < next.upgradeCost) return prev;
+      return { ...prev, coins: prev.coins - next.upgradeCost, depotLevel: next.level };
+    });
+  }, []);
+
   return {
     state,
     unlockSection,
@@ -713,6 +767,7 @@ export function useGameEngine({ isNewUser = false }: { isNewUser?: boolean } = {
     harvestPlot,
     replantPlot,
     sellProducts,
+    upgradeDepot,
     incomePerMin,
     showWelcomeBonus,
     setShowWelcomeBonus,

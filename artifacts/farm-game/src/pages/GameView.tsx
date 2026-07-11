@@ -957,7 +957,7 @@ function FarmScene({ state }: { state: any }) {
 /* ── Main GameView ── */
 export default function GameView() {
   const { user, telegramId, isNewUser } = useUser();
-  const { state, unlockSection, buyUnit, harvestPlot, replantPlot, sellProducts, incomePerMin, showWelcomeBonus, setShowWelcomeBonus, autoSell, toggleAutoSell, autoSellPurchased, setBalance, setCoins } = useGameEngine({ isNewUser });
+  const { state, unlockSection, buyUnit, harvestPlot, replantPlot, sellProducts, upgradeDepot, incomePerMin, showWelcomeBonus, setShowWelcomeBonus, autoSell, toggleAutoSell, autoSellPurchased, setBalance, setCoins } = useGameEngine({ isNewUser });
   const saveFarmMut = useSaveFarmState();
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -1229,6 +1229,7 @@ export default function GameView() {
               autoSell={autoSell}
               autoSellPurchased={autoSellPurchased}
               onToggleAutoSell={toggleAutoSell}
+              onUpgradeDepot={upgradeDepot}
             />
             {!autoSell && <SellHintMascot hasProducts={Object.values(state.storage).some(v => Math.floor(v) > 0)} />}
           </div>

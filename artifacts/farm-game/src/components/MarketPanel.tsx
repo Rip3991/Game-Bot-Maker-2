@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SECTIONS, SaleRecord, GameState } from '../hooks/use-game-engine';
+import { SECTIONS, SaleRecord, GameState, DEPOT_LEVELS, getDepotCapacity, getNextDepotLevel } from '../hooks/use-game-engine';
 import { formatNum } from '../utils/format';
 import { useLocation } from 'wouter';
-import { ShoppingBag, Zap } from 'lucide-react';
+import { ShoppingBag, Zap, ArrowUpCircle, Package } from 'lucide-react';
 
 interface MarketPanelProps {
   storage: Record<string, number>;
@@ -12,9 +12,10 @@ interface MarketPanelProps {
   autoSell: boolean;
   autoSellPurchased: boolean;
   onToggleAutoSell: () => void;
+  onUpgradeDepot: () => void;
 }
 
-export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurchased, onToggleAutoSell }: MarketPanelProps) {
+export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurchased, onToggleAutoSell, onUpgradeDepot }: MarketPanelProps) {
   const [lastSale, setLastSale] = useState<SaleRecord[] | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [totalEarned, setTotalEarned] = useState(0);
@@ -55,6 +56,19 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
   };
 
   const unlockedSections = SECTIONS.filter(cfg => gameState.sections[cfg.id]?.unlocked);
+
+  const depotLevel = gameState.depotLevel ?? 1;
+  const capacity = getDepotCapacity(depotLevel);
+  const nextLevel = getNextDepotLevel(depotLevel);
+  const distinctCount = storedItems.length;
+  const isFull = distinctCount >= capacity;
+  const canAffordUpgrade = nextLevel ? gameState.coins >= nextLevel.upgradeCost : false;
+
+  // All capacity slots in order: filled ones first, then empty placeholders
+  const allSlots: Array<typeof storedItems[0] | null> = [
+    ...storedItems,
+    ...Array(Math.max(0, capacity - distinctCount)).fill(null),
+  ];
 
   return (
     <div
@@ -178,159 +192,182 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
         )}
       </div>
 
-      {/* ── STORAGE AREA ── */}
-      <div className="flex gap-2 px-2 pb-2.5 items-stretch">
-
-        {/* Storage card */}
+      {/* ── DEPO AREA ── */}
+      <div className="px-2 pb-2.5">
         <div
-          className="flex-1 rounded-xl overflow-hidden"
+          className="rounded-xl overflow-hidden"
           style={{
-            background: 'rgba(0,0,0,0.25)',
-            border: '1px solid rgba(255,255,255,0.07)',
+            background: 'rgba(0,0,0,0.28)',
+            border: isFull ? '1px solid rgba(239,68,68,0.35)' : '1px solid rgba(255,255,255,0.07)',
           }}
         >
-          {/* Card header */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1.5 border-b border-white/5">
-            <span className="text-sm">🏚️</span>
+          {/* ── Header row: icon + level + capacity bar + upgrade btn ── */}
+          <div className="flex items-center gap-2 px-2.5 py-1.5 border-b border-white/5">
+            <Package size={11} className="text-white/40 flex-shrink-0" />
             <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Depo</span>
-            {hasAnything && (
-              <div className="ml-auto flex items-center gap-1">
-                <div className="w-1 h-1 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-[8px] text-green-400 font-bold">{storedItems.length} çeşit</span>
-              </div>
-            )}
+
+            {/* Level badge */}
+            <div
+              className="flex items-center gap-0.5 rounded-full px-1.5 py-0.5"
+              style={{ background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.3)' }}
+            >
+              <span className="text-[8px] font-black text-purple-300">Sv.{depotLevel}</span>
+            </div>
+
+            {/* Capacity fill dots */}
+            <div className="flex gap-0.5 flex-1">
+              {Array.from({ length: capacity }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-1 flex-1 rounded-full transition-colors duration-300"
+                  style={{ background: i < distinctCount ? '#4ade80' : 'rgba(255,255,255,0.08)' }}
+                />
+              ))}
+            </div>
+
+            <span className="text-[8px] font-bold" style={{ color: isFull ? '#f87171' : 'rgba(255,255,255,0.25)' }}>
+              {distinctCount}/{capacity}
+            </span>
           </div>
 
-          {/* Items grid */}
-          <div className="px-2 py-1.5 min-h-[38px] flex items-center">
-            {storedItems.length === 0 ? (
-              <div className="flex items-center gap-1.5 w-full">
-                {autoSell ? (
-                  <span className="text-[10px] text-green-400/60 italic flex items-center gap-1">
-                    <Zap size={9} className="text-green-400/60" /> Otomatik satılıyor...
-                  </span>
-                ) : (
-                  <span className="text-white/25 text-[10px] italic">Depo boş — ürünlerin bekleniyor...</span>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col gap-1 w-full">
-                {/* Farm items row */}
-                {farmItems.length > 0 && (
-                  <div className="flex items-center gap-1 flex-wrap">
-                    {farmItems.map(cfg => {
-                      const qty = Math.floor(storage[cfg.id] ?? 0);
-                      return (
-                        <motion.div
-                          key={cfg.id}
-                          layout
-                          initial={{ scale: 0.7, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          className="flex items-center gap-1 rounded-lg px-2 py-0.5"
-                          style={{
-                            background: autoSell ? 'rgba(74,222,128,0.1)' : 'rgba(34,197,94,0.07)',
-                            border: '1px solid rgba(74,222,128,0.2)',
-                          }}
-                        >
-                          <span className="text-xs leading-none">{cfg.emoji}</span>
-                          <span className="text-white font-black text-[10px]">{qty}</span>
-                          <span className="text-green-400 font-bold text-[8px]">×{formatNum(cfg.sellPrice)}🪙</span>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                )}
-                {/* Animal items row */}
-                {animalItems.length > 0 && (
-                  <div className="flex items-center gap-1 flex-wrap">
-                    {animalItems.map(cfg => {
-                      const qty = Math.floor(storage[cfg.id] ?? 0);
-                      return (
-                        <motion.div
-                          key={cfg.id}
-                          layout
-                          initial={{ scale: 0.7, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          className="flex items-center gap-1 rounded-lg px-2 py-0.5"
-                          style={{
-                            background: autoSell ? 'rgba(251,191,36,0.1)' : 'rgba(251,191,36,0.07)',
-                            border: '1px solid rgba(251,191,36,0.2)',
-                          }}
-                        >
-                          <span className="text-xs leading-none">{cfg.emoji}</span>
-                          <span className="text-white font-black text-[10px]">{qty}</span>
-                          <span className="text-yellow-400 font-bold text-[8px]">×{formatNum(cfg.sellPrice)}🪙</span>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Sell action column */}
-        <div className="flex-shrink-0 flex flex-col items-center justify-center gap-1 w-[76px]">
-          {/* Total value of items currently sitting in storage, waiting to be
-              sold — this is NOT the wallet coin balance shown in the top bar,
-              so it's labeled "Depoda" to avoid the two numbers looking like
-              the same thing when they legitimately differ. */}
-          <div className="text-[7px] font-bold uppercase tracking-wide leading-none" style={{ color: 'rgba(253,224,71,0.6)' }}>
-            Depoda
-          </div>
-          <motion.div
-            key={grandTotal}
-            initial={{ scale: 1.15 }}
-            animate={{ scale: 1 }}
-            className="font-black text-xs text-center leading-none tabular-nums"
-            style={{ color: hasAnything ? '#fde047' : 'rgba(253,224,71,0.3)' }}
+          {/* ── Slot grid: always 4 per row, fixed 2-row max height + scroll ── */}
+          <div
+            className="overflow-y-auto"
+            style={{ maxHeight: 86 }}
           >
-            {formatNum(grandTotal)} 🪙
-          </motion.div>
+            <div
+              className="grid gap-1.5 p-2"
+              style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}
+            >
+              {allSlots.map((cfg, i) => cfg ? (
+                <motion.div
+                  key={cfg.id}
+                  layout
+                  initial={{ scale: 0.7, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="flex flex-col items-center justify-center gap-0.5 rounded-xl py-1.5"
+                  style={{
+                    background: cfg.category === 'farm'
+                      ? (autoSell ? 'rgba(74,222,128,0.12)' : 'rgba(34,197,94,0.08)')
+                      : (autoSell ? 'rgba(251,191,36,0.12)' : 'rgba(251,191,36,0.08)'),
+                    border: cfg.category === 'farm'
+                      ? '1px solid rgba(74,222,128,0.22)'
+                      : '1px solid rgba(251,191,36,0.22)',
+                  }}
+                >
+                  <span className="text-base leading-none">{cfg.emoji}</span>
+                  <span className="text-white font-black text-[10px] leading-none tabular-nums">
+                    {formatNum(Math.floor(storage[cfg.id] ?? 0))}
+                  </span>
+                  <span
+                    className="font-bold text-[7px] leading-none"
+                    style={{ color: cfg.category === 'farm' ? '#4ade80' : '#fbbf24' }}
+                  >
+                    ×{formatNum(cfg.sellPrice)}🪙
+                  </span>
+                </motion.div>
+              ) : (
+                <div
+                  key={`empty-${i}`}
+                  className="flex items-center justify-center rounded-xl"
+                  style={{
+                    background: 'rgba(255,255,255,0.02)',
+                    border: '1px dashed rgba(255,255,255,0.07)',
+                    minHeight: 46,
+                  }}
+                >
+                  {autoSell
+                    ? <Zap size={10} className="text-green-400/20" />
+                    : <span className="text-[9px] text-white/10">—</span>
+                  }
+                </div>
+              ))}
+            </div>
+          </div>
 
-          <div className="relative w-full">
-            {/* Glow ring when items available */}
-            {hasAnything && !autoSell && (
-              <motion.div
-                className="absolute inset-0 rounded-xl pointer-events-none"
-                animate={{ opacity: [0.5, 0, 0.5], scale: [1, 1.15, 1] }}
-                transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
-                style={{ background: 'radial-gradient(ellipse, rgba(34,197,94,0.6) 0%, transparent 70%)' }}
-              />
-            )}
+          {/* ── Bottom row: value + sell btn + upgrade btn ── */}
+          <div className="flex items-center gap-2 px-2 pb-2 pt-1">
 
-            {autoSell ? (
-              <div
-                className="relative w-full py-2.5 rounded-xl font-black text-[10px] border text-center"
-                style={{
-                  background: 'linear-gradient(180deg, #16a34a, #15803d)',
-                  borderColor: '#4ade80',
-                  color: '#bbf7d0',
-                  boxShadow: '0 3px 0 #14532d, 0 0 10px rgba(74,222,128,0.35)',
-                }}
+            {/* Grand total */}
+            <div className="flex flex-col leading-none flex-shrink-0">
+              <span className="text-[7px] font-bold uppercase tracking-wide" style={{ color: 'rgba(253,224,71,0.5)' }}>Değer</span>
+              <motion.span
+                key={grandTotal}
+                initial={{ scale: 1.2 }}
+                animate={{ scale: 1 }}
+                className="font-black text-[11px] tabular-nums"
+                style={{ color: hasAnything ? '#fde047' : 'rgba(253,224,71,0.2)' }}
               >
-                <Zap size={10} className="inline mr-0.5" />OTO
-              </div>
-            ) : (
+                {formatNum(grandTotal)} 🪙
+              </motion.span>
+            </div>
+
+            {/* Sell button */}
+            <div className="relative flex-1">
+              {hasAnything && !autoSell && (
+                <motion.div
+                  className="absolute inset-0 rounded-xl pointer-events-none"
+                  animate={{ opacity: [0.4, 0, 0.4], scale: [1, 1.12, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
+                  style={{ background: 'radial-gradient(ellipse, rgba(34,197,94,0.55) 0%, transparent 70%)' }}
+                />
+              )}
+              {autoSell ? (
+                <div
+                  className="relative w-full py-2 rounded-xl font-black text-[10px] border text-center"
+                  style={{
+                    background: 'linear-gradient(180deg, #16a34a, #15803d)',
+                    borderColor: '#4ade80',
+                    color: '#bbf7d0',
+                    boxShadow: '0 2px 0 #14532d, 0 0 8px rgba(74,222,128,0.3)',
+                  }}
+                >
+                  <Zap size={9} className="inline mr-0.5" />OTO-SAT
+                </div>
+              ) : (
+                <button
+                  onClick={handleSell}
+                  disabled={!hasAnything}
+                  className={`relative w-full py-2 rounded-xl font-black text-sm border transition-colors ${hasAnything ? 'sell-btn-pulse' : ''}`}
+                  style={hasAnything ? {
+                    background: 'linear-gradient(180deg, #4ade80, #16a34a)',
+                    borderColor: '#86efac',
+                    color: 'white',
+                    textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                    boxShadow: '0 2px 0 #14532d, 0 0 14px rgba(34,197,94,0.5)',
+                  } : {
+                    background: 'rgba(255,255,255,0.04)',
+                    borderColor: 'rgba(255,255,255,0.07)',
+                    color: 'rgba(255,255,255,0.18)',
+                  }}
+                >
+                  {hasAnything ? '💰 SAT!' : '⏳'}
+                </button>
+              )}
+            </div>
+
+            {/* Depot upgrade button — only show if not max level */}
+            {nextLevel && (
               <button
-                onClick={handleSell}
-                disabled={!hasAnything}
-                className={`relative w-full py-2.5 rounded-xl font-black text-sm border transition-colors ${hasAnything ? 'sell-btn-pulse' : ''}`}
-                style={hasAnything ? {
-                  background: 'linear-gradient(180deg, #4ade80, #16a34a)',
-                  borderColor: '#86efac',
-                  color: 'white',
-                  textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-                  boxShadow: '0 3px 0 #14532d, 0 0 16px rgba(34,197,94,0.55)',
-                  letterSpacing: '0.03em',
+                onClick={onUpgradeDepot}
+                disabled={!canAffordUpgrade}
+                className="flex-shrink-0 flex flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 transition-all active:scale-90"
+                style={canAffordUpgrade ? {
+                  background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                  border: '1px solid #a78bfa',
+                  boxShadow: '0 2px 0 #4c1d95, 0 0 10px rgba(124,58,237,0.4)',
                 } : {
-                  background: 'rgba(255,255,255,0.04)',
-                  borderColor: 'rgba(255,255,255,0.07)',
-                  color: 'rgba(255,255,255,0.2)',
+                  background: 'rgba(124,58,237,0.08)',
+                  border: '1px solid rgba(124,58,237,0.2)',
                 }}
               >
-                {hasAnything ? '💰 SAT!' : '⏳'}
+                <ArrowUpCircle size={12} style={{ color: canAffordUpgrade ? '#ddd6fe' : 'rgba(167,139,250,0.35)' }} />
+                <span className="text-[7px] font-black leading-none" style={{ color: canAffordUpgrade ? '#ddd6fe' : 'rgba(167,139,250,0.3)' }}>
+                  Sv.{nextLevel.level}
+                </span>
+                <span className="text-[7px] font-bold leading-none" style={{ color: canAffordUpgrade ? '#c4b5fd' : 'rgba(167,139,250,0.25)' }}>
+                  {formatNum(nextLevel.upgradeCost)}🪙
+                </span>
               </button>
             )}
           </div>
