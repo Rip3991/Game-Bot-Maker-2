@@ -293,27 +293,27 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
               )}
               {autoSell ? (
                 <div
-                  className="relative w-full py-1.5 rounded-lg font-black text-[9px] border text-center"
+                  className="relative w-full py-1 rounded-md font-black text-[8px] border text-center"
                   style={{
                     background: 'linear-gradient(180deg, #16a34a, #15803d)',
                     borderColor: '#4ade80',
                     color: '#bbf7d0',
-                    boxShadow: '0 2px 0 #14532d, 0 0 8px rgba(74,222,128,0.3)',
+                    boxShadow: '0 1.5px 0 #14532d, 0 0 6px rgba(74,222,128,0.3)',
                   }}
                 >
-                  <Zap size={8} className="inline mr-0.5" />OTO-SAT
+                  <Zap size={7} className="inline mr-0.5" />OTO-SAT
                 </div>
               ) : (
                 <button
                   onClick={handleSell}
                   disabled={!hasAnything}
-                  className={`relative w-full py-1.5 rounded-lg font-black text-xs border transition-colors ${hasAnything ? 'sell-btn-pulse' : ''}`}
+                  className={`relative w-full py-1 rounded-md font-black text-[10px] border transition-colors ${hasAnything ? 'sell-btn-pulse' : ''}`}
                   style={hasAnything ? {
                     background: 'linear-gradient(180deg, #4ade80, #16a34a)',
                     borderColor: '#86efac',
                     color: 'white',
                     textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-                    boxShadow: '0 2px 0 #14532d, 0 0 14px rgba(34,197,94,0.5)',
+                    boxShadow: '0 1.5px 0 #14532d, 0 0 10px rgba(34,197,94,0.5)',
                   } : {
                     background: 'rgba(255,255,255,0.04)',
                     borderColor: 'rgba(255,255,255,0.07)',

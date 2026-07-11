@@ -130,14 +130,18 @@ export default function MascotTutorial({ onDone }: { onDone: () => void }) {
                   ))}
                 </div>
 
-                <p className="text-white font-bold text-sm leading-snug whitespace-pre-line">
+                <p
+                  className="text-white font-bold text-sm leading-snug whitespace-pre-line"
+                  style={{ textShadow: '0 1px 3px rgba(0,0,0,0.55)' }}
+                >
                   {current.bubble}
                 </p>
 
                 <div className="flex items-center gap-2 mt-3">
                   <button
                     onClick={handleSkip}
-                    className="text-white/50 text-xs font-bold px-2 py-1 rounded-lg hover:text-white/80 transition-colors"
+                    className="text-xs font-bold px-2 py-1 rounded-lg transition-colors"
+                    style={{ color: 'rgba(255,255,255,0.88)', textShadow: '0 1px 2px rgba(0,0,0,0.55)' }}
                   >
                     Atla
                   </button>

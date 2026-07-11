@@ -1312,8 +1312,12 @@ export default function GameView() {
             })}
           </div>
 
-          {/* Scrollable plots */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar py-1 pb-4">
+          {/* Scrollable plots — warm wood-toned backdrop so the gaps between
+              cards read as part of the same rustic palette as the panels and
+              right-nav buttons, instead of the bright cartoon sky/hills. */}
+          <div
+            className="flex-1 overflow-y-auto custom-scrollbar py-1 pb-4 farm-plots-bg"
+          >
             <AnimatePresence mode="popLayout">
               {shownSections.map(cfg => (
                 <FarmPlot

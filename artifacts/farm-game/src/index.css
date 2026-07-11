@@ -164,6 +164,15 @@ body {
     0 1px 0 rgba(255,255,255,0.45) inset;
 }
 
+/* ── Farm/animal plot list backdrop — warm earthy wood tone (matches the
+   right-nav plank buttons and panel palette) instead of the bright cartoon
+   sky/hills bleeding through the card gaps. ── */
+.farm-plots-bg {
+  background:
+    repeating-linear-gradient(100deg, rgba(0,0,0,0.06) 0px, rgba(0,0,0,0.06) 2px, transparent 2px, transparent 9px),
+    linear-gradient(180deg, #2a1c0c 0%, #1c3d0a 45%, #142b07 100%);
+}
+
 /* ── NFT Artwork Animations ── */
 @keyframes nftLegendaryFloat {
   0%, 100% { transform: translateY(0px) scale(1); }
