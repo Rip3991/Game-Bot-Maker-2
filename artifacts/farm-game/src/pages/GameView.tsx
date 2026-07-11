@@ -1149,7 +1149,7 @@ export default function GameView() {
       </AnimatePresence>
 
       {/* ══ TOP BAR ══ */}
-      <div className="z-40 relative flex-shrink-0" style={{ background: 'rgba(0,0,0,0.4)', borderBottom: '2px solid rgba(255,255,255,0.15)' }}>
+      <div className="z-40 relative flex-shrink-0" style={{ background: '#0d1f0a', borderBottom: '2px solid rgba(255,255,255,0.1)' }}>
         <div className="flex items-center gap-2 px-3 py-2">
         <div className="top-balance-pill">
           <span className="text-base">💵</span>
