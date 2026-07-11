@@ -859,39 +859,93 @@ function FarmScene({ state }: { state: any }) {
       {/* Grass base */}
       <div className="absolute inset-x-0 transition-colors duration-1000" style={{ top: 50, height: 14, background: palette.grass }} />
 
-      {/* Road — narrower single lane, shrunk */}
+      {/* Road — narrower single lane, shrunk, with paved texture + shoulders
+          for a more developed look than a flat grey bar */}
       <div
         className="absolute inset-x-0 overflow-hidden transition-colors duration-1000"
-        style={{ top: 62, height: 24, background: 'linear-gradient(180deg, #3d3d3d 0%, #2c2c2c 55%, #232323 100%)' }}
+        style={{
+          top: 62, height: 24,
+          background: 'linear-gradient(180deg, #46464a 0%, #333336 50%, #232326 100%)',
+        }}
       >
-        {/* Top / bottom kerb */}
-        <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: 'rgba(255,255,255,0.14)' }} />
-        <div className="absolute inset-x-0 bottom-0 h-[2px]" style={{ background: 'rgba(0,0,0,0.4)' }} />
+        {/* Subtle asphalt speckle texture */}
+        <div
+          className="absolute inset-0 opacity-40"
+          style={{
+            backgroundImage: 'radial-gradient(rgba(255,255,255,0.10) 0.5px, transparent 0.5px), radial-gradient(rgba(0,0,0,0.25) 0.5px, transparent 0.5px)',
+            backgroundSize: '6px 6px, 5px 5px',
+            backgroundPosition: '0 0, 3px 3px',
+          }}
+        />
+
+        {/* Sandy shoulders top & bottom, dotted with tiny roadside tufts/pebbles */}
+        <div className="absolute inset-x-0 top-0 h-[3px]" style={{ background: 'linear-gradient(180deg, #c99a56, #8a6a35)' }} />
+        <div className="absolute inset-x-0 bottom-0 h-[3px]" style={{ background: 'linear-gradient(0deg, #8a6a35, #6b5228)' }} />
+        <div className="absolute inset-x-0 top-[3px] h-[1px]" style={{ background: 'rgba(255,255,255,0.16)' }} />
+        <div className="absolute inset-x-0 bottom-[3px] h-[1px]" style={{ background: 'rgba(0,0,0,0.45)' }} />
+        <div className="absolute inset-x-0 top-0 h-[3px] flex items-center" style={{ gap: 22, paddingLeft: 10 }}>
+          {Array.from({ length: 9 }).map((_, i) => (
+            <span key={i} style={{ fontSize: 5, opacity: 0.8, filter: isNight ? 'brightness(0.5)' : 'none' }}>🌿</span>
+          ))}
+        </div>
+        <div className="absolute inset-x-0 bottom-0 h-[3px] flex items-center" style={{ gap: 26, paddingLeft: 24 }}>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <span key={i} style={{ fontSize: 5, opacity: 0.75, filter: isNight ? 'brightness(0.5)' : 'none' }}>🌾</span>
+          ))}
+        </div>
+
+        {/* Soft vignette so the road blends into the scene instead of
+            reading as a flat pasted-in strip */}
+        <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 4px 6px -3px rgba(0,0,0,0.5), inset 0 -4px 6px -3px rgba(0,0,0,0.5)' }} />
 
         {/* Animated centre dashes */}
         <div className="absolute inset-x-0 overflow-hidden" style={{ top: '50%', transform: 'translateY(-50%)', height: 2 }}>
           <div style={{ display: 'flex', gap: 10, animation: 'roadDash 1.2s linear infinite', width: 'max-content' }}>
             {Array.from({ length: 32 }).map((_, i) => (
-              <div key={i} style={{ width: 14, height: 2, borderRadius: 2, background: 'rgba(255,220,60,0.65)', flexShrink: 0 }} />
+              <div key={i} style={{ width: 14, height: 2, borderRadius: 2, background: 'rgba(255,220,60,0.7)', flexShrink: 0, boxShadow: '0 0 2px rgba(255,220,60,0.4)' }} />
             ))}
           </div>
         </div>
 
-        {/* ── TRUCK — enters right, brakes near market (~80px from left), pauses, exits ── */}
-        <span className="absolute" style={{ top: '10%', animation: 'truckStop 9s ease-in-out infinite' }}>
+        {/* ── TRUCK — a small layered CSS body (cab + trailer + wheels) instead
+            of a flat emoji, enters right, brakes near market, pauses, exits ── */}
+        <span className="absolute" style={{ top: '6%', animation: 'truckStop 9s ease-in-out infinite' }}>
           <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.32s ease-in-out infinite' }}>
-            <span className="absolute" style={{ right: -8, top: 1, fontSize: 7, animation: 'dustPuff 0.9s ease-out infinite' }}>💨</span>
-            <span className="absolute" style={{ right: -4,  top: 4, fontSize: 6,  animation: 'dustPuff 0.9s ease-out 0.3s infinite' }}>💨</span>
-            {isNight && <span className="absolute" style={{ left: -4, top: 4, fontSize: 6, filter: 'brightness(2)' }}>🔆</span>}
-            <span style={{ fontSize: 20, filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.6))' }}>🚛</span>
+            <span className="absolute" style={{ right: -9, top: 2, fontSize: 7, animation: 'dustPuff 0.9s ease-out infinite' }}>💨</span>
+            <span className="absolute" style={{ right: -5, top: 5, fontSize: 6, animation: 'dustPuff 0.9s ease-out 0.3s infinite' }}>💨</span>
+            <div className="relative flex items-end" style={{ filter: 'drop-shadow(0 3px 3px rgba(0,0,0,0.6))' }}>
+              {/* Cab — leads at the front (left) since the truck travels right → left */}
+              <div className="relative rounded-t-[2px]" style={{ width: 9, height: 13, background: 'linear-gradient(180deg, #ef4444, #b91c1c)', border: '1px solid #7f1d1d' }}>
+                <div className="absolute rounded-[1px]" style={{ top: 1.5, left: 1, right: 1, height: 4, background: isNight ? '#fef08a' : '#7dd3fc', boxShadow: isNight ? '0 0 4px #fde047' : undefined }} />
+                {isNight && <span className="absolute" style={{ left: -3, bottom: 2, fontSize: 5, filter: 'brightness(2.4)' }}>🔆</span>}
+              </div>
+              {/* Trailer follows behind (right/back) */}
+              <div className="relative rounded-[2px] -ml-px" style={{ width: 15, height: 11, background: 'linear-gradient(180deg, #e5e7eb, #9ca3af)', border: '1px solid #4b5563' }}>
+                <div className="absolute inset-x-0.5 top-0.5 h-[3px] rounded-[1px]" style={{ background: 'rgba(255,255,255,0.5)' }} />
+              </div>
+              {/* Wheels */}
+              <div className="absolute rounded-full" style={{ width: 4, height: 4, left: 2, bottom: -2, background: '#1c1c1c', border: '1px solid #444' }} />
+              <div className="absolute rounded-full" style={{ width: 4, height: 4, left: 10, bottom: -2, background: '#1c1c1c', border: '1px solid #444' }} />
+              <div className="absolute rounded-full" style={{ width: 4, height: 4, left: 19, bottom: -2, background: '#1c1c1c', border: '1px solid #444' }} />
+            </div>
           </span>
         </span>
 
-        {/* ── TRACTOR — same stop behaviour, slower, phase offset ── */}
-        <span className="absolute" style={{ top: '38%', animation: 'tractorStop 13s ease-in-out -5s infinite' }}>
+        {/* ── TRACTOR — layered CSS body, same stop behaviour, slower, phase offset ── */}
+        <span className="absolute" style={{ top: '34%', animation: 'tractorStop 13s ease-in-out -5s infinite' }}>
           <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.44s ease-in-out infinite' }}>
             <span className="absolute" style={{ right: -6, top: 2, fontSize: 6, animation: 'dustPuff 1.1s ease-out 0.2s infinite' }}>💨</span>
-            <span style={{ fontSize: 17, filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.55))' }}>🚜</span>
+            <div className="relative flex items-end" style={{ filter: 'drop-shadow(0 3px 3px rgba(0,0,0,0.55))' }}>
+              {/* Cab — leads at the front (left) since the tractor travels right → left */}
+              <div className="relative rounded-t-[3px]" style={{ width: 8, height: 11, background: 'linear-gradient(180deg, #fbbf24, #d97706)', border: '1px solid #92400e' }}>
+                <div className="absolute rounded-[1px]" style={{ top: 1, left: 1, right: 1, height: 3.5, background: isNight ? '#fef08a' : '#bae6fd' }} />
+              </div>
+              {/* Body follows behind (right/back) */}
+              <div className="relative rounded-[2px] -ml-0.5" style={{ width: 13, height: 8, background: 'linear-gradient(180deg, #86efac, #16a34a)', border: '1px solid #14532d' }} />
+              {/* Small front wheel (under cab) + big rear wheel (under body) */}
+              <div className="absolute rounded-full" style={{ width: 4, height: 4, left: -1, bottom: -1.5, background: '#2a2a2a', border: '1px solid #444' }} />
+              <div className="absolute rounded-full" style={{ width: 8, height: 8, left: 13, bottom: -3, background: '#1c1c1c', border: '1.5px solid #444' }} />
+            </div>
           </span>
         </span>
       </div>
@@ -899,11 +953,15 @@ function FarmScene({ state }: { state: any }) {
       {/* Fence strip */}
       <div className="absolute inset-x-0" style={{ top: 86, height: 5, background: 'linear-gradient(90deg, #7a4e1a, #a06235, #7a4e1a)', opacity: 0.88, filter: isNight ? 'brightness(0.55)' : 'none' }} />
 
-      {/* ── LEFT: Market shop — enlarged and redrawn with a proper little
-          roof, brick base and door, closer in feel to the wooden-town
-          reference art instead of a plain rounded rectangle. ── */}
+      {/* ── LEFT: Market shop — a fuller little building with chimney,
+          hanging sign, side windows and flower boxes for a more developed
+          "town" feel instead of a plain roof + rectangle. ── */}
       <div className="absolute flex flex-col items-end transition-opacity duration-1000" style={{ bottom: 3, left: 3, filter: isNight ? 'brightness(0.6)' : 'none' }}>
-        <div className="flex flex-col items-center" style={{ width: 58 }}>
+        <div className="relative flex flex-col items-center" style={{ width: 58 }}>
+          {/* Chimney with smoke */}
+          <div className="absolute" style={{ top: -6, left: 8, width: 6, height: 9, background: 'linear-gradient(180deg, #a8735a, #7a4e3a)', border: '1px solid #5a3624', borderRadius: 1 }} />
+          <span className="absolute text-[7px]" style={{ top: -16, left: 6, animation: 'sunGlow 3s ease-in-out infinite', opacity: 0.75 }}>💨</span>
+
           {/* Pitched roof */}
           <div
             className="relative"
@@ -915,12 +973,24 @@ function FarmScene({ state }: { state: any }) {
               filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))',
             }}
           />
+          {/* Roof ridge highlight */}
+          <div className="absolute" style={{ top: 0, left: 27, width: 4, height: 3, background: '#a8564a', clipPath: 'polygon(50% 0, 0 100%, 100% 100%)' }} />
+
           {/* Striped awning */}
           <div className="rounded-b-sm overflow-hidden flex shadow -mt-0.5" style={{ width: 58, height: 11 }}>
             {Array.from({ length: 7 }).map((_, i) => (
               <div key={i} className="flex-1" style={{ background: i % 2 === 0 ? '#dc2626' : '#f5f5f4' }} />
             ))}
           </div>
+
+          {/* Hanging shop sign */}
+          <div
+            className="absolute flex items-center justify-center rounded-sm shadow"
+            style={{ top: 15, left: -6, width: 15, height: 9, background: 'linear-gradient(180deg, #d4a86e, #a8794a)', border: '1px solid #6b431f', fontSize: 6, transform: 'rotate(-4deg)' }}
+          >
+            <span style={{ fontSize: 7 }}>🥕</span>
+          </div>
+
           {/* Building body */}
           <div
             className="relative flex flex-col items-center justify-end rounded-b-sm border shadow-md overflow-hidden"
@@ -930,9 +1000,20 @@ function FarmScene({ state }: { state: any }) {
               borderColor: '#8b5c1e',
             }}
           >
-            <span className="absolute top-1 text-base leading-none" style={{ fontSize: 16 }}>🏪</span>
+            {/* Side windows */}
+            <div className="absolute rounded-[1px]" style={{ top: 5, left: 5, width: 9, height: 9, background: 'linear-gradient(160deg, #bae6fd, #7dd3fc)', border: '1.5px solid #6b431f' }}>
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, transparent 48%, #6b431f 48%, #6b431f 52%, transparent 52%), linear-gradient(90deg, transparent 48%, #6b431f 48%, #6b431f 52%, transparent 52%)' }} />
+            </div>
+            <div className="absolute rounded-[1px]" style={{ top: 5, right: 5, width: 9, height: 9, background: 'linear-gradient(160deg, #bae6fd, #7dd3fc)', border: '1.5px solid #6b431f' }}>
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, transparent 48%, #6b431f 48%, #6b431f 52%, transparent 52%), linear-gradient(90deg, transparent 48%, #6b431f 48%, #6b431f 52%, transparent 52%)' }} />
+            </div>
             {/* Door */}
-            <div className="rounded-t-sm" style={{ width: 14, height: 15, background: 'linear-gradient(180deg, #6b3a1a, #4a2810)', border: '1px solid #3a1e0a' }} />
+            <div className="relative rounded-t-sm" style={{ width: 14, height: 15, background: 'linear-gradient(180deg, #6b3a1a, #4a2810)', border: '1px solid #3a1e0a' }}>
+              <div className="absolute rounded-full" style={{ width: 1.5, height: 1.5, right: 2, top: 7, background: '#f5c842' }} />
+            </div>
+            {/* Flower boxes under windows */}
+            <div className="absolute flex gap-0.5" style={{ top: 13.5, left: 4.5, fontSize: 4.5 }}>🌷🌷</div>
+            <div className="absolute flex gap-0.5" style={{ top: 13.5, right: 4.5, fontSize: 4.5 }}>🌷🌷</div>
           </div>
         </div>
       </div>

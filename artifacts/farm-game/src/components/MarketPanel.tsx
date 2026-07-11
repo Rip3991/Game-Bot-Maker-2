@@ -268,7 +268,7 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
           <div className="flex items-center gap-1.5 px-1.5 pb-1.5 pt-1">
 
             {/* Grand total */}
-            <div className="flex flex-col leading-none flex-shrink-0">
+            <div className="flex flex-col leading-none flex-1 min-w-0">
               <span className="text-[7px] font-bold uppercase tracking-wide" style={{ color: 'rgba(253,224,71,0.5)' }}>Değer</span>
               <motion.span
                 key={grandTotal}
@@ -281,8 +281,9 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
               </motion.span>
             </div>
 
-            {/* Sell button */}
-            <div className="relative flex-1">
+            {/* Sell button — fixed compact width so it reads as a button,
+                not a bar spanning the row */}
+            <div className="relative flex-shrink-0" style={{ width: 66 }}>
               {hasAnything && !autoSell && (
                 <motion.div
                   className="absolute inset-0 rounded-lg pointer-events-none"
@@ -307,7 +308,7 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
                 <button
                   onClick={handleSell}
                   disabled={!hasAnything}
-                  className={`relative w-full py-1 rounded-md font-black text-[10px] border transition-colors ${hasAnything ? 'sell-btn-pulse' : ''}`}
+                  className={`relative w-full py-1 rounded-md font-black text-[9px] border transition-colors ${hasAnything ? 'sell-btn-pulse' : ''}`}
                   style={hasAnything ? {
                     background: 'linear-gradient(180deg, #4ade80, #16a34a)',
                     borderColor: '#86efac',
@@ -320,7 +321,7 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
                     color: 'rgba(255,255,255,0.18)',
                   }}
                 >
-                  {hasAnything ? '💰 SAT!' : '⏳'}
+                  {hasAnything ? '💰 SAT' : '⏳'}
                 </button>
               )}
             </div>
