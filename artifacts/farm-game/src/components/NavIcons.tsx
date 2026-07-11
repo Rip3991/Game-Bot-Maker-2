@@ -6,119 +6,137 @@ interface IconProps {
   active?: boolean;
 }
 
-/* ── Nav icons redrawn as friendly pictorial "stickers" (barn, storefront,
-   clipboard, people, trophy, cart) — matching the reference screenshots'
-   flat, readable icon style instead of thin abstract line art. ── */
+/* ── Nav icons redrawn as colorful rounded "badge" stickers — each button
+   gets its own distinct gradient + icon, matching the reference screenshot's
+   pictorial rounded-square icon style (Market/Çiftlik/Görevler/Arkadaşlar/
+   Ödeme/Oyunlar) instead of one flat uniform emoji. ── */
+
+function Badge({
+  size,
+  active,
+  gradient,
+  ring,
+  children,
+}: {
+  size: number;
+  active?: boolean;
+  gradient: string;
+  ring: string;
+  children: React.ReactNode;
+}) {
+  const box = Math.round(size * 1.55);
+  return (
+    <div
+      style={{
+        width: box,
+        height: box,
+        borderRadius: box * 0.32,
+        background: gradient,
+        border: `1.5px solid ${ring}`,
+        boxShadow: active
+          ? `0 2px 0 rgba(0,0,0,0.35), 0 0 6px ${ring}, inset 0 1px 1px rgba(255,255,255,0.45)`
+          : `0 2px 0 rgba(0,0,0,0.35), inset 0 1px 1px rgba(255,255,255,0.3)`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        filter: active ? 'none' : 'saturate(0.8) brightness(0.92)',
+        opacity: active ? 1 : 0.92,
+      }}
+    >
+      <span style={{ fontSize: size, lineHeight: 1 }}>{children}</span>
+    </div>
+  );
+}
 
 export function FarmIcon({ size = 22, active }: IconProps) {
   return (
-    <span style={{ fontSize: size, lineHeight: 1, filter: active ? 'none' : 'saturate(0.75) brightness(0.85)', opacity: active ? 1 : 0.85 }}>
-      🏡
-    </span>
+    <Badge size={size} active={active} gradient="linear-gradient(160deg, #ef5350 0%, #b71c1c 100%)" ring="#7f1414">
+      🏚️
+    </Badge>
   );
 }
 
 export function SpinIcon({ size = 22, active }: IconProps) {
   return (
-    <span style={{ fontSize: size, lineHeight: 1, filter: active ? 'none' : 'saturate(0.75) brightness(0.85)', opacity: active ? 1 : 0.85 }}>
+    <Badge size={size} active={active} gradient="linear-gradient(160deg, #ffca28 0%, #f57c00 100%)" ring="#a05a00">
       🎡
-    </span>
+    </Badge>
   );
 }
 
 export function NftIcon({ size = 22, active }: IconProps) {
   return (
-    <span style={{ fontSize: size, lineHeight: 1, filter: active ? 'none' : 'saturate(0.75) brightness(0.85)', opacity: active ? 1 : 0.85 }}>
+    <Badge size={size} active={active} gradient="linear-gradient(160deg, #ba68c8 0%, #6a1b9a 100%)" ring="#4a1268">
       🏷️
-    </span>
+    </Badge>
   );
 }
 
 export function TaskIcon({ size = 22, active }: IconProps) {
   return (
-    <span style={{ fontSize: size, lineHeight: 1, filter: active ? 'none' : 'saturate(0.75) brightness(0.85)', opacity: active ? 1 : 0.85 }}>
+    <Badge size={size} active={active} gradient="linear-gradient(160deg, #4fc3f7 0%, #0277bd 100%)" ring="#01507f">
       📋
-    </span>
+    </Badge>
   );
 }
 
 export function InviteIcon({ size = 22, active }: IconProps) {
   return (
-    <span style={{ fontSize: size, lineHeight: 1, filter: active ? 'none' : 'saturate(0.75) brightness(0.85)', opacity: active ? 1 : 0.85 }}>
+    <Badge size={size} active={active} gradient="linear-gradient(160deg, #4dd0e1 0%, #00838f 100%)" ring="#005a62">
       👥
-    </span>
+    </Badge>
   );
 }
 
 export function LeaderboardIcon({ size = 22, active }: IconProps) {
   return (
-    <span style={{ fontSize: size, lineHeight: 1, filter: active ? 'none' : 'saturate(0.75) brightness(0.85)', opacity: active ? 1 : 0.85 }}>
+    <Badge size={size} active={active} gradient="linear-gradient(160deg, #ffd54f 0%, #ff8f00 100%)" ring="#a35d00">
       🏆
-    </span>
+    </Badge>
   );
 }
 
 export function ShopIcon({ size = 22, active }: IconProps) {
   return (
-    <span style={{ fontSize: size, lineHeight: 1, filter: active ? 'none' : 'saturate(0.75) brightness(0.85)', opacity: active ? 1 : 0.85 }}>
+    <Badge size={size} active={active} gradient="linear-gradient(160deg, #81c784 0%, #2e7d32 100%)" ring="#1b5e20">
       🛒
-    </span>
+    </Badge>
   );
 }
 
 export function AchievementIcon({ size = 22, active }: IconProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="9" r="6" fill={active ? '#1a0a2e' : '#0e0618'} stroke={active ? '#c084fc' : '#6020a0'} strokeWidth="1.5" />
-      <polygon points="12,4.5 13.2,7.5 16.5,7.5 13.9,9.5 14.9,12.5 12,10.5 9.1,12.5 10.1,9.5 7.5,7.5 10.8,7.5" fill={active ? '#fbbf24' : '#8b6020'} />
-      <path d="M8 15 L7 22 L12 19.5 L17 22 L16 15" fill={active ? '#2e1a04' : '#1a0e00'} stroke={active ? '#c4832e' : '#6b4414'} strokeWidth="1.2" />
-      <path d="M9 15.5 L8.5 20 L12 18 L15.5 20 L15 15.5" fill={active ? '#f5c842' : '#8b6010'} opacity="0.6" />
-    </svg>
+    <Badge size={size} active={active} gradient="linear-gradient(160deg, #ffe082 0%, #ff6f00 100%)" ring="#a34700">
+      🏅
+    </Badge>
   );
 }
 
 export function MusicIcon({ size = 22, active, on = true }: IconProps & { on?: boolean }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      {on ? (
-        <>
-          <path d="M9 18 L9 6 L20 4 L20 16" stroke={active || on ? '#fbbf24' : '#6b6040'} strokeWidth="1.5" fill="none" strokeLinecap="round" />
-          <circle cx="7" cy="18" r="2.5" fill={on ? '#c4832e' : '#4a3010'} stroke={on ? '#f5c842' : '#3a2008'} strokeWidth="1" />
-          <circle cx="18" cy="16" r="2.5" fill={on ? '#c4832e' : '#4a3010'} stroke={on ? '#f5c842' : '#3a2008'} strokeWidth="1" />
-          <path d="M13 8 L15 7.5" stroke={on ? '#fde68a' : '#6b6040'} strokeWidth="1" opacity="0.6" />
-        </>
-      ) : (
-        <>
-          <path d="M9 18 L9 6 L20 4 L20 16" stroke="#555" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-          <circle cx="7" cy="18" r="2.5" fill="#333" stroke="#444" strokeWidth="1" />
-          <circle cx="18" cy="16" r="2.5" fill="#333" stroke="#444" strokeWidth="1" />
-          <line x1="4" y1="4" x2="20" y2="20" stroke="#e74c3c" strokeWidth="1.5" strokeLinecap="round" />
-        </>
-      )}
-    </svg>
+    <Badge
+      size={size}
+      active={active || on}
+      gradient={on ? 'linear-gradient(160deg, #f48fb1 0%, #ad1457 100%)' : 'linear-gradient(160deg, #616161 0%, #303030 100%)'}
+      ring={on ? '#7a0e3d' : '#1a1a1a'}
+    >
+      {on ? '🎵' : '🔇'}
+    </Badge>
   );
 }
 
 export function AdminIcon({ size = 22, active }: IconProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path d="M12 2 L19 5 L19 11 C19 15.5 16 19.5 12 21 C8 19.5 5 15.5 5 11 L5 5 Z"
-        fill={active ? '#3f0000' : '#250000'} stroke={active ? '#ef4444' : '#7f1d1d'} strokeWidth="1.5" />
-      <path d="M12 5 L16 7 L16 11 C16 13.8 14.4 16.2 12 17.2 C9.6 16.2 8 13.8 8 11 L8 7 Z"
-        fill={active ? '#7f1d1d' : '#4a0808'} opacity="0.6" />
-      <polygon points="12,7 13,10 16,10 13.5,11.8 14.5,14.5 12,12.7 9.5,14.5 10.5,11.8 8,10 11,10" fill={active ? '#fca5a5' : '#dc2626'} />
-    </svg>
+    <Badge size={size} active={active} gradient="linear-gradient(160deg, #ff5252 0%, #b71c1c 100%)" ring="#7f1414">
+      🛡️
+    </Badge>
   );
 }
 
 export function TradeIcon({ size = 22, active }: IconProps) {
-  const c = active ? '#fbbf24' : '#8a7240';
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path d="M3 8 L21 8" stroke={c} strokeWidth="1.8" strokeLinecap="round"/>
-      <path d="M17 4 L21 8 L17 12" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M21 16 L3 16" stroke={active ? '#a8ff78' : '#4a7a30'} strokeWidth="1.8" strokeLinecap="round"/>
-      <path d="M7 12 L3 16 L7 20" stroke={active ? '#a8ff78' : '#4a7a30'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
+    <Badge size={size} active={active} gradient="linear-gradient(160deg, #aed581 0%, #558b2f 100%)" ring="#33691e">
+      🔄
+    </Badge>
   );
 }
