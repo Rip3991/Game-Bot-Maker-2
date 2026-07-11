@@ -969,8 +969,8 @@ function FarmScene({ state }: { state: any }) {
           </span>
         </span>
 
-        {/* ── SEDAN CAR — fast zip, opposite direction (left → right) ── */}
-        <span className="absolute" style={{ top: '18%', animation: 'carLeftRight 7s ease-in-out -2s infinite', willChange: 'transform', transform: 'scaleX(-1)' }}>
+        {/* ── SEDAN CAR — fast zip, right → left ── */}
+        <span className="absolute" style={{ top: '18%', animation: 'carStop 7s ease-in-out -2s infinite', willChange: 'transform' }}>
           <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.28s ease-in-out infinite' }}>
             <svg width="38" height="18" viewBox="0 0 38 18" style={{ filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.55))' }} xmlns="http://www.w3.org/2000/svg">
               {/* Car body lower */}
