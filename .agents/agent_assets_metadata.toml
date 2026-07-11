@@ -12,3 +12,9 @@ id = "3B3KTpCqq6EpxEbFvpxC5"
 uri = "file://db_export.sql"
 type = "unspecified"
 title = "Veritabanı Yedeği (db_export.sql)"
+
+[[outputs]]
+id = "YX-nvXmT5xabNGdnf3IRN"
+uri = "file://attached_assets/generated_audio/farm_idle_theme.mp3"
+type = "audio"
+title = "farm_idle_theme"

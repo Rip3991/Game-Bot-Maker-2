@@ -1,60 +1,60 @@
 /**
- * Game sound engine — Web Audio API synthesized sounds + background music.
+ * Game sound engine — Web Audio API synthesized SFX + real recorded background music.
  */
 
 let ctx: AudioContext | null = null;
 let enabled = true;
 
-// ── Background Music ─────────────────────────────────────────────────────────
-let bgAudio: HTMLAudioElement | null = null;
+// ── Background Music (real recorded farm theme, looped via <audio>) ──────────
+let musicEl: HTMLAudioElement | null = null;
 let musicEnabled = true;
+let musicVol = 0.32;
+
+function ensureMusicEl(): HTMLAudioElement | null {
+  if (typeof window === 'undefined') return null;
+  if (!musicEl) {
+    musicEl = new Audio(new URL('../assets/farm-theme.mp3', import.meta.url).href);
+    musicEl.loop = true;
+    musicEl.volume = musicVol;
+    musicEl.preload = 'auto';
+  }
+  return musicEl;
+}
 
 export function initBackgroundMusic() {
   if (typeof window === 'undefined') return;
-  if (bgAudio) return; // already initialized
-
-  const baseUrl = import.meta.env.BASE_URL ?? '/';
-  const src = baseUrl.replace(/\/$/, '') + '/farm-theme.mp3';
-
-  bgAudio = new Audio(src);
-  bgAudio.loop = true;
-  bgAudio.volume = 0.35;
-
-  if (musicEnabled) {
-    bgAudio.play().catch(() => {
-      // autoplay blocked — will be resumed on first user gesture
-    });
-  }
+  const el = ensureMusicEl();
+  if (!el || !musicEnabled) return;
+  el.play().catch(() => {
+    // Autoplay blocked until a user gesture — resumeBackgroundMusic() covers that.
+  });
 }
 
 export function resumeBackgroundMusic() {
-  if (!bgAudio || !musicEnabled) return;
-  if (bgAudio.paused) {
-    bgAudio.play().catch(() => {});
-  }
+  if (!musicEnabled) return;
+  const el = ensureMusicEl();
+  if (!el) return;
+  if (el.paused) el.play().catch(() => {});
 }
 
 export function setMusicEnabled(val: boolean) {
   musicEnabled = val;
-  if (!bgAudio) return;
-  if (val) {
-    bgAudio.play().catch(() => {});
+  const el = ensureMusicEl();
+  if (!el) return;
+  if (!val) {
+    el.pause();
   } else {
-    bgAudio.pause();
+    el.play().catch(() => {});
   }
 }
 
-export function isMusicEnabled() {
-  return musicEnabled;
-}
+export function isMusicEnabled() { return musicEnabled; }
 
-export function getMusicVolume(): number {
-  return bgAudio ? bgAudio.volume : 0.35;
-}
+export function getMusicVolume(): number { return musicVol; }
 
 export function setMusicVolume(val: number) {
-  const clamped = Math.max(0, Math.min(1, val));
-  if (bgAudio) bgAudio.volume = clamped;
+  musicVol = Math.max(0, Math.min(1, val));
+  if (musicEl) musicEl.volume = musicVol;
 }
 // ─────────────────────────────────────────────────────────────────────────────
 

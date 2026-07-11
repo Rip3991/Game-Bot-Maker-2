@@ -1,0 +1,27 @@
+kind = "video"
+previewPath = "/farm-game-promo/"
+title = "Sarı'nın Çiftliği Tanıtım Videosu"
+version = "1.0.0"
+id = "artifacts/farm-game-promo"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/farm-game-promo/" ]
+localPort = 26078
+
+[services.development]
+run = "pnpm --filter @workspace/farm-game-promo run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/farm-game-promo", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/farm-game-promo/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "26078"
+BASE_PATH = "/farm-game-promo/"
