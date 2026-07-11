@@ -264,25 +264,87 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
             </div>
           </div>
 
-          {/* ── Bottom row: value + sell btn + upgrade btn ── */}
+          {/* ── Bottom row: value | SAT button | upgrade btn ── */}
           <div className="flex items-center gap-1.5 px-1.5 pb-1.5 pt-1">
 
             {/* Grand total */}
-            <div className="flex flex-col leading-none flex-1 min-w-0">
+            <div className="flex flex-col leading-none flex-shrink-0">
               <span className="text-[7px] font-bold uppercase tracking-wide" style={{ color: 'rgba(253,224,71,0.5)' }}>Değer</span>
               <motion.span
                 key={grandTotal}
                 initial={{ scale: 1.2 }}
                 animate={{ scale: 1 }}
-                className="font-black text-[11px] tabular-nums"
+                className="font-black text-[10px] tabular-nums"
                 style={{ color: hasAnything ? '#fde047' : 'rgba(253,224,71,0.2)' }}
               >
                 {formatNum(grandTotal)} 🪙
               </motion.span>
             </div>
 
-            {/* Sell button — intentionally left empty here; moved to full-width row below */}
-            <div className="flex-shrink-0 w-1" />
+            {/* ── SAT BUTTON — centre of the row ── */}
+            <div className="flex-1 relative">
+              {autoSell ? (
+                <div
+                  className="w-full flex items-center justify-center gap-1 py-1.5 rounded-lg font-black text-[9px] border"
+                  style={{
+                    background: 'linear-gradient(180deg, #16a34a, #15803d)',
+                    borderColor: '#4ade80',
+                    color: '#bbf7d0',
+                    boxShadow: '0 2px 0 #14532d, 0 0 8px rgba(74,222,128,0.3)',
+                  }}
+                >
+                  <Zap size={9} />OTO-SAT
+                </div>
+              ) : (
+                <>
+                  {hasAnything && (
+                    <motion.div
+                      className="absolute inset-0 rounded-lg pointer-events-none"
+                      animate={{ opacity: [0.3, 0.7, 0.3] }}
+                      transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
+                      style={{ boxShadow: '0 0 14px rgba(34,197,94,0.7)' }}
+                    />
+                  )}
+                  <motion.button
+                    onClick={handleSell}
+                    disabled={!hasAnything}
+                    className="relative w-full overflow-hidden rounded-lg font-black transition-colors active:scale-95"
+                    style={hasAnything ? {
+                      background: 'linear-gradient(180deg, #4ade80, #16a34a)',
+                      border: '1.5px solid #86efac',
+                      boxShadow: '0 2.5px 0 #14532d',
+                      padding: '6px 0',
+                    } : {
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1.5px solid rgba(255,255,255,0.08)',
+                      padding: '6px 0',
+                    }}
+                    animate={hasAnything ? { scale: [1, 1.015, 1] } : {}}
+                    transition={{ repeat: Infinity, duration: 1.3 }}
+                    whileTap={{ scale: 0.93 }}
+                  >
+                    {hasAnything && (
+                      <motion.div
+                        className="absolute inset-0 skew-x-[-20deg] pointer-events-none"
+                        style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)', width: '35%' }}
+                        animate={{ x: ['-100%', '280%'] }}
+                        transition={{ repeat: Infinity, duration: 2.2, ease: 'linear', repeatDelay: 0.8 }}
+                      />
+                    )}
+                    <div className="relative flex items-center justify-center gap-1">
+                      {hasAnything ? (
+                        <>
+                          <span style={{ fontSize: 12 }}>💰</span>
+                          <span className="text-white text-[11px]" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>SAT</span>
+                        </>
+                      ) : (
+                        <span className="text-white/20 text-[9px]">⏳</span>
+                      )}
+                    </div>
+                  </motion.button>
+                </>
+              )}
+            </div>
 
             {/* Depot upgrade button — only show if not max level */}
             {nextLevel && (
@@ -307,88 +369,6 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
                   {formatNum(nextLevel.upgradeCost)}🪙
                 </span>
               </button>
-            )}
-          </div>
-
-          {/* ── BIG SAT BUTTON ── */}
-          <div className="px-1.5 pb-1.5 pt-0.5">
-            {autoSell ? (
-              <div
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-black text-sm border"
-                style={{
-                  background: 'linear-gradient(180deg, #16a34a, #15803d)',
-                  borderColor: '#4ade80',
-                  color: '#bbf7d0',
-                  boxShadow: '0 3px 0 #14532d, 0 0 12px rgba(74,222,128,0.35)',
-                }}
-              >
-                <Zap size={14} />
-                <span>OTO-SAT AKTİF</span>
-                <Zap size={14} />
-              </div>
-            ) : (
-              <div className="relative">
-                {/* Outer glow ring when has items */}
-                {hasAnything && (
-                  <>
-                    <motion.div
-                      className="absolute -inset-1 rounded-2xl pointer-events-none"
-                      animate={{ opacity: [0, 0.7, 0] }}
-                      transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}
-                      style={{ background: 'radial-gradient(ellipse, rgba(34,197,94,0.7) 0%, transparent 70%)' }}
-                    />
-                    <motion.div
-                      className="absolute inset-0 rounded-xl pointer-events-none"
-                      animate={{ opacity: [0.3, 0.8, 0.3] }}
-                      transition={{ repeat: Infinity, duration: 1.4, ease: 'easeInOut' }}
-                      style={{ boxShadow: '0 0 20px rgba(34,197,94,0.6), 0 0 40px rgba(34,197,94,0.3)' }}
-                    />
-                  </>
-                )}
-                <motion.button
-                  onClick={handleSell}
-                  disabled={!hasAnything}
-                  className="relative w-full overflow-hidden rounded-xl font-black transition-colors active:scale-95"
-                  style={hasAnything ? {
-                    background: 'linear-gradient(180deg, #4ade80 0%, #22c55e 45%, #16a34a 100%)',
-                    border: '2px solid #86efac',
-                    boxShadow: '0 4px 0 #14532d, 0 0 16px rgba(34,197,94,0.55)',
-                    padding: '11px 0',
-                  } : {
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '2px solid rgba(255,255,255,0.08)',
-                    padding: '11px 0',
-                  }}
-                  animate={hasAnything ? { scale: [1, 1.012, 1] } : {}}
-                  transition={{ repeat: Infinity, duration: 1.3, ease: 'easeInOut' }}
-                  whileTap={{ scale: 0.94 }}
-                >
-                  {/* Shine sweep */}
-                  {hasAnything && (
-                    <motion.div
-                      className="absolute inset-0 skew-x-[-20deg] pointer-events-none"
-                      style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)', width: '40%' }}
-                      animate={{ x: ['-120%', '300%'] }}
-                      transition={{ repeat: Infinity, duration: 2, ease: 'linear', repeatDelay: 0.6 }}
-                    />
-                  )}
-                  <div className="relative flex items-center justify-center gap-2">
-                    {hasAnything ? (
-                      <>
-                        <span style={{ fontSize: 18 }}>💰</span>
-                        <span className="text-white text-base" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.4)' }}>
-                          SAT
-                        </span>
-                        <span className="text-white/80 text-sm font-bold" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
-                          +{formatNum(grandTotal)} 🪙
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-white/20 text-sm">⏳ Depo boş</span>
-                    )}
-                  </div>
-                </motion.button>
-              </div>
             )}
           </div>
         </div>

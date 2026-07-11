@@ -23,9 +23,9 @@ export type CoinPackageId = (typeof COIN_PACKAGES)[number]["id"];
 // still be turned into TL through the dedicated, margin-safe converter below
 // (see COIN_TO_TL_RATE / POST /stars/convert-coins-to-tl).
 export const COIN_SHOP_ITEMS = [
-  { id: "extra_spin", coins: 20,  emoji: "🎡", label: "Ekstra Çark Hakkı",   desc: "Çark bekleme süresini sıfırla",                   action: "reset_spin"     },
-  { id: "auto_sell",  coins: 75,  emoji: "🤖", label: "Otomatik Satış",      desc: "Ürünler 30 sn'de bir otomatik satılır — kalıcı!", action: "unlock_auto_sell" },
-  { id: "nft_case",   coins: 500, emoji: "💎", label: "Ücretsiz NFT Kasası", desc: "Rastgele bir Çiftlik Kasası açılır (Yaygın eşya)", action: "open_case"      },
+  { id: "extra_spin", coins: 20,   emoji: "🎡", label: "Ekstra Çark Hakkı",   desc: "Çark bekleme süresini sıfırla",                   action: "reset_spin"     },
+  { id: "auto_sell",  coins: 250,  emoji: "🤖", label: "Otomatik Satış",      desc: "Ürünler 30 sn'de bir otomatik satılır — kalıcı!", action: "unlock_auto_sell" },
+  { id: "nft_case",   coins: 1500, emoji: "💎", label: "Ücretsiz NFT Kasası", desc: "Rastgele bir Çiftlik Kasası açılır (Yaygın eşya)", action: "open_case"      },
 ] as const;
 
 export type CoinShopItemId = (typeof COIN_SHOP_ITEMS)[number]["id"];
