@@ -808,7 +808,7 @@ function FarmScene({ state }: { state: any }) {
   return (
     <div
       className="relative flex-shrink-0 overflow-hidden transition-colors duration-1000"
-      style={{ height: 156, background: palette.scene }}
+      style={{ height: 172, background: palette.scene }}
     >
       {/* Sky gradient */}
       <div className="absolute inset-x-0 top-0 transition-colors duration-1000" style={{ height: 78, background: palette.sky }} />
@@ -859,47 +859,64 @@ function FarmScene({ state }: { state: any }) {
       {/* Grass base */}
       <div className="absolute inset-x-0 transition-colors duration-1000" style={{ top: 76, height: 22, background: palette.grass }} />
 
-      {/* Road */}
-      <div className="absolute inset-x-0 flex items-center overflow-hidden transition-colors duration-1000" style={{ top: 98, height: 26, background: `linear-gradient(180deg, ${palette.ground}, ${palette.ground}dd)` }}>
-        <div className="absolute inset-x-0 top-0 h-px bg-black/25" />
-        <div className="absolute inset-x-0 bottom-0 h-px bg-black/15" />
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex gap-2.5 px-3">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="h-0.5 flex-1 rounded-full" style={{ background: 'rgba(255,220,60,0.45)' }} />
-          ))}
+      {/* Road — wider, taller, two-lane feel */}
+      <div
+        className="absolute inset-x-0 overflow-hidden transition-colors duration-1000"
+        style={{ top: 90, height: 52, background: `linear-gradient(180deg, #3a3a3a 0%, #2c2c2c 50%, #252525 100%)` }}
+      >
+        {/* Road edges */}
+        <div className="absolute inset-x-0 top-0 h-[3px]" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent)' }} />
+        <div className="absolute inset-x-0 bottom-0 h-[3px]" style={{ background: 'rgba(0,0,0,0.35)' }} />
+
+        {/* Side kerb lines */}
+        <div className="absolute inset-x-0 top-[3px] h-[3px]" style={{ background: 'rgba(255,255,255,0.1)' }} />
+        <div className="absolute inset-x-0 bottom-[3px] h-[3px]" style={{ background: 'rgba(255,255,255,0.07)' }} />
+
+        {/* Animated centre dashes */}
+        <div className="absolute inset-x-0 overflow-hidden" style={{ top: '50%', transform: 'translateY(-50%)', height: 4 }}>
+          <div style={{ display: 'flex', gap: 14, animation: 'roadDash 1.4s linear infinite', width: 'max-content' }}>
+            {Array.from({ length: 30 }).map((_, i) => (
+              <div key={i} style={{ width: 22, height: 4, borderRadius: 2, background: 'rgba(255,220,60,0.7)', flexShrink: 0 }} />
+            ))}
+          </div>
         </div>
-        {/* Delivery truck — front vehicle, biggest, drives leftward (matches emoji facing) */}
-        <span className="absolute" style={{ left: 20, top: '50%', animation: 'truckMove 8s ease-in-out infinite' }}>
-          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.35s ease-in-out infinite' }}>
-            <span className="absolute text-[8px]" style={{ right: -8, top: 2, animation: 'dustPuff 0.9s ease-out infinite' }}>💨</span>
-            <span className="absolute text-[7px]" style={{ right: -4, top: 4, animation: 'dustPuff 0.9s ease-out 0.35s infinite' }}>💨</span>
-            <span className="text-lg" style={{ filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.35))' }}>🚛</span>
-            {isNight && <span className="absolute text-[6px]" style={{ left: -3, top: 4, filter: 'brightness(2) blur(0.5px)' }}>🔆</span>}
+
+        {/* ── TRUCK (biggest, 8 s loop) ── */}
+        <span className="absolute" style={{ top: '18%', animation: 'vehicleRoll 8s ease-in-out infinite' }}>
+          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.32s ease-in-out infinite' }}>
+            {/* Exhaust smoke */}
+            <span className="absolute" style={{ right: -12, top: 2, fontSize: 11, animation: 'dustPuff 0.85s ease-out infinite' }}>💨</span>
+            <span className="absolute" style={{ right: -7,  top: 6, fontSize: 9,  animation: 'dustPuff 0.85s ease-out 0.28s infinite' }}>💨</span>
+            {/* Headlights at night */}
+            {isNight && <span className="absolute" style={{ left: -6, top: 8, fontSize: 7, filter: 'brightness(2)' }}>🔆</span>}
+            {/* Vehicle */}
+            <span style={{ fontSize: 34, filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.55)) drop-shadow(0 1px 0 rgba(0,0,0,0.8))' }}>🚛</span>
           </span>
         </span>
 
-        {/* Tractor — mid depth, slightly smaller/slower, opposite phase */}
-        <span className="absolute" style={{ left: 55, top: '50%', animation: 'truckMove 13s linear -5s infinite', opacity: 0.9 }}>
-          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.45s ease-in-out infinite' }}>
-            <span className="absolute text-[7px]" style={{ right: -6, top: 1, animation: 'dustPuff 1.1s ease-out 0.2s infinite' }}>💨</span>
-            <span className="text-base" style={{ filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))' }}>🚜</span>
+        {/* ── TRACTOR (medium, 14 s loop, phase offset) ── */}
+        <span className="absolute" style={{ top: '30%', animation: 'vehicleRoll 14s linear -6s infinite' }}>
+          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.42s ease-in-out infinite' }}>
+            <span className="absolute" style={{ right: -10, top: 4, fontSize: 10, animation: 'dustPuff 1.1s ease-out 0.2s infinite' }}>💨</span>
+            <span className="absolute" style={{ right: -5,  top: 8, fontSize: 8,  animation: 'dustPuff 1.1s ease-out 0.55s infinite' }}>💨</span>
+            <span style={{ fontSize: 30, filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.5)) drop-shadow(0 1px 0 rgba(0,0,0,0.8))' }}>🚜</span>
           </span>
         </span>
 
-        {/* Small car — background depth, fastest pass, adds traffic variety */}
-        <span className="absolute" style={{ left: 80, top: '50%', animation: 'truckMove 5.5s ease-in-out -2s infinite', opacity: 0.75 }}>
-          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.3s ease-in-out infinite' }}>
-            <span className="absolute text-[6px]" style={{ right: -5, top: 1, animation: 'dustPuff 0.7s ease-out 0.15s infinite' }}>💨</span>
-            <span className="text-sm">🚗</span>
+        {/* ── CAR (smallest, 5.5 s loop) ── */}
+        <span className="absolute" style={{ top: '38%', animation: 'vehicleRoll 5.5s ease-in-out -2.5s infinite' }}>
+          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.28s ease-in-out infinite' }}>
+            <span className="absolute" style={{ right: -8, top: 3, fontSize: 8, animation: 'dustPuff 0.7s ease-out 0.15s infinite' }}>💨</span>
+            <span style={{ fontSize: 24, filter: 'drop-shadow(0 3px 3px rgba(0,0,0,0.5)) drop-shadow(0 1px 0 rgba(0,0,0,0.7))' }}>🚗</span>
           </span>
         </span>
       </div>
 
       {/* Fence strip */}
-      <div className="absolute inset-x-0" style={{ top: 124, height: 7, background: 'linear-gradient(90deg, #7a4e1a, #a06235, #7a4e1a)', opacity: 0.85, filter: isNight ? 'brightness(0.55)' : 'none' }} />
+      <div className="absolute inset-x-0" style={{ top: 142, height: 8, background: 'linear-gradient(90deg, #7a4e1a, #a06235, #7a4e1a)', opacity: 0.9, filter: isNight ? 'brightness(0.55)' : 'none' }} />
 
       {/* ── LEFT: Market shop ── */}
-      <div className="absolute flex flex-col items-end transition-opacity duration-1000" style={{ bottom: 4, left: 5, filter: isNight ? 'brightness(0.6)' : 'none' }}>
+      <div className="absolute flex flex-col items-end transition-opacity duration-1000" style={{ bottom: 6, left: 5, filter: isNight ? 'brightness(0.6)' : 'none' }}>
         <div className="flex flex-col items-center">
           {/* Striped awning */}
           <div className="rounded-t-sm overflow-hidden flex shadow" style={{ width: 62, height: 14 }}>
@@ -915,7 +932,7 @@ function FarmScene({ state }: { state: any }) {
       </div>
 
       {/* ── CENTER: Farm name plate ── */}
-      <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ bottom: 10 }}>
+      <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center" style={{ bottom: 12 }}>
         <div className="rounded-xl px-3 py-1 shadow-lg flex flex-col items-center gap-0.5"
           style={{ background: 'linear-gradient(135deg, #8b5c1e, #c4832e)', border: '2px solid #f5c842', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
           <div className="text-[8px] font-black text-yellow-200 tracking-widest uppercase leading-none">🌾 ÇİFTLİĞİM</div>
@@ -943,11 +960,13 @@ function FarmScene({ state }: { state: any }) {
           0%, 100% { transform: rotate(-2deg); }
           50%       { transform: rotate(2deg); }
         }
-        @keyframes truckMove {
-          0%     { transform: translateX(0); }
-          49.99% { transform: translateX(-85vw); }
-          50%    { transform: translateX(75vw); }
-          100%   { transform: translateX(0); }
+        @keyframes vehicleRoll {
+          0%     { transform: translateX(80vw); }
+          100%   { transform: translateX(-120px); }
+        }
+        @keyframes roadDash {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-36px); }
         }
       `}</style>
     </div>

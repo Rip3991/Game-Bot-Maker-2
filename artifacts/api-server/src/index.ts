@@ -61,4 +61,28 @@ app.listen(port, (err) => {
 
   // Register webhook after server is up (non-blocking)
   autoRegisterWebhook().catch(() => {});
+
+  // ── Self-ping keep-alive ──────────────────────────────────────────────────
+  // Render free tier suspends services after ~15 min of inactivity.
+  // We ping our own /healthz every 4 minutes so the process stays awake
+  // 24/7 without needing an external cron or Termux session.
+  const selfPingUrl = (() => {
+    const domain = getAppDomain();
+    if (!domain) return null;
+    return `${domain}/healthz`;
+  })();
+
+  if (selfPingUrl) {
+    logger.info({ selfPingUrl }, "Self-ping keep-alive enabled (every 4 min)");
+    setInterval(async () => {
+      try {
+        const res = await fetch(selfPingUrl);
+        logger.debug({ status: res.status }, "Self-ping ok");
+      } catch (err) {
+        logger.warn({ err }, "Self-ping failed (transient, will retry)");
+      }
+    }, 4 * 60 * 1000);
+  } else {
+    logger.warn("Self-ping disabled — no REPLIT_DOMAINS or RENDER_EXTERNAL_URL set");
+  }
 });

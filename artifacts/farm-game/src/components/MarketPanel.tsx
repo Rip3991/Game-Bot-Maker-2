@@ -114,44 +114,27 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
         )}
       </AnimatePresence>
 
-      {/* ── TOP ROW: Header + Auto-sell ── */}
-      <div className="flex items-center gap-2 px-3 pt-2.5 pb-1.5">
-        {/* Title */}
-        <div className="flex items-center gap-1.5">
-          <div className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', boxShadow: '0 2px 6px rgba(22,163,74,0.4)' }}>
-            <ShoppingBag size={13} className="text-white" />
-          </div>
-          <div>
-            <div className="font-black text-white text-[11px] leading-none tracking-wider uppercase">Pazar Yeri</div>
-            <div className="text-green-400/60 text-[8px] font-bold leading-none mt-0.5">
-              {unlockedSections.length} ürün aktif
-            </div>
-          </div>
-        </div>
+      {/* ── TOP ROW: Header + price chips + auto-sell — all in one compact bar ── */}
+      <div className="flex items-center gap-1.5 px-2.5 pt-1.5 pb-1">
+        {/* Icon + label */}
+        <ShoppingBag size={11} className="text-green-400/70 flex-shrink-0" />
+        <span className="font-black text-white text-[10px] leading-none tracking-wider uppercase flex-shrink-0">Pazar</span>
+        <span className="text-green-400/40 text-[8px] font-bold flex-shrink-0">{unlockedSections.length} ürün</span>
 
-        {/* Divider */}
-        <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, rgba(74,222,128,0.2), transparent)' }} />
-
-        {/* Price chips */}
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+        {/* Scrollable price chips */}
+        <div className="flex items-center gap-0.5 overflow-x-auto no-scrollbar flex-1 min-w-0">
           {unlockedSections.map(cfg => (
             <div
               key={cfg.id}
-              className="flex items-center gap-0.5 rounded-full px-1.5 py-0.5 flex-shrink-0"
+              className="flex items-center gap-0.5 rounded-full px-1 py-0.5 flex-shrink-0"
               style={{
-                background: cfg.category === 'farm'
-                  ? 'rgba(34,197,94,0.12)'
-                  : 'rgba(251,191,36,0.12)',
-                border: cfg.category === 'farm'
-                  ? '1px solid rgba(34,197,94,0.22)'
-                  : '1px solid rgba(251,191,36,0.22)',
+                background: cfg.category === 'farm' ? 'rgba(34,197,94,0.1)' : 'rgba(251,191,36,0.1)',
+                border: cfg.category === 'farm' ? '1px solid rgba(34,197,94,0.18)' : '1px solid rgba(251,191,36,0.18)',
               }}
             >
-              <span className="text-[10px]">{cfg.emoji}</span>
-              <span className="text-[8px] font-black"
-                style={{ color: cfg.category === 'farm' ? '#4ade80' : '#fbbf24' }}>
-                {formatNum(cfg.sellPrice)}🪙
+              <span className="text-[9px] leading-none">{cfg.emoji}</span>
+              <span className="text-[7px] font-black leading-none" style={{ color: cfg.category === 'farm' ? '#4ade80' : '#fbbf24' }}>
+                {formatNum(cfg.sellPrice)}
               </span>
             </div>
           ))}
@@ -161,32 +144,28 @@ export function MarketPanel({ storage, gameState, onSell, autoSell, autoSellPurc
         {!autoSellPurchased ? (
           <button
             onClick={() => navigate('/stars')}
-            className="flex items-center gap-1 rounded-full px-2.5 py-1 flex-shrink-0 transition-all active:scale-90"
-            style={{
-              background: 'rgba(255,200,0,0.06)',
-              border: '1px solid rgba(255,200,0,0.25)',
-            }}
+            className="flex items-center gap-0.5 rounded-full px-2 py-0.5 flex-shrink-0 active:scale-90"
+            style={{ background: 'rgba(255,200,0,0.06)', border: '1px solid rgba(255,200,0,0.2)' }}
           >
-            <span className="text-[10px]">🔒</span>
-            <span className="font-black text-[9px] text-yellow-400/60">OTO-SAT</span>
+            <span className="text-[9px]">🔒</span>
+            <span className="font-black text-[8px] text-yellow-400/50">OTO</span>
           </button>
         ) : (
           <button
             onClick={onToggleAutoSell}
-            className="flex items-center gap-1 rounded-full px-2.5 py-1 flex-shrink-0 transition-all active:scale-90"
+            className="flex items-center gap-0.5 rounded-full px-2 py-0.5 flex-shrink-0 active:scale-90"
             style={autoSell ? {
               background: 'linear-gradient(135deg, #15803d, #166534)',
               border: '1px solid #4ade80',
-              boxShadow: '0 0 10px rgba(74,222,128,0.4)',
+              boxShadow: '0 0 8px rgba(74,222,128,0.35)',
             } : {
               background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.12)',
+              border: '1px solid rgba(255,255,255,0.1)',
             }}
           >
-            <Zap size={9} style={{ color: autoSell ? '#bbf7d0' : 'rgba(255,255,255,0.35)' }} />
-            <span className="font-black text-[9px]"
-              style={{ color: autoSell ? '#bbf7d0' : 'rgba(255,255,255,0.35)' }}>
-              {autoSell ? 'OTO: AÇIK' : 'OTO-SAT'}
+            <Zap size={8} style={{ color: autoSell ? '#bbf7d0' : 'rgba(255,255,255,0.3)' }} />
+            <span className="font-black text-[8px]" style={{ color: autoSell ? '#bbf7d0' : 'rgba(255,255,255,0.3)' }}>
+              {autoSell ? 'AÇIK' : 'OTO'}
             </span>
           </button>
         )}
