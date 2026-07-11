@@ -899,18 +899,40 @@ function FarmScene({ state }: { state: any }) {
       {/* Fence strip */}
       <div className="absolute inset-x-0" style={{ top: 86, height: 5, background: 'linear-gradient(90deg, #7a4e1a, #a06235, #7a4e1a)', opacity: 0.88, filter: isNight ? 'brightness(0.55)' : 'none' }} />
 
-      {/* ── LEFT: Market shop ── */}
-      <div className="absolute flex flex-col items-end transition-opacity duration-1000" style={{ bottom: 4, left: 4, filter: isNight ? 'brightness(0.6)' : 'none' }}>
-        <div className="flex flex-col items-center">
+      {/* ── LEFT: Market shop — enlarged and redrawn with a proper little
+          roof, brick base and door, closer in feel to the wooden-town
+          reference art instead of a plain rounded rectangle. ── */}
+      <div className="absolute flex flex-col items-end transition-opacity duration-1000" style={{ bottom: 3, left: 3, filter: isNight ? 'brightness(0.6)' : 'none' }}>
+        <div className="flex flex-col items-center" style={{ width: 58 }}>
+          {/* Pitched roof */}
+          <div
+            className="relative"
+            style={{
+              width: 0, height: 0,
+              borderLeft: '31px solid transparent',
+              borderRight: '31px solid transparent',
+              borderBottom: '14px solid #8b3a2e',
+              filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))',
+            }}
+          />
           {/* Striped awning */}
-          <div className="rounded-t-sm overflow-hidden flex shadow" style={{ width: 42, height: 9 }}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex-1" style={{ background: i % 2 === 0 ? '#15803d' : '#166534' }} />
+          <div className="rounded-b-sm overflow-hidden flex shadow -mt-0.5" style={{ width: 58, height: 11 }}>
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} className="flex-1" style={{ background: i % 2 === 0 ? '#dc2626' : '#f5f5f4' }} />
             ))}
           </div>
-          {/* Building */}
-          <div className="flex items-center justify-center gap-1 rounded-b border border-white/20 shadow-md" style={{ width: 42, height: 24, background: 'linear-gradient(180deg, #f0fdf4 0%, #d1fae5 100%)' }}>
-            <span style={{ fontSize: 12 }}>🏪</span>
+          {/* Building body */}
+          <div
+            className="relative flex flex-col items-center justify-end rounded-b-sm border shadow-md overflow-hidden"
+            style={{
+              width: 58, height: 34,
+              background: 'linear-gradient(180deg, #fde9c8 0%, #e8c896 60%, #d4a86e 100%)',
+              borderColor: '#8b5c1e',
+            }}
+          >
+            <span className="absolute top-1 text-base leading-none" style={{ fontSize: 16 }}>🏪</span>
+            {/* Door */}
+            <div className="rounded-t-sm" style={{ width: 14, height: 15, background: 'linear-gradient(180deg, #6b3a1a, #4a2810)', border: '1px solid #3a1e0a' }} />
           </div>
         </div>
       </div>
