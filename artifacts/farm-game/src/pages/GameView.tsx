@@ -808,7 +808,7 @@ function FarmScene({ state }: { state: any }) {
   return (
     <div
       className="relative flex-shrink-0 overflow-hidden transition-colors duration-1000"
-      style={{ height: 172, background: palette.scene }}
+      style={{ height: 158, background: palette.scene }}
     >
       {/* Sky gradient */}
       <div className="absolute inset-x-0 top-0 transition-colors duration-1000" style={{ height: 78, background: palette.sky }} />
@@ -859,61 +859,53 @@ function FarmScene({ state }: { state: any }) {
       {/* Grass base */}
       <div className="absolute inset-x-0 transition-colors duration-1000" style={{ top: 76, height: 22, background: palette.grass }} />
 
-      {/* Road — wider, taller, two-lane feel */}
+      {/* Road — narrower single lane */}
       <div
         className="absolute inset-x-0 overflow-hidden transition-colors duration-1000"
-        style={{ top: 90, height: 52, background: `linear-gradient(180deg, #3a3a3a 0%, #2c2c2c 50%, #252525 100%)` }}
+        style={{ top: 93, height: 36, background: 'linear-gradient(180deg, #3d3d3d 0%, #2c2c2c 55%, #232323 100%)' }}
       >
-        {/* Road edges */}
-        <div className="absolute inset-x-0 top-0 h-[3px]" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent)' }} />
-        <div className="absolute inset-x-0 bottom-0 h-[3px]" style={{ background: 'rgba(0,0,0,0.35)' }} />
-
-        {/* Side kerb lines */}
-        <div className="absolute inset-x-0 top-[3px] h-[3px]" style={{ background: 'rgba(255,255,255,0.1)' }} />
-        <div className="absolute inset-x-0 bottom-[3px] h-[3px]" style={{ background: 'rgba(255,255,255,0.07)' }} />
+        {/* Top / bottom kerb */}
+        <div className="absolute inset-x-0 top-0 h-[2px]" style={{ background: 'rgba(255,255,255,0.14)' }} />
+        <div className="absolute inset-x-0 bottom-0 h-[2px]" style={{ background: 'rgba(0,0,0,0.4)' }} />
 
         {/* Animated centre dashes */}
-        <div className="absolute inset-x-0 overflow-hidden" style={{ top: '50%', transform: 'translateY(-50%)', height: 4 }}>
-          <div style={{ display: 'flex', gap: 14, animation: 'roadDash 1.4s linear infinite', width: 'max-content' }}>
-            {Array.from({ length: 30 }).map((_, i) => (
-              <div key={i} style={{ width: 22, height: 4, borderRadius: 2, background: 'rgba(255,220,60,0.7)', flexShrink: 0 }} />
+        <div className="absolute inset-x-0 overflow-hidden" style={{ top: '50%', transform: 'translateY(-50%)', height: 3 }}>
+          <div style={{ display: 'flex', gap: 12, animation: 'roadDash 1.2s linear infinite', width: 'max-content' }}>
+            {Array.from({ length: 32 }).map((_, i) => (
+              <div key={i} style={{ width: 18, height: 3, borderRadius: 2, background: 'rgba(255,220,60,0.65)', flexShrink: 0 }} />
             ))}
           </div>
         </div>
 
-        {/* ── TRUCK (biggest, 8 s loop) ── */}
-        <span className="absolute" style={{ top: '18%', animation: 'vehicleRoll 8s ease-in-out infinite' }}>
+        {/* ── TRUCK — enters right, brakes near market (~80px from left), pauses, exits ── */}
+        <span className="absolute" style={{ top: '8%', animation: 'truckStop 9s ease-in-out infinite' }}>
           <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.32s ease-in-out infinite' }}>
-            {/* Exhaust smoke */}
-            <span className="absolute" style={{ right: -12, top: 2, fontSize: 11, animation: 'dustPuff 0.85s ease-out infinite' }}>💨</span>
-            <span className="absolute" style={{ right: -7,  top: 6, fontSize: 9,  animation: 'dustPuff 0.85s ease-out 0.28s infinite' }}>💨</span>
-            {/* Headlights at night */}
-            {isNight && <span className="absolute" style={{ left: -6, top: 8, fontSize: 7, filter: 'brightness(2)' }}>🔆</span>}
-            {/* Vehicle */}
-            <span style={{ fontSize: 34, filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.55)) drop-shadow(0 1px 0 rgba(0,0,0,0.8))' }}>🚛</span>
+            <span className="absolute" style={{ right: -11, top: 1, fontSize: 10, animation: 'dustPuff 0.9s ease-out infinite' }}>💨</span>
+            <span className="absolute" style={{ right: -6,  top: 5, fontSize: 8,  animation: 'dustPuff 0.9s ease-out 0.3s infinite' }}>💨</span>
+            {isNight && <span className="absolute" style={{ left: -5, top: 6, fontSize: 7, filter: 'brightness(2)' }}>🔆</span>}
+            <span style={{ fontSize: 30, filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.6))' }}>🚛</span>
           </span>
         </span>
 
-        {/* ── TRACTOR (medium, 14 s loop, phase offset) ── */}
-        <span className="absolute" style={{ top: '30%', animation: 'vehicleRoll 14s linear -6s infinite' }}>
-          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.42s ease-in-out infinite' }}>
-            <span className="absolute" style={{ right: -10, top: 4, fontSize: 10, animation: 'dustPuff 1.1s ease-out 0.2s infinite' }}>💨</span>
-            <span className="absolute" style={{ right: -5,  top: 8, fontSize: 8,  animation: 'dustPuff 1.1s ease-out 0.55s infinite' }}>💨</span>
-            <span style={{ fontSize: 30, filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.5)) drop-shadow(0 1px 0 rgba(0,0,0,0.8))' }}>🚜</span>
+        {/* ── TRACTOR — same stop behaviour, slower, phase offset ── */}
+        <span className="absolute" style={{ top: '20%', animation: 'tractorStop 13s ease-in-out -5s infinite' }}>
+          <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.44s ease-in-out infinite' }}>
+            <span className="absolute" style={{ right: -9, top: 3, fontSize: 9, animation: 'dustPuff 1.1s ease-out 0.2s infinite' }}>💨</span>
+            <span style={{ fontSize: 26, filter: 'drop-shadow(0 3px 4px rgba(0,0,0,0.55))' }}>🚜</span>
           </span>
         </span>
 
-        {/* ── CAR (smallest, 5.5 s loop) ── */}
-        <span className="absolute" style={{ top: '38%', animation: 'vehicleRoll 5.5s ease-in-out -2.5s infinite' }}>
+        {/* ── CAR — quick pass, shorter pause ── */}
+        <span className="absolute" style={{ top: '30%', animation: 'carStop 6s ease-in-out -2s infinite' }}>
           <span className="relative inline-block" style={{ animation: 'vehicleBounce 0.28s ease-in-out infinite' }}>
-            <span className="absolute" style={{ right: -8, top: 3, fontSize: 8, animation: 'dustPuff 0.7s ease-out 0.15s infinite' }}>💨</span>
-            <span style={{ fontSize: 24, filter: 'drop-shadow(0 3px 3px rgba(0,0,0,0.5)) drop-shadow(0 1px 0 rgba(0,0,0,0.7))' }}>🚗</span>
+            <span className="absolute" style={{ right: -7, top: 2, fontSize: 7, animation: 'dustPuff 0.7s ease-out 0.12s infinite' }}>💨</span>
+            <span style={{ fontSize: 22, filter: 'drop-shadow(0 3px 3px rgba(0,0,0,0.5))' }}>🚗</span>
           </span>
         </span>
       </div>
 
       {/* Fence strip */}
-      <div className="absolute inset-x-0" style={{ top: 142, height: 8, background: 'linear-gradient(90deg, #7a4e1a, #a06235, #7a4e1a)', opacity: 0.9, filter: isNight ? 'brightness(0.55)' : 'none' }} />
+      <div className="absolute inset-x-0" style={{ top: 129, height: 7, background: 'linear-gradient(90deg, #7a4e1a, #a06235, #7a4e1a)', opacity: 0.88, filter: isNight ? 'brightness(0.55)' : 'none' }} />
 
       {/* ── LEFT: Market shop ── */}
       <div className="absolute flex flex-col items-end transition-opacity duration-1000" style={{ bottom: 6, left: 5, filter: isNight ? 'brightness(0.6)' : 'none' }}>
@@ -960,13 +952,31 @@ function FarmScene({ state }: { state: any }) {
           0%, 100% { transform: rotate(-2deg); }
           50%       { transform: rotate(2deg); }
         }
-        @keyframes vehicleRoll {
-          0%     { transform: translateX(80vw); }
-          100%   { transform: translateX(-120px); }
-        }
         @keyframes roadDash {
           from { transform: translateX(0); }
-          to   { transform: translateX(-36px); }
+          to   { transform: translateX(-30px); }
+        }
+        /* Truck: rolls in from right → brakes near market (~78px from left) →
+           idles 2.3 s → drives off left */
+        @keyframes truckStop {
+          0%   { transform: translateX(95vw); }
+          44%  { transform: translateX(78px); }
+          70%  { transform: translateX(78px); }
+          100% { transform: translateX(-160px); }
+        }
+        /* Tractor: same concept, slower, longer pause */
+        @keyframes tractorStop {
+          0%   { transform: translateX(95vw); }
+          40%  { transform: translateX(82px); }
+          66%  { transform: translateX(82px); }
+          100% { transform: translateX(-160px); }
+        }
+        /* Car: quick zip, short stop */
+        @keyframes carStop {
+          0%   { transform: translateX(95vw); }
+          46%  { transform: translateX(74px); }
+          60%  { transform: translateX(74px); }
+          100% { transform: translateX(-160px); }
         }
       `}</style>
     </div>
